@@ -1,0 +1,3 @@
+{
+  "claudeMdExcludes": ["**/instructions/excluded/CLAUDE.md"]
+}
