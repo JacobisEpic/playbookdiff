@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { IdRegistry } from "./diagnostics.js";
 import { discoverInstructions } from "./instructions.js";
 import { validateAnalysisContext } from "./paths.js";
+import { loadClaudeMdExcludes } from "./settings.js";
 
 const fixturesRoot = path.join(import.meta.dirname, "..", "test", "fixtures");
 
@@ -18,7 +19,9 @@ async function discover(params: {
     mode: params.mode ?? "repo",
     ...(params.targetPath !== undefined ? { targetPath: params.targetPath } : {}),
   });
-  return discoverInstructions(ctx, new IdRegistry());
+  const registry = new IdRegistry();
+  const excludes = await loadClaudeMdExcludes(ctx.cwd, registry);
+  return discoverInstructions(ctx, excludes, registry);
 }
 
 describe("ancestor startup discovery", () => {

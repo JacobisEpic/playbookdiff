@@ -18,7 +18,7 @@ import {
   toRepoRelativePosix,
   type ValidatedContext,
 } from "./paths.js";
-import { loadClaudeMdExcludes } from "./settings.js";
+import type { ExcludeMatcher } from "./settings.js";
 
 /** Documented recursion limit for `@path` imports. */
 const MAX_IMPORT_DEPTH = 4;
@@ -35,6 +35,7 @@ type SourceScope = "repository" | "local";
 
 export async function discoverInstructions(
   ctx: ValidatedContext,
+  excludes: ExcludeMatcher,
   registry: IdRegistry,
 ): Promise<InstructionDiscoveryResult> {
   const instructions: EffectiveInstruction[] = [];
@@ -46,9 +47,6 @@ export async function discoverInstructions(
     orderCounter += 1;
     return current;
   };
-
-  const excludes = await loadClaudeMdExcludes(ctx.cwd, registry);
-  diagnostics.push(...excludes.diagnostics);
 
   function relPath(absolutePath: string): string {
     return toRepoRelativePosix(ctx.repositoryRoot, absolutePath);

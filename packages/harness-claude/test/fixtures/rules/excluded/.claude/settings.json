@@ -1,0 +1,3 @@
+{
+  "claudeMdExcludes": ["**/rules/excluded/.claude/rules/excluded.md"]
+}
