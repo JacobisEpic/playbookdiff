@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "alpha": {
+      "command": "alpha-server"
+    },
+    "beta": {
+      "url": "https://example.test/beta"
+    }
+  }
+}

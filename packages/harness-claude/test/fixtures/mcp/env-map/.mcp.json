@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "example": {
+      "command": "example-server",
+      "env": {
+        "API_KEY": "${API_KEY}"
+      }
+    }
+  }
+}

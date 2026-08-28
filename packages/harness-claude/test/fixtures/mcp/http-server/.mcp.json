@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "hosted": {
+      "url": "https://example.test/mcp"
+    }
+  }
+}
