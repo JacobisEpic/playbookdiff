@@ -1,0 +1,32 @@
+{
+  "name": "playbookdiff-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Read-only cross-agent configuration compatibility checker for Claude Code and Codex.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "turbo run clean",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "lint": "oxlint --deny-warnings .",
+    "lint:fix": "oxlint --fix .",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "tsdown": "0.22.14",
+    "turbo": "2.10.12",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": ">=24.11.0 <25",
+    "pnpm": ">=11.24.0 <12"
+  },
+  "packageManager": "pnpm@11.24.0"
+}

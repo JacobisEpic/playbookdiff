@@ -1,0 +1,25 @@
+{
+  "name": "@playbookdiff/harness-codex",
+  "version": "0.0.0",
+  "description": "Codex configuration adapter for PlaybookDiff.",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "node -e \"import('node:fs').then(({ rmSync }) => rmSync('dist', { recursive: true, force: true }))\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=24.11.0 <25"
+  }
+}
