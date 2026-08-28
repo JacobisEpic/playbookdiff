@@ -35,4 +35,14 @@ describe("loadClaudeMdExcludes", () => {
     expect(result.diagnostics).toHaveLength(0);
     expect(result.matches(path.join(cwd, "CLAUDE.md"))).toBe(false);
   });
+
+  it("does not fall back to an ancestor directory's settings.json", async () => {
+    // Documented: project settings load from <cwd>/.claude/ only, unlike
+    // CLAUDE.md/rules discovery, which does walk the ancestor chain.
+    const ancestorRoot = path.join(fixturesRoot, "no-ancestor-fallback");
+    const nestedCwd = path.join(ancestorRoot, "nested");
+    const result = await loadClaudeMdExcludes(nestedCwd, new IdRegistry());
+    expect(result.diagnostics).toHaveLength(0);
+    expect(result.matches(path.join(ancestorRoot, "CLAUDE.md"))).toBe(false);
+  });
 });

@@ -88,9 +88,12 @@ export async function validateAnalysisContext(context: {
   return { repositoryRoot, cwd, targetPath: targetReal, mode: context.mode };
 }
 
-/** Converts an absolute path known to be inside `root` to a repo-relative POSIX path. */
+/** Converts an absolute path known to be inside `root` to a repo-relative POSIX path; `root` itself becomes ".". */
 export function toRepoRelativePosix(root: string, absolutePath: string): string {
   const relative = path.relative(root, absolutePath);
+  if (relative === "") {
+    return ".";
+  }
   return relative.split(path.sep).join("/");
 }
 

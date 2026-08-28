@@ -1,2 +1,3 @@
-// Phase 1 intentionally contains no Claude Code adapter implementation.
-export {};
+export { compileClaudeConfig } from "./compile.js";
+export { matchesClaudeRulePath } from "./rules.js";
+export { AnalysisContextError } from "./paths.js";

@@ -224,7 +224,7 @@ export async function discoverSkills(
     await processSkillsRoot(
       path.join(dir, ".claude", "skills"),
       "available",
-      `Discovered via ancestor .claude/skills/ directory at ${relPath(dir) || "."}`,
+      `Discovered via ancestor .claude/skills/ directory at ${relPath(dir)}`,
     );
   }
 
