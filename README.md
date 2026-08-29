@@ -8,8 +8,8 @@ It does not modify analyzed repositories and does not claim that different codin
 
 ## Status
 
-Phase 1 establishes the monorepo, shared domain contracts, and documented harness semantics.
-Discovery adapters, comparison logic, CLI commands, Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
+Phase 3 implements read-only repository configuration adapters for Claude Code and Codex with fixture-backed provenance and explicit uncertainty.
+Comparison logic, CLI commands, Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
 
 ## Development
 
