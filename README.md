@@ -8,8 +8,18 @@ It does not modify analyzed repositories and does not claim that different codin
 
 ## Status
 
-Phase 4 implements deterministic comparison of normalized Claude Code and Codex instructions, skills, and MCP configuration with fixture-backed provenance and explicit uncertainty.
-CLI commands, Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
+Phase 5 adds a production-usable `playbookdiff` CLI on top of the Phase 4 deterministic comparator: `check` and `explain`, human and JSON output, and CI-usable exit codes.
+Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
+
+## CLI
+
+```sh
+pnpm install
+pnpm --filter playbookdiff build
+pnpm playbookdiff check .
+```
+
+See [the CLI reference](docs/cli.md) for `check`, `explain`, `--cwd` vs `--path`, `--json`, and exit codes.
 
 ## Development
 
@@ -29,7 +39,7 @@ pnpm test
 pnpm build
 ```
 
-See [the architecture notes](docs/architecture.md), [the deterministic comparison specification](docs/comparison.md), [the Claude Code harness specification](docs/harnesses/claude.md), and [the Codex harness specification](docs/harnesses/codex.md).
+See [the architecture notes](docs/architecture.md), [the deterministic comparison specification](docs/comparison.md), [the CLI reference](docs/cli.md), [the Claude Code harness specification](docs/harnesses/claude.md), and [the Codex harness specification](docs/harnesses/codex.md).
 
 ## License
 
