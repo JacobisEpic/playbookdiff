@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "database": {
+      "command": "database-server",
+      "args": ["--safe"],
+      "env": {
+        "API_KEY": "${API_KEY}"
+      }
+    }
+  }
+}

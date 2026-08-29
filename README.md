@@ -8,8 +8,8 @@ It does not modify analyzed repositories and does not claim that different codin
 
 ## Status
 
-Phase 3 implements read-only repository configuration adapters for Claude Code and Codex with fixture-backed provenance and explicit uncertainty.
-Comparison logic, CLI commands, Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
+Phase 4 implements deterministic comparison of normalized Claude Code and Codex instructions, skills, and MCP configuration with fixture-backed provenance and explicit uncertainty.
+CLI commands, Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
 
 ## Development
 
@@ -29,7 +29,7 @@ pnpm test
 pnpm build
 ```
 
-See [the architecture notes](docs/architecture.md), [the Claude Code harness specification](docs/harnesses/claude.md), and [the Codex harness specification](docs/harnesses/codex.md).
+See [the architecture notes](docs/architecture.md), [the deterministic comparison specification](docs/comparison.md), [the Claude Code harness specification](docs/harnesses/claude.md), and [the Codex harness specification](docs/harnesses/codex.md).
 
 ## License
 

@@ -80,7 +80,8 @@ A one-sided finding includes evidence from the side that exists.
 
 Instruction excerpts are short and preserve only enough text to identify the compared item.
 Skill excerpts contain a name and, when useful, a short description or policy state.
-MCP excerpts contain only non-secret structured state such as server name, transport, command, URL, environment variable names, and normalized value kinds.
+MCP excerpts contain only non-secret structured state such as server name, transport, configured field names, environment variable names, and normalized value kinds.
+Command, argument, URL, and environment values are omitted because any of them can contain credentials.
 Configured environment values are always described as redacted and are never exposed in IDs, explanations, evidence, or snapshots.
 
 Finding `left` and `right` details are short, structural, and machine-safe.

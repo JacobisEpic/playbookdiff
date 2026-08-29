@@ -1,6 +1,6 @@
 ---
 name: root-skill
-description: Root Codex skill.
+description: Root shared skill.
 ---
 
-Use the root Codex skill.
+Use the root shared skill.

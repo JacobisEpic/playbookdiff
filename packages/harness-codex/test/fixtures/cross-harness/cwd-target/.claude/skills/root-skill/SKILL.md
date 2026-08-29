@@ -1,6 +1,6 @@
 ---
 name: root-skill
-description: Root Claude skill.
+description: Root shared skill.
 ---
 
-Use the root Claude skill.
+Use the root shared skill.

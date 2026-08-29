@@ -1,0 +1,6 @@
+[mcp_servers.database]
+command = "database-server"
+args = ["--safe"]
+
+[mcp_servers.database.env]
+API_KEY = "${API_KEY}"

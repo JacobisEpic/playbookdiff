@@ -1,1 +1,1 @@
-Root Codex playbook.
+Root shared playbook.
