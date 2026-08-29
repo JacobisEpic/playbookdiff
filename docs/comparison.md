@@ -93,7 +93,7 @@ They do not predict agent behavior.
 Instruction content canonicalization performs exactly two transformations:
 
 1. CRLF and bare CR line endings become LF.
-2. Any number of final LF characters becomes one final LF.
+2. One optional final LF is ignored, while additional trailing blank lines remain meaningful.
 
 No other transformation occurs.
 The comparator does not lowercase, collapse internal whitespace, remove punctuation, strip Markdown, reorder sections, fuzzy-match, tokenize, embed, or invoke a model.
