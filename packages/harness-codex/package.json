@@ -17,7 +17,20 @@
   "scripts": {
     "build": "tsdown",
     "clean": "node -e \"import('node:fs').then(({ rmSync }) => rmSync('dist', { recursive: true, force: true }))\"",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@playbookdiff/core": "workspace:*",
+    "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-frontmatter": "2.0.1",
+    "micromark-extension-frontmatter": "2.0.0",
+    "toml-eslint-parser": "1.0.3",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@playbookdiff/harness-claude": "workspace:*",
+    "@types/mdast": "4.0.4"
   },
   "engines": {
     "node": ">=24.11.0 <25"

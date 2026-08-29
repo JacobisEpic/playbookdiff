@@ -1,0 +1,3 @@
+[mcp_servers.shared]
+command = "root-server"
+args = ["--root"]

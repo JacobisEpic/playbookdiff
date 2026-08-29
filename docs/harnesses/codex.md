@@ -2,10 +2,10 @@
 
 ## Verification record
 
-Last verified: 2026-08-28.
+Last verified: 2026-08-29.
 
-Status: Phase 1 contributor specification.
-No Codex adapter implementation exists yet.
+Status: Phase 3 implemented subset.
+The deterministic subset described below is implemented in `packages/harness-codex` as `compileCodexConfig` and fixture-tested under `packages/harness-codex/test/fixtures/`.
 
 This specification is based on current official Codex documentation, especially:
 
@@ -25,7 +25,7 @@ Where official pages conflict or omit a mechanical detail, the adapter must prod
 
 ## Adapter purpose
 
-The future Codex adapter will answer:
+The Codex adapter answers:
 
 > Given a repository and launch directory, which supported repository-defined instructions, skills, and MCP servers can Codex discover under documented rules, and where did each value come from?
 
@@ -84,7 +84,8 @@ Local mode may eventually include accessible machine-local configuration.
 It still cannot assume knowledge of server-managed policy, remote authentication, or runtime MCP behavior.
 Every local source must retain its scope and provenance so it cannot be mistaken for reproducible repository state.
 
-Phase 1 defines the mode distinction but does not implement local discovery.
+Phase 3 preserves the mode distinction but does not inspect machine-local Codex state.
+It emits diagnostics for unavailable user and managed layers in both modes.
 
 ## Project instructions
 
@@ -132,7 +133,7 @@ The normalized model must expose the resulting scope gap rather than erase it.
 ### Fallback filenames
 
 The documented built-in default for `project_doc_fallback_filenames` is an empty array.
-When an applicable, trusted repository config provides fallback filenames, the future adapter may use them for the directories in the root-to-`cwd` chain.
+When an applicable, trusted repository config provides fallback filenames, the adapter uses them for the directories in the root-to-`cwd` chain.
 Repo mode must not invent fallback names from unavailable user configuration.
 
 ### Project instruction byte budget
@@ -144,8 +145,8 @@ The official pages currently conflict on the budget's exact scope.
 The dedicated `AGENTS.md` page describes a combined-chain limit, while Advanced Configuration describes the option as a per-file limit and the reference does not resolve the distinction.
 The documentation also does not specify partial-last-file behavior, UTF-8 boundary handling, or whether inserted separators count toward the limit.
 
-Until a real Codex fixture establishes those mechanics, the adapter must not claim exact truncation behavior.
-It must preserve the candidate chain, emit an `unresolved` diagnostic when the budget could matter, and record the configured or default budget as an assumption.
+The Phase 3 fixture confirms that the adapter preserves the candidate chain and reports risk rather than implementing undocumented truncation.
+It emits an `unresolved` diagnostic when repository-visible candidate bytes exceed the configured or default limit.
 
 ## Project configuration
 
@@ -175,7 +176,7 @@ The presence of `.codex/config.toml` does not authorize comparison of unrelated 
 For repository skills, Codex scans `.agents/skills/` in each directory from `cwd` upward through `repositoryRoot`.
 It does not scan arbitrary descendants below `cwd` merely because `targetPath` is deeper.
 
-The future adapter will discover each `SKILL.md` using real filesystem behavior.
+The adapter discovers each `SKILL.md` using real filesystem behavior.
 Codex documents support for symlinked skill directories, but repo mode must diagnose a target outside the repository rather than silently importing non-reproducible content.
 
 Same-name skills in separate scanned locations remain separate entries.
@@ -235,9 +236,9 @@ Capabilities must use `known: false` unless supported evidence comes from a late
 The official configuration documentation establishes overall layer precedence but does not specify field-level merge behavior when the same `mcp_servers.<name>` table appears in multiple `.codex/config.toml` layers.
 It is unknown whether the nearest table replaces the ancestor table, deep-merges with it, or resolves fields independently.
 
-The future adapter must preserve both provenances and emit an `unsupported` or `unresolved` diagnostic.
+The adapter preserves both provenances, emits an `unresolved` diagnostic, and leaves the normalized transport and fields unknown.
 It must not implement a field-merge strategy until a real Codex fixture verifies the behavior.
-The documented `/debug-config` and `/mcp` commands can provide evidence for that fixture in Phase 3.
+No deterministic noninteractive project-only debug surface established the merge mechanics during Phase 3, so the uncertainty remains explicit.
 
 ## Provenance and diagnostics
 
@@ -289,30 +290,30 @@ These are Phase 3 fixture requirements, not permission to guess during implement
 
 ## Fixture checklist
 
-- [ ] root AGENTS.md
-- [ ] nested AGENTS.md
-- [ ] nested AGENTS.override.md
-- [ ] root AGENTS.override.md
-- [ ] fallback filename
-- [ ] instruction byte limit
-- [ ] different cwd values
-- [ ] root `.agents/skills`
-- [ ] nested `.agents/skills`
-- [ ] duplicate skill names
-- [ ] root `.codex/config.toml`
-- [ ] nested `.codex/config.toml`
-- [ ] project MCP configuration
-- [ ] duplicate MCP server across layers marked unresolved until verified
-- [ ] trusted-project assumption
-- [ ] repo-mode missing user config diagnostic
+- [x] root AGENTS.md
+- [x] nested AGENTS.md
+- [x] nested AGENTS.override.md
+- [x] root AGENTS.override.md
+- [x] fallback filename
+- [x] instruction byte limit
+- [x] different cwd values
+- [x] root `.agents/skills`
+- [x] nested `.agents/skills`
+- [x] duplicate skill names
+- [x] root `.codex/config.toml`
+- [x] nested `.codex/config.toml`
+- [x] project MCP configuration
+- [x] duplicate MCP server across layers marked unresolved until verified
+- [x] trusted-project assumption
+- [x] repo-mode missing user config diagnostic
 
 Additional verification cases identified from current documentation:
 
-- [ ] configured project-root marker changes
-- [ ] empty instruction file is skipped
-- [ ] configured fallback filename order
-- [ ] symlinked repository skill
-- [ ] skill symlink outside repository
-- [ ] `allow_implicit_invocation: false`
-- [ ] skill advertisement budget risk
-- [ ] symbolic MCP environment reference remains unresolved
+- [x] configured project-root marker is recorded without redefining the supplied boundary
+- [x] empty instruction file is skipped
+- [x] configured fallback filename order
+- [x] symlinked repository skill
+- [x] skill symlink outside repository
+- [x] `allow_implicit_invocation: false`
+- [x] skill advertisement budget risk
+- [x] symbolic MCP environment references are preserved without host resolution

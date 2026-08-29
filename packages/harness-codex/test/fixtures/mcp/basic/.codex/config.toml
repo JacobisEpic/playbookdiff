@@ -1,0 +1,12 @@
+[mcp_servers.local]
+command = "node"
+args = ["server.js", "${API_TOKEN}"]
+env_vars = ["HOST_TOKEN"]
+
+[mcp_servers.local.env]
+API_TOKEN = "${API_TOKEN}"
+INLINE_SECRET = "must-not-appear"
+
+[mcp_servers.remote]
+url = "https://example.test/mcp"
+bearer_token_env_var = "REMOTE_TOKEN"

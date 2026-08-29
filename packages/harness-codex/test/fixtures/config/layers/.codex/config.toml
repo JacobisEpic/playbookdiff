@@ -1,0 +1,3 @@
+project_doc_fallback_filenames = ["ROOT.md"]
+project_doc_max_bytes = 100
+project_root_markers = [".git"]
