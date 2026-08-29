@@ -22,7 +22,8 @@ Comparators must consume normalized configurations and must not perform filesyst
 ## Locked stack
 
 The repository uses Node.js 24 LTS, strict TypeScript 6, ESM, pnpm workspaces, Turborepo, tsdown, Vitest, Oxlint, and Oxfmt.
-Future phases reserve citty for the CLI, syntax-aware Markdown and configuration parsers for adapters, execa for isolated Git analysis, Zod at untrusted runtime boundaries, Vercel AI SDK for optional semantic classification, and Next.js for a thin hosted interface.
+Future phases reserve citty for the CLI, syntax-aware Markdown and configuration parsers for adapters, Zod at untrusted runtime boundaries, Vercel AI SDK for optional semantic classification, and Next.js for a thin hosted interface.
+Isolated Git revision analysis (Phase 6) uses Node's built-in `child_process` and `git worktree` directly rather than an added dependency.
 Those future dependencies are intentionally absent from Phase 1.
 
 ## Phase 1 boundary

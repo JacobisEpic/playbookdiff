@@ -33,11 +33,12 @@ Installing the package globally (`npm install -g .` from `packages/cli`, or publ
 ```text
 playbookdiff check [repository]
 playbookdiff explain <finding-id> [repository]
+playbookdiff diff <baseline>..<candidate> [repository]
 playbookdiff --help
 playbookdiff --version
 ```
 
-`repository` defaults to `.` for both commands.
+`repository` defaults to `.` for all three commands.
 
 ### `check`
 
@@ -62,6 +63,21 @@ playbookdiff explain <finding-id> . --cwd apps/web --path apps/web/src/page.tsx 
 
 If the ID does not exist for the given repository/cwd/target, `explain` reports a lookup failure (exit code 2) rather than guessing a nearby match.
 
+### `diff`
+
+Compares PlaybookDiff analysis at two Git revisions of the same repository and reports only the compatibility findings the candidate introduced or resolved relative to the baseline.
+Pre-existing divergence common to both revisions never causes `diff` to fail.
+Your active checkout, branch, `HEAD`, and index are never touched, and no remote is ever fetched.
+
+```sh
+playbookdiff diff main..HEAD
+playbookdiff diff origin/main..HEAD .
+playbookdiff diff main..feature --cwd apps/web --path apps/web/src/page.tsx
+playbookdiff diff main..HEAD --json
+```
+
+See [`docs/git-diff.md`](git-diff.md) for the full specification: exact range semantics, isolation guarantees, the introduced/resolved/unchanged matching rules, the regression policy, and the `--json` contract.
+
 ## `--cwd` vs `--path`
 
 These model two different things and must not be confused:
@@ -83,18 +99,21 @@ PlaybookDiff models this distinction explicitly rather than collapsing it into o
 ## Exit codes
 
 ```text
-0   analysis completed; no actionable compatibility divergence found
-1   analysis completed; one or more actionable (medium/high severity) findings exist
-2   PlaybookDiff could not perform the analysis (invalid input, path escape, lookup failure, ...)
+0   analysis completed; no actionable compatibility divergence found (or, for `diff`, no new actionable regression)
+1   analysis completed; one or more actionable (medium/high severity) findings exist (or, for `diff`, were newly introduced)
+2   PlaybookDiff could not perform the analysis (invalid input, path escape, lookup failure, invalid Git range, unresolvable revision, ...)
 ```
 
 A deterministic `unknown` finding (informational, severity `info`) never causes exit code 1 by itself, and never causes exit code 2.
 `--help` and `--version` always exit 0.
 
+`diff`'s exit code answers a different question than `check`'s: whether the candidate revision introduced a _new_ actionable finding relative to the baseline, not whether actionable findings exist at all.
+See [`docs/git-diff.md`](git-diff.md) for the full regression policy.
+
 ## `--json`
 
-`check --json` and `explain --json` print machine-readable JSON to stdout and never mix in ANSI styling or log lines; errors still go to stderr.
-An actionable `check --json` result still exits 1.
+`check --json`, `explain --json`, and `diff --json` print machine-readable JSON to stdout and never mix in ANSI styling or log lines; errors still go to stderr.
+An actionable `check --json` result still exits 1, and a `diff --json` result that introduces a new actionable regression still exits 1.
 
 The JSON contracts are intentionally minimal wrappers around the existing `CompatibilityReport`/`CompatibilityFinding` types from `@playbookdiff/core`, rather than a second, CLI-specific report shape:
 
@@ -104,9 +123,23 @@ The JSON contracts are intentionally minimal wrappers around the existing `Compa
 
 // explain --json
 { context: { repository, cwd, targetPath? }, finding: CompatibilityFinding }
+
+// diff --json
+{
+  context: { repository, cwd, targetPath? },
+  baseline: { revision, commit, diagnostics: { claude: Diagnostic[], codex: Diagnostic[] } },
+  candidate: { revision, commit, diagnostics: { claude: Diagnostic[], codex: Diagnostic[] } },
+  diff: {
+    introduced: CompatibilityFinding[],
+    resolved: CompatibilityFinding[],
+    unchanged: CompatibilityFinding[],
+    summary: { introduced, introducedActionable, introducedInformational, resolved, unchanged },
+  },
+}
 ```
 
 `context.cwd`/`context.targetPath` are the repo-relative values the adapters actually resolved (from the compiled config's `target`), so displayed context always reflects what was analyzed, not just what was typed.
+`diff --json` deliberately omits the full baseline/candidate `CompatibilityReport`s in favor of the delta; see [`docs/git-diff.md`](git-diff.md) for why.
 
 ## Deterministic limitations
 

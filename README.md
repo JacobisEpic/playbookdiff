@@ -8,8 +8,8 @@ It does not modify analyzed repositories and does not claim that different codin
 
 ## Status
 
-Phase 5 adds a production-usable `playbookdiff` CLI on top of the Phase 4 deterministic comparator: `check` and `explain`, human and JSON output, and CI-usable exit codes.
-Git revision analysis, semantic AI, and the web application are intentionally not implemented yet.
+Phase 6 adds Git-aware regression diffing on top of the Phase 5 `playbookdiff` CLI: `diff` compares two Git revisions and reports only the compatibility regressions the candidate introduced, leaving pre-existing divergence alone.
+Semantic AI, CI/GitHub integration, and the web application are intentionally not implemented yet.
 
 ## CLI
 
@@ -19,7 +19,15 @@ pnpm --filter playbookdiff build
 pnpm playbookdiff check .
 ```
 
-See [the CLI reference](docs/cli.md) for `check`, `explain`, `--cwd` vs `--path`, `--json`, and exit codes.
+The most useful new workflow is checking whether a change introduced a new cross-agent regression, without failing on debt that was already there:
+
+```sh
+pnpm playbookdiff diff origin/main..HEAD --path apps/web/src/page.tsx
+```
+
+This fails only when the candidate introduces a new actionable Claude Code ↔ Codex compatibility regression; it never fails on pre-existing divergence, and it never touches your working tree, branch, or `HEAD`.
+
+See [the CLI reference](docs/cli.md) for `check`, `explain`, `diff`, `--cwd` vs `--path`, `--json`, and exit codes, and [the Git diff specification](docs/git-diff.md) for `diff`'s full regression semantics.
 
 ## Development
 
@@ -39,7 +47,7 @@ pnpm test
 pnpm build
 ```
 
-See [the architecture notes](docs/architecture.md), [the deterministic comparison specification](docs/comparison.md), [the CLI reference](docs/cli.md), [the Claude Code harness specification](docs/harnesses/claude.md), and [the Codex harness specification](docs/harnesses/codex.md).
+See [the architecture notes](docs/architecture.md), [the deterministic comparison specification](docs/comparison.md), [the CLI reference](docs/cli.md), [the Git diff specification](docs/git-diff.md), [the Claude Code harness specification](docs/harnesses/claude.md), and [the Codex harness specification](docs/harnesses/codex.md).
 
 ## License
 
