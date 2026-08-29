@@ -1,6 +1,7 @@
 import { defineCommand, runCommand, showUsage } from "citty";
 import type { CommandDef } from "citty";
 import { runCheck } from "./commands/check.js";
+import { runDiff } from "./commands/diff.js";
 import { runExplain } from "./commands/explain.js";
 import { EXIT_ANALYSIS_ERROR, EXIT_SUCCESS } from "./exit-codes.js";
 import { readCliVersion } from "./version.js";
@@ -96,13 +97,61 @@ const explainCommand = defineCommand({
   },
 });
 
+const diffCommand = defineCommand({
+  meta: {
+    name: "diff",
+    description:
+      "Compare Claude Code and Codex compatibility across two Git revisions and report only newly introduced regressions.",
+  },
+  args: {
+    range: {
+      type: "positional",
+      description:
+        'Exactly "BASELINE..CANDIDATE" (two revisions separated by ".."). Analyzes exactly those two commits; does not use merge-base semantics, and never fetches a remote.',
+      required: true,
+    },
+    repository: {
+      type: "positional",
+      description: "Repository to analyze.",
+      required: false,
+      default: ".",
+    },
+    cwd: {
+      type: "string",
+      description:
+        "Model the directory the coding agent was launched from, relative to the repository, at both revisions.",
+      default: ".",
+    },
+    path: {
+      type: "string",
+      description:
+        "Model the repository path the coding agent is working on, relative to the repository, at both revisions.",
+    },
+    json: {
+      type: "boolean",
+      description: "Print machine-readable JSON to stdout instead of human-readable text.",
+    },
+  },
+  async run({ args }) {
+    const outcome = await runDiff({
+      range: args.range,
+      repository: args.repository,
+      cwd: args.cwd,
+      ...(args.path !== undefined && args.path !== "" ? { targetPath: args.path } : {}),
+      json: args.json === true,
+    });
+    writeOutcome(outcome);
+    return outcome.exitCode;
+  },
+});
+
 const mainCommand = defineCommand({
   meta: {
     name: "playbookdiff",
     version: readCliVersion(),
     description: "Read-only Claude Code <-> Codex repository compatibility analyzer.",
   },
-  subCommands: { check: checkCommand, explain: explainCommand },
+  subCommands: { check: checkCommand, explain: explainCommand, diff: diffCommand },
 });
 
 /**
@@ -121,6 +170,8 @@ async function showHelpFor(rawArgs: readonly string[]): Promise<void> {
     await showUsageFor(checkCommand, mainCommand);
   } else if (rawArgs[0] === "explain") {
     await showUsageFor(explainCommand, mainCommand);
+  } else if (rawArgs[0] === "diff") {
+    await showUsageFor(diffCommand, mainCommand);
   } else {
     await showUsageFor(mainCommand);
   }
@@ -161,6 +212,10 @@ export async function runCli(rawArgs: readonly string[]): Promise<number> {
     }
     if (name === "explain") {
       const { result } = await runCommand(explainCommand, { rawArgs: [...rest] });
+      return result as number;
+    }
+    if (name === "diff") {
+      const { result } = await runCommand(diffCommand, { rawArgs: [...rest] });
       return result as number;
     }
   } catch (error) {

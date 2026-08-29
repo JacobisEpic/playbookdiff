@@ -25,3 +25,14 @@ export function actionableFindings(report: CompatibilityReport): readonly Compat
 export function determineCheckExitCode(report: CompatibilityReport): number {
   return actionableFindings(report).length > 0 ? EXIT_ACTIONABLE_FINDINGS : EXIT_SUCCESS;
 }
+
+/**
+ * `diff` fails only when the candidate introduced a new actionable finding.
+ * Pre-existing (unchanged) actionable findings, resolved findings, and newly
+ * introduced non-actionable (low/info) findings must never affect this -
+ * reusing `isActionableFinding` here is what guarantees `diff` and `check`
+ * never define "actionable" two different ways.
+ */
+export function determineDiffExitCode(introduced: readonly CompatibilityFinding[]): number {
+  return introduced.some(isActionableFinding) ? EXIT_ACTIONABLE_FINDINGS : EXIT_SUCCESS;
+}

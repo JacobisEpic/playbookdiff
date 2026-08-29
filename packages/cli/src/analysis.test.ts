@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { analyzeRepository, isAnalysisContextError } from "./analysis.js";
@@ -89,5 +90,34 @@ describe("analyzeRepository", () => {
     });
     const after = await snapshot(cwdTargetFixture);
     expect(after).toEqual(before);
+  });
+
+  it("produces identical stable finding IDs for the same content materialized at two different absolute roots", async () => {
+    // Phase 6's `diff` command re-analyzes the same repository-relative
+    // content from disposable Git worktrees at different temp roots each
+    // time. Stable finding IDs must not depend on that absolute root - this
+    // is a property of `createFindingId` (Phase 4), proven here directly
+    // rather than assumed by the Git-diffing feature built on top of it.
+    async function copyFixtureToTempRoot(): Promise<string> {
+      const root = await fs.mkdtemp(path.join(os.tmpdir(), "playbookdiff-id-stability-"));
+      await fs.cp(cwdTargetFixture, root, { recursive: true });
+      return root;
+    }
+
+    const rootA = await copyFixtureToTempRoot();
+    const rootB = await copyFixtureToTempRoot();
+    try {
+      const [resultA, resultB] = await Promise.all([
+        analyzeRepository({ repository: rootA, cwd: ".", targetPath: "apps/api/file.ts" }),
+        analyzeRepository({ repository: rootB, cwd: ".", targetPath: "apps/api/file.ts" }),
+      ]);
+      expect(resultA.report.findings.length).toBeGreaterThan(0);
+      expect(resultA.report.findings.map((f) => f.id)).toEqual(
+        resultB.report.findings.map((f) => f.id),
+      );
+    } finally {
+      await fs.rm(rootA, { recursive: true, force: true });
+      await fs.rm(rootB, { recursive: true, force: true });
+    }
   });
 });

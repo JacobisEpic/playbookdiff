@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 import { EXIT_ANALYSIS_ERROR, EXIT_SUCCESS } from "./exit-codes.js";
+import { createTestGitRepo } from "./git/test-repo.js";
 import { parityFixture } from "./test-fixtures.js";
 
 let stdout: string[];
@@ -33,6 +34,7 @@ describe("runCli", () => {
     expect(stdout.join("")).toContain("USAGE");
     expect(stdout.join("")).toContain("check");
     expect(stdout.join("")).toContain("explain");
+    expect(stdout.join("")).toContain("diff");
   });
 
   it("--help shows top-level usage and exits 0", async () => {
@@ -53,6 +55,14 @@ describe("runCli", () => {
     const code = await runCli(["explain", "--help"]);
     expect(code).toBe(EXIT_SUCCESS);
     expect(stdout.join("")).toContain("FINDING-ID");
+  });
+
+  it("diff --help shows diff-specific usage and exits 0", async () => {
+    const code = await runCli(["diff", "--help"]);
+    expect(code).toBe(EXIT_SUCCESS);
+    expect(stdout.join("")).toContain("RANGE");
+    expect(stdout.join("")).toContain("--cwd");
+    expect(stdout.join("")).toContain("--json");
   });
 
   it("--version prints the package version and exits 0", async () => {
@@ -85,5 +95,29 @@ describe("runCli", () => {
     expect(code).toBe(EXIT_SUCCESS);
     expect(() => JSON.parse(stdout.join(""))).not.toThrow();
     expect(stderr).toEqual([]);
+  });
+
+  it("dispatches `diff` end to end against a real Git repository", async () => {
+    const repo = await createTestGitRepo();
+    try {
+      await repo.writeFile("CLAUDE.md", "Run tests before pushing.\n");
+      const baseline = await repo.commitAll("baseline");
+      await repo.writeFile("AGENTS.md", "Run tests before pushing.\n");
+      const candidate = await repo.commitAll("candidate: resolve the gap");
+
+      const code = await runCli(["diff", `${baseline}..${candidate}`, repo.root, "--json"]);
+      expect(code).toBe(EXIT_SUCCESS);
+      const parsed = JSON.parse(stdout.join(""));
+      expect(parsed.diff.summary.resolved).toBe(1);
+      expect(stderr).toEqual([]);
+    } finally {
+      await repo.cleanup();
+    }
+  });
+
+  it("`diff` with a malformed range exits 2 with a clean error", async () => {
+    const code = await runCli(["diff", "not-a-range", parityFixture]);
+    expect(code).toBe(EXIT_ANALYSIS_ERROR);
+    expect(stderr.join("")).toMatch(/^Error: invalid revision range/);
   });
 });

@@ -50,7 +50,7 @@ function renderEvidenceLine(evidence: Evidence): string {
   return `          - ${reason}${location} (${evidence.source.scope})${excerpt}`;
 }
 
-function renderFinding(finding: CompatibilityFinding): string[] {
+export function renderFinding(finding: CompatibilityFinding): string[] {
   const lines: string[] = [];
   lines.push(`${finding.severity.toUpperCase().padEnd(7)} ${findingTitle(finding)}`);
   lines.push(`        ${finding.explanation}`);
@@ -62,7 +62,10 @@ function renderFinding(finding: CompatibilityFinding): string[] {
   return lines;
 }
 
-function renderDiagnostics(harness: HarnessId, diagnostics: readonly Diagnostic[]): string[] {
+export function renderDiagnostics(
+  harness: HarnessId,
+  diagnostics: readonly Diagnostic[],
+): string[] {
   const notable = diagnostics.filter((d) => d.level === "warning" || d.level === "error");
   if (notable.length === 0) return [];
   const lines = [`  ${harnessLabel(harness)}:`];
