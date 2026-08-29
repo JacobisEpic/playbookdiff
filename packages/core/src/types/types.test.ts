@@ -55,6 +55,18 @@ const mcpServer = {
   transport: "stdio",
   command: "example-server",
   args: ["--token", "${API_TOKEN}"],
+  environment: [
+    {
+      name: "API_TOKEN",
+      value: { kind: "host", variable: "API_TOKEN" },
+      source: repositorySource,
+    },
+    {
+      name: "INLINE_SECRET",
+      value: { kind: "configured", redacted: true },
+      source: repositorySource,
+    },
+  ],
   source: repositorySource,
   capabilities: { known: false },
 } satisfies EffectiveMcpServer;
@@ -104,6 +116,14 @@ describe("shared type contracts", () => {
 
   it("preserves symbolic MCP environment references", () => {
     expect(report.left.mcpServers[0]?.args).toContain("${API_TOKEN}");
+    expect(report.left.mcpServers[0]?.environment?.[0]?.value).toEqual({
+      kind: "host",
+      variable: "API_TOKEN",
+    });
+    expect(report.left.mcpServers[0]?.environment?.[1]?.value).toEqual({
+      kind: "configured",
+      redacted: true,
+    });
   });
 
   it("models skill discovery, invocation, and advertisement separately", () => {

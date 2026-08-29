@@ -2,6 +2,7 @@ import path from "node:path";
 import type {
   Diagnostic,
   EffectiveMcpServer,
+  McpEnvironmentVariable,
   McpTransport,
   ProvenanceRecord,
   SourceRef,
@@ -27,6 +28,19 @@ function readStringArray(value: unknown): string[] | undefined {
   }
   const strings = value.filter((entry): entry is string => typeof entry === "string");
   return strings.length > 0 ? strings : undefined;
+}
+
+function readEnvironment(value: unknown, source: SourceRef): McpEnvironmentVariable[] | undefined {
+  if (!isRecord(value)) return undefined;
+  const environment = Object.entries(value).map(([name, rawValue]) => ({
+    name,
+    value:
+      typeof rawValue === "string" && /^\$\{[A-Za-z_][A-Za-z0-9_]*\}$/.test(rawValue)
+        ? ({ kind: "symbolic", expression: rawValue } as const)
+        : ({ kind: "configured", redacted: true } as const),
+    source,
+  }));
+  return environment.length > 0 ? environment : undefined;
 }
 
 /**
@@ -91,6 +105,7 @@ export async function discoverMcpServers(
     const args = readStringArray(entry.args);
     const url = typeof entry.url === "string" ? entry.url : undefined;
     const explicitType = typeof entry.type === "string" ? entry.type.toLowerCase() : undefined;
+    const environment = readEnvironment(entry.env, source);
 
     let transport: McpTransport = "unknown";
     if (command !== undefined) {
@@ -126,18 +141,6 @@ export async function discoverMcpServers(
       );
     }
 
-    if (isRecord(entry.env)) {
-      diagnostics.push(
-        createDiagnostic(registry, {
-          level: "info",
-          code: "unsupported",
-          slug: `mcp-env:${name}`,
-          message: `MCP server "${name}" declares a dedicated env map, which the current shared EffectiveMcpServer contract has no field for. Environment placeholders embedded directly in args are still preserved symbolically; this server's env map is not represented.`,
-          source,
-        }),
-      );
-    }
-
     const server: EffectiveMcpServer = {
       id,
       name,
@@ -147,6 +150,7 @@ export async function discoverMcpServers(
       ...(command !== undefined ? { command } : {}),
       ...(args !== undefined ? { args } : {}),
       ...(url !== undefined ? { url } : {}),
+      ...(environment !== undefined ? { environment } : {}),
     };
     mcpServers.push(server);
     provenance.push({ effectiveId: id, sources: [source], resolution: { strategy: "matched" } });

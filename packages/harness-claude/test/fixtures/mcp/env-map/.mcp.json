@@ -3,7 +3,8 @@
     "example": {
       "command": "example-server",
       "env": {
-        "API_KEY": "${API_KEY}"
+        "API_KEY": "${API_KEY}",
+        "INLINE_SECRET": "must-not-appear"
       }
     }
   }

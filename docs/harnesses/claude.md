@@ -264,7 +264,9 @@ A `.mcp.json` entry proves repository configuration only.
 It does not prove approval, authentication, connection success, runtime server instructions, or exposed tools, resources, and prompts.
 Capabilities must use `known: false` in repo mode.
 
-A dedicated per-server `env` map (as opposed to a `${VAR}` placeholder embedded directly in `args`, which the shared type test already establishes as representable) has no field in the current `EffectiveMcpServer` contract. Discovered during Phase 2 implementation, not anticipated in the Phase 1 contract. The adapter emits an `unsupported` diagnostic naming the server rather than silently dropping the `env` map or widening the shared type without broader evidence that this is the right representation (e.g. whether it should be a flat map, whether values need the same symbolic-placeholder treatment, how it should interact with future local-mode env resolution).
+A dedicated per-server `env` map is represented by the shared `McpEnvironmentVariable` contract introduced in Phase 3 after both adapters demonstrated the same need.
+Variable names and exact `${VAR}` references remain symbolic with provenance.
+Configured literal values are represented only as `{ kind: "configured", redacted: true }`, so secret values are never copied into normalized output.
 
 ## Provenance and diagnostics
 

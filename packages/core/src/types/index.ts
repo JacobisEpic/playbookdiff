@@ -11,7 +11,12 @@ export type {
 } from "./finding.js";
 export type { EffectiveAgentConfig, HarnessId } from "./config.js";
 export type { EffectiveInstruction, InstructionLoadPhase } from "./instruction.js";
-export type { EffectiveMcpServer, McpTransport } from "./mcp.js";
+export type {
+  EffectiveMcpServer,
+  McpEnvironmentValue,
+  McpEnvironmentVariable,
+  McpTransport,
+} from "./mcp.js";
 export type { ProvenanceRecord, ResolutionStrategy } from "./provenance.js";
 export type { CategorySummary, CompatibilityReport, CompatibilitySummary } from "./report.js";
 export type {

@@ -51,13 +51,22 @@ describe("symbolic environment references", () => {
     expect(server.args).toContain("${API_ENDPOINT:-https://default.test}");
   });
 
-  it("flags a dedicated env map as an unsupported schema gap rather than dropping it silently", async () => {
+  it("normalizes a dedicated env map without serializing configured literal values", async () => {
     const result = await discover(path.join(fixturesRoot, "env-map"));
     expect(result.mcpServers).toHaveLength(1);
-    const diagnostic = result.diagnostics.find(
-      (d) => d.code === "unsupported" && d.message.includes("env map"),
+    expect(result.mcpServers[0]?.environment).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "API_KEY",
+          value: { kind: "symbolic", expression: "${API_KEY}" },
+        }),
+        expect.objectContaining({
+          name: "INLINE_SECRET",
+          value: { kind: "configured", redacted: true },
+        }),
+      ]),
     );
-    expect(diagnostic).toBeDefined();
+    expect(JSON.stringify(result)).not.toContain("must-not-appear");
   });
 });
 
