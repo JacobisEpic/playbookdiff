@@ -115,6 +115,6 @@ In particular:
 
 - Different instruction prose at the same effective scope is reported as an informational `unknown`, never as a claimed conflict or claimed equivalence.
 - A capability appearing in repository configuration is reported as configured, not as verified at runtime.
-- PlaybookDiff detects structured differences; it does not infer that two harnesses will *behave* identically or differently.
+- PlaybookDiff detects structured differences; it does not infer that two harnesses will _behave_ identically or differently.
 
 See [`docs/comparison.md`](comparison.md) for the full deterministic comparison specification.
