@@ -14,11 +14,15 @@ const SEVERITY_RANK: Record<FindingSeverity, number> = {
   info: 3,
 };
 
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 export function sortFindings(findings: readonly CompatibilityFinding[]): CompatibilityFinding[] {
   return [...findings].sort(
     (left, right) =>
       CATEGORY_RANK[left.category] - CATEGORY_RANK[right.category] ||
       SEVERITY_RANK[left.severity] - SEVERITY_RANK[right.severity] ||
-      left.id.localeCompare(right.id),
+      compareText(left.id, right.id),
   );
 }
