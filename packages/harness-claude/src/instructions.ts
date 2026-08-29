@@ -150,7 +150,7 @@ export async function discoverInstructions(
         scope,
         format: "markdown",
       };
-      const id = `claude:instruction:${file}#seg${segmentIndex}`;
+      const id = registry.unique(`claude:instruction:${file}#seg${segmentIndex}`);
       segmentIndex += 1;
       const order = nextOrder();
       instructions.push({

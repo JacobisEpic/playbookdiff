@@ -22,7 +22,7 @@ export async function compileClaudeConfig(context: AnalysisContext): Promise<Eff
   const [instructionsResult, rulesResult, skillsResult, mcpResult] = await Promise.all([
     discoverInstructions(ctx, excludes, registry),
     discoverRules(ctx, excludes, registry),
-    discoverSkills(ctx, excludes, registry),
+    discoverSkills(ctx, registry),
     discoverMcpServers(ctx, registry),
   ]);
 

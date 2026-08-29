@@ -141,6 +141,19 @@ describe("imports", () => {
     expect(orders).toEqual([...orders].sort((a, b) => a - b));
   });
 
+  it("assigns unique effective ids when the same file is imported more than once", async () => {
+    const root = path.join(fixturesRoot, "imports", "repeated");
+    const result = await discover({ repositoryRoot: root });
+    const imported = result.instructions.filter(
+      (instruction) => instruction.source.path === "shared.md",
+    );
+    expect(imported).toHaveLength(2);
+    expect(new Set(imported.map((instruction) => instruction.id))).toHaveLength(2);
+    expect(new Set(result.provenance.map((record) => record.effectiveId)).size).toBe(
+      result.provenance.length,
+    );
+  });
+
   it("follows a recursive import chain within the documented depth", async () => {
     const root = path.join(fixturesRoot, "imports", "recursive");
     const result = await discover({ repositoryRoot: root });

@@ -2,7 +2,6 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { IdRegistry } from "./diagnostics.js";
 import { validateAnalysisContext } from "./paths.js";
-import { loadClaudeMdExcludes } from "./settings.js";
 import { discoverSkills } from "./skills.js";
 
 const fixturesRoot = path.join(import.meta.dirname, "..", "test", "fixtures", "skills");
@@ -15,8 +14,7 @@ async function discover(params: { repositoryRoot: string; targetPath?: string })
     ...(params.targetPath !== undefined ? { targetPath: params.targetPath } : {}),
   });
   const registry = new IdRegistry();
-  const excludes = await loadClaudeMdExcludes(ctx.cwd, registry);
-  return discoverSkills(ctx, excludes, registry);
+  return discoverSkills(ctx, registry);
 }
 
 describe("root skills", () => {
@@ -29,6 +27,13 @@ describe("root skills", () => {
     expect(skill.discovery.state).toBe("available");
     expect(skill.invocation).toEqual({ explicit: "allowed", implicit: "allowed" });
     expect(skill.advertisement.state).toBe("advertised");
+  });
+
+  it("does not apply instruction-only claudeMdExcludes patterns to skills", async () => {
+    const root = path.join(fixturesRoot, "exclude-setting-does-not-apply");
+    const result = await discover({ repositoryRoot: root });
+    expect(result.skills).toHaveLength(1);
+    expect(result.skills[0]?.name).toBe("review");
   });
 });
 
@@ -111,7 +116,7 @@ describe("skill paths frontmatter", () => {
     const root = path.join(fixturesRoot, "paths-scoped");
     const result = await discover({ repositoryRoot: root });
     const skill = result.skills[0]!;
-    expect(skill.invocation.implicit).toBe("allowed");
+    expect(skill.invocation.implicit).toBe("unknown");
     const diagnostic = result.diagnostics.find((d) => d.code === "assumption");
     expect(diagnostic).toBeDefined();
   });

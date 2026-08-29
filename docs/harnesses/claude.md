@@ -208,7 +208,9 @@ By default, a project skill permits both explicit user invocation and implicit m
 - implicit invocation `allowed`
 - model description advertised
 
-Skill frontmatter also supports `paths` globs that condition automatic activation; the official docs state this field "Uses the same format as path-specific rules" (`docs/en/skills`), confirming it shares anchoring and matcher behavior with rule `paths` frontmatter - Phase 2 reuses `matchesClaudeRulePath` for both. For a concrete matching target, the adapter resolves implicit invocation to `allowed` or `blocked` with provenance. Without a target, implicit invocation falls back to the frontmatter default (`allowed` unless `disable-model-invocation` blocks it) plus an `assumption` diagnostic noting applicability is unknown, rather than claiming unconditional invocation.
+Skill frontmatter also supports `paths` globs that condition automatic activation; the official docs state this field "Uses the same format as path-specific rules" (`docs/en/skills`), confirming it shares anchoring and matcher behavior with rule `paths` frontmatter - Phase 2 reuses `matchesClaudeRulePath` for both.
+For a concrete matching target, the adapter resolves implicit invocation to `allowed` or `blocked` with provenance.
+Without a target, implicit invocation is `unknown` unless another setting deterministically blocks it, and an `assumption` diagnostic records the unresolved path applicability.
 
 ### Advertisement
 
@@ -347,7 +349,6 @@ Implemented and covered by a real filesystem fixture under `packages/harness-cla
 - [x] environment placeholders in MCP (args-embedded)
 - [x] excluded CLAUDE.md
 - [x] excluded rule
-- [x] excluded skill
 - [x] unresolved import (missing file)
 - [x] outside-repository import
 - [x] import cycle defensive behavior

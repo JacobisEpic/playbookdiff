@@ -17,7 +17,6 @@ import {
   type ValidatedContext,
 } from "./paths.js";
 import { matchesClaudeRulePath, readPathsField } from "./rules.js";
-import type { ExcludeMatcher } from "./settings.js";
 
 export type SkillDiscoveryResult = {
   skills: EffectiveSkill[];
@@ -73,7 +72,6 @@ async function listSkillDirectories(skillsRoot: string): Promise<string[]> {
 
 export async function discoverSkills(
   ctx: ValidatedContext,
-  excludes: ExcludeMatcher,
   registry: IdRegistry,
 ): Promise<SkillDiscoveryResult> {
   const skills: EffectiveSkill[] = [];
@@ -100,19 +98,6 @@ export async function discoverSkills(
       if (content === undefined) {
         continue;
       }
-      if (excludes.matches(skillMdPath)) {
-        diagnostics.push(
-          createDiagnostic(registry, {
-            level: "info",
-            code: "other",
-            slug: `excluded:${relPath(skillMdPath)}`,
-            message: `Excluded by claudeMdExcludes: ${relPath(skillMdPath)}`,
-            source: { path: relPath(skillMdPath), scope: "repository", format: "markdown" },
-          }),
-        );
-        continue;
-      }
-
       const frontmatter = extractFrontmatter(content);
       if (frontmatter.parseError) {
         diagnostics.push(
@@ -175,9 +160,10 @@ export async function discoverSkills(
       // discovery - the SKILL.md was still found, so discovery.state stays
       // as-is regardless of whether a target matches its paths.
       const paths = readPathsField(data);
-      let conditionedImplicit: "allowed" | "blocked" | undefined;
+      let conditionedImplicit: "allowed" | "blocked" | "unknown" | undefined;
       if (paths && paths.length > 0) {
         if (!targetRelPath) {
+          conditionedImplicit = implicit === "blocked" ? "blocked" : "unknown";
           diagnostics.push(
             createDiagnostic(registry, {
               level: "info",
