@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "Read-only cross-agent configuration compatibility checker for Claude Code and Codex.",
   "license": "MIT",
+  "bin": {
+    "playbookdiff": "./dist/bin.js"
+  },
   "files": [
     "dist"
   ],
@@ -17,7 +20,14 @@
   "scripts": {
     "build": "tsdown",
     "clean": "node -e \"import('node:fs').then(({ rmSync }) => rmSync('dist', { recursive: true, force: true }))\"",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@playbookdiff/core": "workspace:*",
+    "@playbookdiff/harness-claude": "workspace:*",
+    "@playbookdiff/harness-codex": "workspace:*",
+    "citty": "^0.2.2"
   },
   "engines": {
     "node": ">=24.11.0 <25"
