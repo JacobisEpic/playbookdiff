@@ -145,3 +145,7 @@ It also never contains an absolute path to the temporary directory a revision wa
 - Submodules are analyzed at whatever the Gitlink resolves to in each worktree snapshot; submodule contents are not recursively checked out.
 - Git LFS objects are not fetched; LFS-tracked files are analyzed as their pointer content, not their real contents, if the objects are not already present locally.
 - There is no `playbookdiff diff explain`. Investigate an introduced or resolved finding's stable ID with `playbookdiff explain <finding-id>` against the specific revision it belongs to.
+
+## Running this in CI
+
+See [`docs/github-action.md`](github-action.md) for a reusable GitHub Action that wraps this exact command for pull-request CI, including automatic baseline/candidate detection from PR events.

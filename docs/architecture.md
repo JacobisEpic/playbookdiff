@@ -15,6 +15,7 @@ Agent execution, configuration synchronization, behavioral benchmarking, hooks, 
 - `packages/harness-claude` will own Claude Code discovery and resolution semantics.
 - `packages/harness-codex` will own Codex discovery and resolution semantics.
 - `packages/cli` will eventually expose the `playbookdiff` command.
+- `packages/action` (Phase 7) wraps the CLI's `runDiff` orchestration as a GitHub Action. It owns GitHub-specific presentation only (input/event-context resolution, Step Summary Markdown, Action outputs) and contains no comparator, actionability, or regression logic of its own; `packages/core` remains entirely GitHub-agnostic.
 
 Adapters will compile harness-specific repository configuration into the shared `EffectiveAgentConfig` representation.
 Comparators must consume normalized configurations and must not perform filesystem discovery.

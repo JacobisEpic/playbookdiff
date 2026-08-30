@@ -150,4 +150,4 @@ In particular:
 - A capability appearing in repository configuration is reported as configured, not as verified at runtime.
 - PlaybookDiff detects structured differences; it does not infer that two harnesses will _behave_ identically or differently.
 
-See [`docs/comparison.md`](comparison.md) for the full deterministic comparison specification.
+See [`docs/comparison.md`](comparison.md) for the full deterministic comparison specification, and [`docs/github-action.md`](github-action.md) for running `diff` as a reusable GitHub Action.

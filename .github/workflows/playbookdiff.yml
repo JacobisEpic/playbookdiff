@@ -1,0 +1,21 @@
+name: PlaybookDiff
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  playbookdiff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Uses the Action directly from this checkout (`./`, where action.yml
+      # lives) rather than `JacobisEpic/playbookdiff@v1`: no release tag
+      # exists yet, and this dogfoods exactly the version of the Action
+      # this PR itself is changing.
+      - uses: ./
