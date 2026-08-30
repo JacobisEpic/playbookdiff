@@ -82,6 +82,56 @@ describe("nested on-demand discovery", () => {
 });
 
 describe("CLAUDE.local.md handling", () => {
+  it("reports applicability repository-relative, independent of the launch cwd", async () => {
+    // Applicability is a property of where the instruction file lives, not of
+    // where the agent happened to start. Reporting a nested CLAUDE.md as
+    // repository-wide previously made a mirrored nested Codex file look like a
+    // scope gap purely because the two adapters used different coordinates.
+    const root = path.join(fixturesRoot, "instructions", "nested");
+    const fromRoot = await discover({
+      repositoryRoot: root,
+      targetPath: path.join(root, "apps", "api", "file.ts"),
+    });
+    expect(
+      fromRoot.instructions.map((instruction) => [
+        instruction.source.path,
+        instruction.scope.appliesTo,
+        instruction.loadPhase,
+      ]),
+    ).toEqual([
+      ["CLAUDE.md", ["."], "startup"],
+      ["apps/api/CLAUDE.md", ["apps/api"], "on-demand"],
+    ]);
+
+    const fromNested = await discover({
+      repositoryRoot: root,
+      cwd: path.join(root, "apps", "api"),
+    });
+    expect(
+      fromNested.instructions.map((instruction) => [
+        instruction.source.path,
+        instruction.scope.appliesTo,
+        instruction.loadPhase,
+      ]),
+    ).toEqual([
+      ["CLAUDE.md", ["."], "startup"],
+      ["apps/api/CLAUDE.md", ["apps/api"], "startup"],
+    ]);
+  });
+
+  it("gives imported content the importing file's applicability, not the imported file's location", async () => {
+    const root = path.join(fixturesRoot, "instructions", "nested-import");
+    const result = await discover({
+      repositoryRoot: root,
+      cwd: path.join(root, "apps", "api"),
+    });
+    const imported = result.instructions.find(
+      (instruction) => instruction.source.path === "shared/rules.md",
+    );
+    expect(imported).toBeDefined();
+    expect(imported?.scope.appliesTo).toEqual(["apps/api"]);
+  });
+
   it("excludes CLAUDE.local.md from repo-mode output with a diagnostic", async () => {
     const root = path.join(fixturesRoot, "instructions", "claude-local");
     const result = await discover({ repositoryRoot: root, mode: "repo" });

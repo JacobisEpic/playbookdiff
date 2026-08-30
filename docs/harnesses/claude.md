@@ -128,7 +128,12 @@ With `targetPath = repo/apps/api/file.ts`, PlaybookDiff may mark the nested file
 Without `targetPath`, a discoverable descendant source remains conditional rather than effective startup context.
 
 This behavior intentionally differs from Codex, whose project `AGENTS.md` chain stops at `cwd`.
-The normalized representation must expose that scope difference.
+The normalized representation must expose that scope difference, and it does so through `loadPhase` and through which files are discovered at all.
+
+It must not express it by spelling applicability differently from Codex.
+An instruction's `appliesTo` is the repository-root-relative directory that contains its file, so a nested `apps/api/CLAUDE.md` reports `apps/api` whether it was reached at startup from `cwd = repo/apps/api/` or on demand from `cwd = repo/`.
+See [the canonical scope coordinate system](../comparison.md#canonical-scope-coordinate-system).
+Content pulled in by an `@path` import expands inline into the importing file, so it inherits that file's applicability rather than the imported file's own location.
 
 ### Imports
 

@@ -219,17 +219,19 @@ describe("runDiff", () => {
   });
 
   it("threads a non-default --cwd and --path identically into both revisions", async () => {
-    // Claude's and Codex's instruction-scoping rules genuinely differ for a
-    // nested (non-root) instruction even when its content matches on both
-    // sides (Claude scopes repository-wide; Codex scopes to the launch
-    // directory) - see docs/harnesses - so this is not "0 findings"; it
-    // proves --cwd/--path are threaded identically into both revisions by
-    // checking the exact same scope-gap finding is produced for both, with
-    // context reflecting the requested (non-default) values.
+    // A nested Claude-only instruction is a real, deterministic divergence at
+    // cwd=apps/web: Claude loads apps/web/CLAUDE.md from the launch chain and
+    // Codex finds no counterpart there. It is present in both revisions, so it
+    // proves --cwd/--path are threaded identically into both by checking the
+    // exact same finding is produced for each, with context reflecting the
+    // requested (non-default) values.
+    //
+    // Mirrored nested files would be the wrong probe here: they are
+    // equivalent, and only looked divergent while the two adapters expressed
+    // the same applicability in different coordinate systems.
     const repo = await createTestGitRepo();
     try {
       await repo.writeFile("apps/web/CLAUDE.md", CLAUDE_CONTENT);
-      await repo.writeFile("apps/web/AGENTS.md", AGENTS_CONTENT_MATCHING);
       const baseline = await repo.commitAll("baseline: nested instruction, launch-scoped");
       await repo.writeFile("README.md", "unrelated\n");
       const candidate = await repo.commitAll("candidate: unrelated change");
@@ -253,7 +255,7 @@ describe("runDiff", () => {
         resolved: 0,
         unchanged: 1,
       });
-      expect(parsed.diff.unchanged[0].type).toBe("scope-gap");
+      expect(parsed.diff.unchanged[0].type).toBe("missing");
     } finally {
       await repo.cleanup();
     }

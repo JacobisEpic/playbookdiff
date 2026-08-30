@@ -1,0 +1,1 @@
+Shared rule text.

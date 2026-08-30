@@ -17001,6 +17001,46 @@ function createFindingId(parts) {
 	const directionSegment = parts.direction ? `${parts.direction}:` : "";
 	return `${parts.category}:${parts.type}:${directionSegment}${readableSlug(parts.logicalKey)}:${digest}`;
 }
+/**
+* The canonical coordinate system for normalized instruction applicability.
+*
+* Every `EffectiveInstruction.scope.appliesTo` / `scope.excludedFrom` entry is
+* a **repository-root-relative POSIX path or glob**, never a cwd-relative one
+* and never an absolute one. The repository root itself is `"."`.
+*
+* Adapters discover configuration through harness-specific mechanics (Claude
+* Code walks the cwd ancestor chain and lazily descends toward a target path;
+* Codex walks the cwd ancestor chain only), but the applicability they *report*
+* must be expressed against the repository root so that two instructions
+* governing the same effective location compare equal regardless of which
+* adapter found them, and regardless of where the agent was launched from.
+*
+* The comparator normalizes defensively through {@link canonicalizeScopePath}
+* before building a scope signature, so an adapter that reports
+* `"./server/"`, `"server"`, or `"server/."` cannot manufacture a false
+* `scope-gap` out of pure representation.
+*/
+/**
+* Normalizes one applicability entry to its canonical repository-relative
+* POSIX form.
+*
+* This is deliberately a *representational* normalization only: it rewrites
+* separators and removes redundant `.` and empty segments. It never resolves
+* `..`, never expands globs, and never reinterprets one location as another,
+* so `**` and other glob syntax used by Claude Code path-scoped rules survives
+* untouched.
+*/
+function canonicalizeScopePath(value) {
+	const segments = value.replace(/\\/g, "/").split("/").filter((segment) => {
+		return segment.length > 0 && segment !== ".";
+	});
+	if (segments.length === 0) return ".";
+	return segments.join("/");
+}
+/** Canonicalizes, de-duplicates, and sorts a set of applicability entries. */
+function canonicalizeScopePaths(values) {
+	return [...new Set((values ?? []).map(canonicalizeScopePath))].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+}
 const CATEGORY_RANK = {
 	instruction: 0,
 	skill: 1,
@@ -17019,6 +17059,80 @@ function compareText$3(left, right) {
 function sortFindings(findings) {
 	return [...findings].sort((left, right) => CATEGORY_RANK[left.category] - CATEGORY_RANK[right.category] || SEVERITY_RANK[left.severity] - SEVERITY_RANK[right.severity] || compareText$3(left.id, right.id));
 }
+/**
+* Deterministic block-level decomposition of instruction text.
+*
+* The comparator needs to answer one narrow, mechanical question about two
+* instructions that are not byte-identical: *how much of one side's content
+* has no counterpart at all on the other side?* Answering it at whole-file
+* granularity is too coarse - a single unmatched sentence on one side would
+* otherwise stand in for an arbitrarily large body of unmatched instructions
+* on the other.
+*
+* A "content unit" is a Markdown block: a fenced code block (kept atomic,
+* including its blank lines), or a run of non-blank lines delimited by blank
+* lines. Units are compared by exact normalized text. Nothing here interprets
+* meaning, weighs importance, or measures length - two units correspond only
+* when their text is identical.
+*/
+const FENCE_PATTERN = /^ {0,3}(`{3,}|~{3,})/;
+/**
+* Splits instruction content into normalized block-level content units,
+* preserving fenced code blocks whole and dropping blank-only blocks.
+*/
+function instructionContentUnits(content) {
+	const lines = content.replace(/\r\n?/g, "\n").split("\n");
+	const units = [];
+	let current = [];
+	let fenceMarker;
+	const flush = () => {
+		const text = current.join("\n").trim();
+		if (text.length > 0) units.push(text);
+		current = [];
+	};
+	for (const line of lines) {
+		if (fenceMarker === void 0) {
+			const opening = FENCE_PATTERN.exec(line);
+			if (opening?.[1]) {
+				flush();
+				fenceMarker = opening[1];
+				current.push(line);
+				continue;
+			}
+			if (line.trim().length === 0) {
+				flush();
+				continue;
+			}
+			current.push(line);
+			continue;
+		}
+		current.push(line);
+		const marker = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line)?.[1];
+		if (marker && marker[0] === fenceMarker[0] && marker.length >= fenceMarker.length) {
+			fenceMarker = void 0;
+			flush();
+		}
+	}
+	flush();
+	return units;
+}
+/**
+* Counts the content units of `content` that do not appear anywhere in
+* `available`.
+*
+* Membership is set-based rather than multiset-based: a unit repeated on one
+* side is considered covered by a single occurrence on the other. That keeps
+* the count a conservative lower bound on genuinely one-sided content.
+*/
+function uncoveredUnitCount(content, available) {
+	return instructionContentUnits(content).filter((unit) => !available.has(unit)).length;
+}
+/** The set of every content unit appearing in any of `contents`. */
+function contentUnitSet(contents) {
+	const units = /* @__PURE__ */ new Set();
+	for (const content of contents) for (const unit of instructionContentUnits(content)) units.add(unit);
+	return units;
+}
 function compareText$2(left, right) {
 	return left < right ? -1 : left > right ? 1 : 0;
 }
@@ -17030,7 +17144,7 @@ function canonicalizeInstructionContent(content) {
 	return lineNormalized.endsWith("\n") ? lineNormalized.slice(0, -1) : lineNormalized;
 }
 function sorted(values) {
-	return [...values ?? []].sort(compareText$2);
+	return canonicalizeScopePaths(values);
 }
 function instructionScopeSignature(instruction) {
 	return JSON.stringify({
@@ -17126,6 +17240,62 @@ function unmatchedBucketFinding(scopeKey, left, right, leftHarness, rightHarness
 		evidence: [...left.slice(0, 3).map((item) => instructionEvidence(item.instruction, `${harnessLabel$2(leftHarness)} unmatched instruction`)), ...right.slice(0, 3).map((item) => instructionEvidence(item.instruction, `${harnessLabel$2(rightHarness)} unmatched instruction`))]
 	};
 }
+function bucketCoverage(left, right) {
+	const leftUnits = contentUnitSet(left.map((item) => item.canonicalContent));
+	const rightUnits = contentUnitSet(right.map((item) => item.canonicalContent));
+	const countUncovered = (items, available) => {
+		let total = 0;
+		const carrying = [];
+		for (const item of items) {
+			const uncovered = uncoveredUnitCount(item.canonicalContent, available);
+			if (uncovered > 0) carrying.push(item);
+			total += uncovered;
+		}
+		return {
+			total,
+			items: carrying
+		};
+	};
+	const leftUncovered = countUncovered(left, rightUnits);
+	const rightUncovered = countUncovered(right, leftUnits);
+	const pairable = Math.min(leftUncovered.total, rightUncovered.total);
+	return {
+		pairable,
+		leftSurplus: leftUncovered.total - pairable,
+		rightSurplus: rightUncovered.total - pairable,
+		leftUncoveredItems: leftUncovered.items,
+		rightUncoveredItems: rightUncovered.items
+	};
+}
+function coverageFinding(scopeKey, surplus, carrying, existingSide, leftHarness, rightHarness) {
+	const missingSide = existingSide === "left" ? "right" : "left";
+	const existingHarness = existingSide === "left" ? leftHarness : rightHarness;
+	const missingHarness = existingSide === "left" ? rightHarness : leftHarness;
+	const units = `${surplus} instruction content unit${surplus === 1 ? "" : "s"}`;
+	return {
+		id: createFindingId({
+			category: "instruction",
+			type: "missing",
+			logicalKey: `coverage:${scopeKey}`,
+			aspect: "coverage",
+			direction: missingSide
+		}),
+		category: "instruction",
+		type: "missing",
+		severity: "medium",
+		confidence: "deterministic",
+		left: {
+			present: true,
+			detail: existingSide === "left" ? `${units} without a deterministic counterpart` : `no deterministic counterpart for ${units}`
+		},
+		right: {
+			present: true,
+			detail: existingSide === "right" ? `${units} without a deterministic counterpart` : `no deterministic counterpart for ${units}`
+		},
+		explanation: `${harnessLabel$2(existingHarness)} has ${units} for this effective scope that ${harnessLabel$2(missingHarness)} does not receive. Both sides also have differing prose here, but that difference can only account for part of the gap, so this coverage is deterministically one-sided. Semantic equivalence of the remaining text has not been evaluated.`,
+		evidence: carrying.slice(0, 3).map((item) => instructionEvidence(item.instruction, `${harnessLabel$2(existingHarness)} instruction with unmatched content`))
+	};
+}
 function missingFinding(item, occurrence, existingSide, leftHarness, rightHarness) {
 	const missingSide = existingSide === "left" ? "right" : "left";
 	const existingHarness = existingSide === "left" ? leftHarness : rightHarness;
@@ -17187,13 +17357,26 @@ function compareInstructions(leftConfig, rightConfig) {
 		const left = leftBuckets.get(scopeKey) ?? [];
 		const right = rightBuckets.get(scopeKey) ?? [];
 		if (left.length > 0 && right.length > 0) {
-			const entityKey = `bucket:${scopeKey}`;
-			findings.push(unmatchedBucketFinding(scopeKey, left, right, leftConfig.harness, rightConfig.harness));
-			entities.push({
-				category: "instruction",
-				key: entityKey,
-				status: "unknown"
-			});
+			const coverage = bucketCoverage(left, right);
+			if (coverage.pairable > 0 || coverage.leftSurplus === 0 && coverage.rightSurplus === 0) {
+				findings.push(unmatchedBucketFinding(scopeKey, left, right, leftConfig.harness, rightConfig.harness));
+				entities.push({
+					category: "instruction",
+					key: `bucket:${scopeKey}`,
+					status: "unknown"
+				});
+			}
+			for (const side of ["left", "right"]) {
+				const surplus = side === "left" ? coverage.leftSurplus : coverage.rightSurplus;
+				if (surplus === 0) continue;
+				const carrying = side === "left" ? coverage.leftUncoveredItems : coverage.rightUncoveredItems;
+				findings.push(coverageFinding(scopeKey, surplus, carrying, side, leftConfig.harness, rightConfig.harness));
+				entities.push({
+					category: "instruction",
+					key: `coverage:${scopeKey}:${side}`,
+					status: "divergent"
+				});
+			}
 			continue;
 		}
 		const existingSide = left.length > 0 ? "left" : "right";
@@ -38871,6 +39054,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 		};
 	}
 	async function processDirectory(dir, loadPhase) {
+		const appliesTo = relPath(dir);
 		const candidates = [{
 			absolutePath: path.join(dir, "CLAUDE.md"),
 			scope: "repository"
@@ -38880,7 +39064,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 		}];
 		for (const candidate of candidates) {
 			const content = await readFileIfExists$1(candidate.absolutePath);
-			if (content !== void 0) await handleFile(candidate.absolutePath, content, candidate.scope, loadPhase);
+			if (content !== void 0) await handleFile(candidate.absolutePath, content, candidate.scope, loadPhase, appliesTo);
 		}
 		const localPath = path.join(dir, "CLAUDE.local.md");
 		const localContent = await readFileIfExists$1(localPath);
@@ -38892,10 +39076,10 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: "A CLAUDE.local.md local-instruction source exists at this path. It is excluded from repo-mode output because it is a personal, conventionally git-ignored override, not reproducible repository-defined configuration.",
 				source: wholeFileSource(localPath, "local")
 			}));
-			else await handleFile(localPath, localContent, "local", loadPhase);
+			else await handleFile(localPath, localContent, "local", loadPhase, appliesTo);
 		}
 	}
-	async function handleFile(absolutePath, content, scope, loadPhase) {
+	async function handleFile(absolutePath, content, scope, loadPhase, appliesTo) {
 		if (excludes.matches(absolutePath)) {
 			diagnostics.push(createDiagnostic$1(registry, {
 				level: "info",
@@ -38911,6 +39095,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 			content,
 			scope,
 			loadPhase,
+			appliesTo,
 			chain: {
 				visited: /* @__PURE__ */ new Set([absolutePath]),
 				depth: 0
@@ -38919,7 +39104,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 		});
 	}
 	async function expandFile(params) {
-		const { absolutePath, content, scope, loadPhase, chain, importReference } = params;
+		const { absolutePath, content, scope, loadPhase, appliesTo, chain, importReference } = params;
 		const file = relPath(absolutePath);
 		const lineIndex = buildLineIndex(content);
 		const imports = extractImports(content);
@@ -38944,7 +39129,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				id,
 				content: text,
 				source,
-				scope: { appliesTo: ["."] },
+				scope: { appliesTo: [appliesTo] },
 				loadPhase,
 				order
 			});
@@ -38966,12 +39151,12 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				scope,
 				format: "markdown"
 			};
-			await resolveImport(match.target, absolutePath, chain, loadPhase, refSource);
+			await resolveImport(match.target, absolutePath, chain, loadPhase, appliesTo, refSource);
 			cursor = match.offsetEnd;
 		}
 		emitSegment(content.slice(cursor), content.length);
 	}
-	async function resolveImport(target, fromAbsolutePath, chain, loadPhase, refSource) {
+	async function resolveImport(target, fromAbsolutePath, chain, loadPhase, appliesTo, refSource) {
 		const from = relPath(fromAbsolutePath);
 		if (chain.depth + 1 > MAX_IMPORT_DEPTH) {
 			diagnostics.push(createDiagnostic$1(registry, {
@@ -39042,6 +39227,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 			content: importedContent,
 			scope: "repository",
 			loadPhase,
+			appliesTo,
 			chain: {
 				visited: new Set(chain.visited).add(importedAbsolutePath),
 				depth: chain.depth + 1

@@ -7,7 +7,9 @@ import type {
 import { instructionEvidence } from "./evidence.js";
 import { createFindingId, stableDigest } from "./ids.js";
 import type { CategoryComparisonResult, ComparedEntity } from "./model.js";
+import { canonicalizeScopePaths } from "./scope.js";
 import { sortFindings } from "./sort.js";
+import { contentUnitSet, uncoveredUnitCount } from "./units.js";
 
 type IndexedInstruction = {
   instruction: EffectiveInstruction;
@@ -30,7 +32,7 @@ export function canonicalizeInstructionContent(content: string): string {
 }
 
 function sorted(values: readonly string[] | undefined): string[] {
-  return [...(values ?? [])].sort(compareText);
+  return canonicalizeScopePaths(values);
 }
 
 export function instructionScopeSignature(instruction: EffectiveInstruction): string {
@@ -183,6 +185,112 @@ function unmatchedBucketFinding(
   };
 }
 
+/**
+ * The deterministic one-sided coverage a bucket's unmatched instructions
+ * contain.
+ *
+ * Within one scope bucket, unmatched text on both sides may simply be two
+ * wordings of the same guidance, which is why the bucket produces an
+ * informational `unknown`. But that reformulation hypothesis can only ever
+ * account for as many content units as *both* sides actually have. Whatever
+ * remains beyond `min(leftUncovered, rightUncovered)` is content that one
+ * harness receives and the other deterministically does not, no matter how
+ * the overlapping prose is interpreted.
+ *
+ * Counting this way keeps the claim mechanical: no length threshold, no
+ * judgment about which text matters, and no semantic comparison. A one-line
+ * pointer file can absorb exactly one content unit of ambiguity, not an
+ * entire instruction set.
+ */
+type BucketCoverage = {
+  pairable: number;
+  leftSurplus: number;
+  rightSurplus: number;
+  leftUncoveredItems: IndexedInstruction[];
+  rightUncoveredItems: IndexedInstruction[];
+};
+
+function bucketCoverage(
+  left: readonly IndexedInstruction[],
+  right: readonly IndexedInstruction[],
+): BucketCoverage {
+  const leftUnits = contentUnitSet(left.map((item) => item.canonicalContent));
+  const rightUnits = contentUnitSet(right.map((item) => item.canonicalContent));
+  const countUncovered = (
+    items: readonly IndexedInstruction[],
+    available: ReadonlySet<string>,
+  ): { total: number; items: IndexedInstruction[] } => {
+    let total = 0;
+    const carrying: IndexedInstruction[] = [];
+    for (const item of items) {
+      const uncovered = uncoveredUnitCount(item.canonicalContent, available);
+      if (uncovered > 0) carrying.push(item);
+      total += uncovered;
+    }
+    return { total, items: carrying };
+  };
+  const leftUncovered = countUncovered(left, rightUnits);
+  const rightUncovered = countUncovered(right, leftUnits);
+  const pairable = Math.min(leftUncovered.total, rightUncovered.total);
+  return {
+    pairable,
+    leftSurplus: leftUncovered.total - pairable,
+    rightSurplus: rightUncovered.total - pairable,
+    leftUncoveredItems: leftUncovered.items,
+    rightUncoveredItems: rightUncovered.items,
+  };
+}
+
+function coverageFinding(
+  scopeKey: string,
+  surplus: number,
+  carrying: readonly IndexedInstruction[],
+  existingSide: "left" | "right",
+  leftHarness: HarnessId,
+  rightHarness: HarnessId,
+): CompatibilityFinding {
+  const missingSide = existingSide === "left" ? "right" : "left";
+  const existingHarness = existingSide === "left" ? leftHarness : rightHarness;
+  const missingHarness = existingSide === "left" ? rightHarness : leftHarness;
+  const units = `${surplus} instruction content unit${surplus === 1 ? "" : "s"}`;
+  return {
+    id: createFindingId({
+      category: "instruction",
+      type: "missing",
+      logicalKey: `coverage:${scopeKey}`,
+      aspect: "coverage",
+      direction: missingSide,
+    }),
+    category: "instruction",
+    type: "missing",
+    severity: "medium",
+    confidence: "deterministic",
+    left: {
+      present: true,
+      detail:
+        existingSide === "left"
+          ? `${units} without a deterministic counterpart`
+          : `no deterministic counterpart for ${units}`,
+    },
+    right: {
+      present: true,
+      detail:
+        existingSide === "right"
+          ? `${units} without a deterministic counterpart`
+          : `no deterministic counterpart for ${units}`,
+    },
+    explanation: `${harnessLabel(existingHarness)} has ${units} for this effective scope that ${harnessLabel(missingHarness)} does not receive. Both sides also have differing prose here, but that difference can only account for part of the gap, so this coverage is deterministically one-sided. Semantic equivalence of the remaining text has not been evaluated.`,
+    evidence: carrying
+      .slice(0, 3)
+      .map((item) =>
+        instructionEvidence(
+          item.instruction,
+          `${harnessLabel(existingHarness)} instruction with unmatched content`,
+        ),
+      ),
+  };
+}
+
 function missingFinding(
   item: IndexedInstruction,
   occurrence: number,
@@ -254,11 +362,45 @@ export function compareInstructions(
     const left = leftBuckets.get(scopeKey) ?? [];
     const right = rightBuckets.get(scopeKey) ?? [];
     if (left.length > 0 && right.length > 0) {
-      const entityKey = `bucket:${scopeKey}`;
-      findings.push(
-        unmatchedBucketFinding(scopeKey, left, right, leftConfig.harness, rightConfig.harness),
-      );
-      entities.push({ category: "instruction", key: entityKey, status: "unknown" });
+      const coverage = bucketCoverage(left, right);
+      // The bucket stays semantically unknown whenever unmatched text remains
+      // that one-sided coverage does not already explain. That includes the
+      // case where every content unit is mutually present and only whitespace
+      // or ordering differs: the sides are still not byte-identical, so
+      // equivalence has not been proved.
+      const hasUnexplainedRemainder =
+        coverage.pairable > 0 || (coverage.leftSurplus === 0 && coverage.rightSurplus === 0);
+      if (hasUnexplainedRemainder) {
+        findings.push(
+          unmatchedBucketFinding(scopeKey, left, right, leftConfig.harness, rightConfig.harness),
+        );
+        entities.push({
+          category: "instruction",
+          key: `bucket:${scopeKey}`,
+          status: "unknown",
+        });
+      }
+      for (const side of ["left", "right"] as const) {
+        const surplus = side === "left" ? coverage.leftSurplus : coverage.rightSurplus;
+        if (surplus === 0) continue;
+        const carrying =
+          side === "left" ? coverage.leftUncoveredItems : coverage.rightUncoveredItems;
+        findings.push(
+          coverageFinding(
+            scopeKey,
+            surplus,
+            carrying,
+            side,
+            leftConfig.harness,
+            rightConfig.harness,
+          ),
+        );
+        entities.push({
+          category: "instruction",
+          key: `coverage:${scopeKey}:${side}`,
+          status: "divergent",
+        });
+      }
       continue;
     }
     const existingSide = left.length > 0 ? "left" : "right";

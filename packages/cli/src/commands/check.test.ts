@@ -17,16 +17,20 @@ describe("runCheck", () => {
     expect(outcome.stdout).toContain("Findings: 2 medium, 0 low, 0 info");
   });
 
-  it("Scenario B: modeling cwd=apps/api leaves only the instruction scope gap", async () => {
+  it("Scenario B: modeling cwd=apps/api resolves the Scenario A divergence", async () => {
+    // Launching from apps/api puts the nested Codex configuration in scope, so
+    // the mirrored, byte-identical nested files compare equivalent. The two
+    // adapters must express that shared applicability identically; when they
+    // did not, this scenario reported a false medium scope gap.
     const outcome = await runCheck({
       repository: cwdTargetFixture,
       cwd: "apps/api",
       targetPath: "apps/api/file.ts",
       json: false,
     });
-    expect(outcome.exitCode).toBe(EXIT_ACTIONABLE_FINDINGS);
-    expect(outcome.stdout).toContain("Findings: 1 medium, 0 low, 0 info");
-    expect(outcome.stdout).toContain("Instruction scope gap");
+    expect(outcome.exitCode).toBe(EXIT_SUCCESS);
+    expect(outcome.stdout).toContain("No compatibility findings.");
+    expect(outcome.stdout).not.toContain("scope gap");
     expect(outcome.stdout).not.toContain("missing");
     expect(outcome.stdout).not.toContain("capability gap");
   });

@@ -57,6 +57,11 @@ export async function discoverInstructions(
   }
 
   async function processDirectory(dir: string, loadPhase: LoadPhase): Promise<void> {
+    // Applicability is reported in PlaybookDiff's canonical coordinate system:
+    // repository-root-relative, never cwd-relative. A CLAUDE.md governs the
+    // directory that contains it, so launching from that directory must not
+    // change how its applicability is expressed.
+    const appliesTo = relPath(dir);
     const candidates: Array<{ absolutePath: string; scope: SourceScope }> = [
       { absolutePath: path.join(dir, "CLAUDE.md"), scope: "repository" },
       { absolutePath: path.join(dir, ".claude", "CLAUDE.md"), scope: "repository" },
@@ -64,7 +69,7 @@ export async function discoverInstructions(
     for (const candidate of candidates) {
       const content = await readFileIfExists(candidate.absolutePath);
       if (content !== undefined) {
-        await handleFile(candidate.absolutePath, content, candidate.scope, loadPhase);
+        await handleFile(candidate.absolutePath, content, candidate.scope, loadPhase, appliesTo);
       }
     }
 
@@ -83,7 +88,7 @@ export async function discoverInstructions(
           }),
         );
       } else {
-        await handleFile(localPath, localContent, "local", loadPhase);
+        await handleFile(localPath, localContent, "local", loadPhase, appliesTo);
       }
     }
   }
@@ -93,6 +98,7 @@ export async function discoverInstructions(
     content: string,
     scope: SourceScope,
     loadPhase: LoadPhase,
+    appliesTo: string,
   ): Promise<void> {
     if (excludes.matches(absolutePath)) {
       diagnostics.push(
@@ -111,6 +117,7 @@ export async function discoverInstructions(
       content,
       scope,
       loadPhase,
+      appliesTo,
       chain: { visited: new Set([absolutePath]), depth: 0 },
       importReference: undefined,
     });
@@ -121,10 +128,11 @@ export async function discoverInstructions(
     content: string;
     scope: SourceScope;
     loadPhase: LoadPhase;
+    appliesTo: string;
     chain: ImportChain;
     importReference: SourceRef | undefined;
   }): Promise<void> {
-    const { absolutePath, content, scope, loadPhase, chain, importReference } = params;
+    const { absolutePath, content, scope, loadPhase, appliesTo, chain, importReference } = params;
     const file = relPath(absolutePath);
     const lineIndex = buildLineIndex(content);
     const imports = extractImports(content);
@@ -157,7 +165,7 @@ export async function discoverInstructions(
         id,
         content: text,
         source,
-        scope: { appliesTo: ["."] },
+        scope: { appliesTo: [appliesTo] },
         loadPhase,
         order,
       });
@@ -181,7 +189,7 @@ export async function discoverInstructions(
         scope,
         format: "markdown",
       };
-      await resolveImport(match.target, absolutePath, chain, loadPhase, refSource);
+      await resolveImport(match.target, absolutePath, chain, loadPhase, appliesTo, refSource);
       cursor = match.offsetEnd;
     }
     emitSegment(content.slice(cursor), content.length);
@@ -192,6 +200,7 @@ export async function discoverInstructions(
     fromAbsolutePath: string,
     chain: ImportChain,
     loadPhase: LoadPhase,
+    appliesTo: string,
     refSource: SourceRef,
   ): Promise<void> {
     const from = relPath(fromAbsolutePath);
@@ -285,6 +294,9 @@ export async function discoverInstructions(
       content: importedContent,
       scope: "repository",
       loadPhase,
+      // An import expands inline into the importing file, so it inherits that
+      // file's applicability rather than the imported file's own location.
+      appliesTo,
       chain: nextChain,
       importReference: refSource,
     });

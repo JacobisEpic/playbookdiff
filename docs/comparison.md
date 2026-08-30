@@ -121,10 +121,42 @@ Numeric order alone does not produce a finding because free-form instruction pre
 Unmatched instructions are grouped by a canonical applicability signature containing sorted `appliesTo`, sorted `excludedFrom`, and load phase.
 Source filename is not part of this logical bucket.
 
-If both sides contain unmatched prose in the same bucket, the bucket produces an informational `unknown` finding.
-The comparator has proved that the text differs but has not evaluated semantic compatibility.
+`appliesTo` and `excludedFrom` are canonicalized before the signature is built, so representational differences alone cannot separate two instructions that govern the same location.
+See [the canonical scope coordinate system](#canonical-scope-coordinate-system).
+
 If only one side contains instructions in a bucket, each one-sided instruction produces a medium `missing` finding with direction in the finding ID.
 When duplicate candidates cannot be paired uniquely, the comparator preserves the ambiguity as `unknown` instead of choosing an arbitrary pairing.
+
+### Stage C: one-sided coverage within a bucket
+
+When both sides have unmatched instructions in the same bucket, the differing text may be two wordings of the same guidance, so the bucket produces an informational `unknown` finding.
+That reformulation hypothesis is bounded: it can only account for as much content as both sides actually have.
+
+Each side's unmatched instructions are decomposed into Markdown block-level content units - a fenced code block, or a run of non-blank lines between blank lines.
+A unit is covered when its exact normalized text also appears somewhere on the other side of the same bucket.
+With `L` and `R` uncovered units on the two sides, `min(L, R)` units are attributable to differing prose, and the remainder on the larger side is content one harness receives and the other deterministically does not.
+Any such surplus produces one medium `missing` finding for that bucket and direction.
+
+This is a mechanical bound, not a judgment about which text matters.
+There is no length threshold, no importance weighting, and no semantic comparison; units correspond only when their text is identical.
+A one-line pointer file can therefore absorb exactly one unit of ambiguity rather than an entire instruction set, which is why a `CLAUDE.md` whose whole body is prose such as ``See `AGENTS.md` ...`` does not downgrade the substantive coverage gap it leaves behind.
+Claude Code treats a path mention as an import only through documented `@path` syntax outside code spans, so such prose delivers no content and the gap is real.
+
+The informational `unknown` is emitted whenever unmatched text remains that one-sided coverage does not already explain, including when every content unit is mutually present and only whitespace or ordering differs.
+A bucket whose entire difference is one-sided surplus reports the coverage finding alone.
+
+## Canonical scope coordinate system
+
+Every `appliesTo` and `excludedFrom` entry in a normalized `EffectiveInstruction` is a repository-root-relative POSIX path or glob, with the repository root written as `"."`.
+
+Adapters discover configuration through harness-specific mechanics, but the applicability they report must be expressed against the repository root, never against the launch `cwd` and never as an absolute path.
+Two instructions governing the same effective location therefore compare equal regardless of which adapter discovered them or where the agent was modeled as launching from.
+
+Canonicalization is representational only: it rewrites separators and drops redundant `.` and empty segments.
+It never resolves `..`, never expands globs, and never reinterprets one location as another, so glob syntax used by Claude Code path-scoped rules survives untouched.
+
+Genuine harness differences remain visible in `loadPhase` and in which instructions are discovered at all.
+Claude Code's on-demand descent toward a target path and Codex's `cwd`-bounded ancestor walk still produce different compiled sets; only the spelling of a shared location is normalized.
 
 ## Skill comparison
 
@@ -198,7 +230,7 @@ Description differences remain independent because routing metadata can differ e
 
 Phase 4 emits no high-severity finding by default.
 
-Medium severity is used for one-sided instructions, missing skills or MCP servers, skill discovery and invocation gaps, MCP transport or endpoint configuration differences, environment differences, and known runtime capability gaps.
+Medium severity is used for one-sided instructions, deterministic one-sided instruction coverage inside a shared bucket, missing skills or MCP servers, skill discovery and invocation gaps, MCP transport or endpoint configuration differences, environment differences, and known runtime capability gaps.
 
 Low severity is used for skill description and independent advertisement differences.
 
