@@ -1,0 +1,46 @@
+{
+  "baseline": "1bb33848fcd0f64ce9e6cdc9dcd380b6aef0b06b",
+  "source": "packages/harness-codex/src/cross-harness.test.ts",
+  "fixture": "packages/harness-codex/test/fixtures/cross-harness/cwd-target",
+  "target": "apps/api/file.ts",
+  "root": {
+    "cwd": ".",
+    "count": 2,
+    "equivalent": 2,
+    "note": "Claude discovers the nested API configuration on demand. Codex remains bounded by the root launch directory.",
+    "findings": [
+      {
+        "type": "missing",
+        "title": "API instruction missing in Codex",
+        "category": "instruction",
+        "idPrefix": "instruction:missing:right:",
+        "detail": "The API instruction is present for Claude, with no corresponding instruction in Codex's effective configuration.",
+        "evidence": ["apps/api/CLAUDE.md"]
+      },
+      {
+        "type": "capability-gap",
+        "title": "API skill has no Codex counterpart in scope",
+        "category": "skill",
+        "idPrefix": "skill:capability-gap:right:api-skill:",
+        "detail": "The target makes the nested Claude skill conditionally discoverable. Codex has not discovered the nested skill from this cwd.",
+        "evidence": ["apps/api/.claude/skills/api-skill/SKILL.md"]
+      }
+    ]
+  },
+  "api": {
+    "cwd": "apps/api",
+    "count": 1,
+    "equivalent": 3,
+    "note": "Both harnesses now discover the API skill. The missing configuration gaps resolve, but the normalized instruction scopes still differ.",
+    "findings": [
+      {
+        "type": "scope-gap",
+        "title": "API instruction scope still differs",
+        "category": "instruction",
+        "idPrefix": "instruction:scope-gap:",
+        "detail": "The same text is present on both sides. The baseline IR records Claude applicability as . and Codex applicability as apps/api, so this remains a scope gap.",
+        "evidence": ["apps/api/CLAUDE.md", "apps/api/AGENTS.md"]
+      }
+    ]
+  }
+}
