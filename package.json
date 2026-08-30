@@ -6,6 +6,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "action:build": "pnpm --filter @playbookdiff/action build",
+    "action:test": "pnpm --filter @playbookdiff/action test",
+    "action:verify-bundle": "pnpm action:build && git diff --exit-code -- packages/action/dist",
     "build": "turbo run build",
     "clean": "turbo run clean",
     "fmt": "oxfmt --write .",

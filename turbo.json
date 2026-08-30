@@ -19,6 +19,10 @@
     "playbookdiff#test": {
       "dependsOn": ["^build", "build"],
       "outputs": []
+    },
+    "@playbookdiff/action#test": {
+      "dependsOn": ["^build", "build"],
+      "outputs": []
     }
   }
 }

@@ -1,0 +1,60 @@
+name: PlaybookDiff
+description: >-
+  Fail a pull request only when it introduces a new deterministic Claude Code
+  <-> Codex repository-configuration regression. Pre-existing compatibility
+  debt never blocks CI.
+author: JacobisEpic
+
+inputs:
+  baseline:
+    description: >-
+      Baseline Git revision to compare against. Defaults to the pull
+      request's base commit on "pull_request" events; required elsewhere.
+    required: false
+  candidate:
+    description: >-
+      Candidate Git revision to analyze. Defaults to the pull request's head
+      commit on "pull_request" events; required elsewhere.
+    required: false
+  cwd:
+    description: >-
+      The directory the coding agent is modeled as having been launched
+      from, relative to the repository. Applied identically to both
+      revisions.
+    required: false
+    default: "."
+  path:
+    description: >-
+      The repository path the coding agent is modeled as working on,
+      relative to the repository. Applied identically to both revisions.
+      Unset means no specific target.
+    required: false
+
+outputs:
+  result:
+    description: >-
+      "no-new-regressions" or "new-regressions". Not set if analysis failed.
+  introduced-count:
+    description: Total findings introduced by the candidate (any severity).
+  introduced-actionable-count:
+    description: >-
+      Introduced findings with severity medium or high. This count alone
+      determines pass/fail.
+  introduced-informational-count:
+    description: Introduced findings with severity low or info.
+  resolved-count:
+    description: Findings present in the baseline and absent from the candidate.
+  unchanged-count:
+    description: Findings present, unchanged, in both the baseline and the candidate.
+  baseline-sha:
+    description: The full resolved baseline commit SHA.
+  candidate-sha:
+    description: The full resolved candidate commit SHA.
+
+runs:
+  using: node24
+  main: packages/action/dist/index.mjs
+
+branding:
+  icon: git-pull-request
+  color: purple

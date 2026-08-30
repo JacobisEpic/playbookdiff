@@ -5,3 +5,8 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 
+# The GitHub Action's runtime bundle must be committed: GitHub does not
+# install dependencies or run a build before `uses:` executes it.
+!packages/action/dist/
+!packages/action/dist/index.mjs
+
