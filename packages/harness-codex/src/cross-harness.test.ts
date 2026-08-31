@@ -150,6 +150,20 @@ describe("cross-harness instruction coverage", () => {
     });
   });
 
+  it("keeps a skill shared by directory symlink equivalent across harnesses", async () => {
+    // `.claude/skills/deploy` is a symlink to `.agents/skills/deploy`, so both
+    // harnesses read the same SKILL.md. Dropping the symlinked entry would
+    // claim Codex has a skill Claude Code lacks, failing CI on configuration
+    // that is in fact one shared file.
+    const report = await compileBoth(fixture("symlinked-skill"));
+    expect(report.findings).toEqual([]);
+    expect(report.summary.byCategory.skill).toEqual({
+      equivalent: 1,
+      divergent: 0,
+      unknown: 0,
+    });
+  });
+
   it("treats a valid @AGENTS.md import as fully equivalent", async () => {
     const report = await compileBoth(fixture("valid-import"));
     expect(report.findings).toEqual([]);

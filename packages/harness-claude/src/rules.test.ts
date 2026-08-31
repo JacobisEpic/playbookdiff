@@ -75,3 +75,22 @@ describe("separately nested .claude/rules/ root", () => {
     expect(diagnostic?.message).toContain("apps/api/.claude/rules");
   });
 });
+
+describe("symlinked rule files", () => {
+  it("follows an in-repository rule symlink but rejects an outside-repository target", async () => {
+    // A `Dirent` reports a symlink-to-file as a symlink, not a file, so a rule
+    // shared by symlink would otherwise vanish with no instruction and no
+    // diagnostic - silently hiding guidance Claude Code actually receives.
+    const repositoryRoot = path.join(fixturesRoot, "symlinked", "repo");
+    const result = await discover({ repositoryRoot });
+    const paths = result.instructions.map((instruction) => instruction.source.path);
+    expect(paths).toContain(".claude/rules/testing.md");
+    expect(paths).not.toContain(".claude/rules/outside.md");
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "outside-repository",
+        source: expect.objectContaining({ path: ".claude/rules/outside.md" }),
+      }),
+    );
+  });
+});

@@ -121,3 +121,31 @@ describe("skill paths frontmatter", () => {
     expect(diagnostic).toBeDefined();
   });
 });
+
+describe("symlinked skill directories", () => {
+  it("follows an in-repository skill symlink but rejects an outside-repository target", async () => {
+    // A `Dirent` reports a symlink-to-directory as a symlink, not a directory,
+    // so a skill shared by symlink - the natural way to hand one SKILL.md to
+    // both harnesses - must not be dropped and reported as missing from Claude
+    // Code. Escaping the repository is still refused, with a diagnostic rather
+    // than a silent omission.
+    const repositoryRoot = path.join(fixturesRoot, "symlinked", "repo");
+    const result = await discover({ repositoryRoot });
+    const names = result.skills.map((skill) => skill.name);
+    expect(names).toContain("shared-deploy");
+    expect(names).not.toContain("external");
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "outside-repository",
+        source: expect.objectContaining({ path: ".claude/skills/external/SKILL.md" }),
+      }),
+    );
+  });
+
+  it("keeps the visible symlinked path as provenance", async () => {
+    const repositoryRoot = path.join(fixturesRoot, "symlinked", "repo");
+    const result = await discover({ repositoryRoot });
+    const skill = result.skills.find((candidate) => candidate.name === "shared-deploy");
+    expect(skill?.source.path).toBe(".claude/skills/linked/SKILL.md");
+  });
+});

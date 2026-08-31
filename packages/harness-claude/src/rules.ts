@@ -13,6 +13,7 @@ import {
   getAncestorChain,
   getDescendantChain,
   readFileIfExists,
+  resolveCandidate,
   targetDirectory,
   toRepoRelativePosix,
   type ValidatedContext,
@@ -44,7 +45,11 @@ export function matchesClaudeRulePath(patterns: string[], targetRepoRelativePath
   });
 }
 
-async function listMarkdownFilesRecursive(dir: string): Promise<string[]> {
+async function listMarkdownFilesRecursive(
+  dir: string,
+  repositoryRoot: string,
+  outsideRepository: string[],
+): Promise<string[]> {
   let entries;
   try {
     entries = await fs.readdir(dir, { withFileTypes: true });
@@ -55,12 +60,41 @@ async function listMarkdownFilesRecursive(dir: string): Promise<string[]> {
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     const entryPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...(await listMarkdownFilesRecursive(entryPath)));
+      files.push(
+        ...(await listMarkdownFilesRecursive(entryPath, repositoryRoot, outsideRepository)),
+      );
     } else if (entry.isFile() && entry.name.endsWith(".md")) {
       files.push(entryPath);
+    } else if (entry.isSymbolicLink() && entry.name.endsWith(".md")) {
+      // A `Dirent` reports a symlink-to-file as a symlink, not a file, so a
+      // rule shared by symlink would otherwise be dropped with no trace even
+      // though Claude Code reads it at this path. Only a link that stays inside
+      // the repository is followed; one that escapes is recorded so the caller
+      // can diagnose it rather than omit it silently. A symlinked *directory*
+      // is deliberately not recursed into - doing so safely needs a cycle rule
+      // this adapter has no documented basis for.
+      const resolved = await resolveCandidate(repositoryRoot, dir, entry.name);
+      if (!resolved.exists) {
+        continue;
+      }
+      if (!resolved.insideRoot) {
+        outsideRepository.push(entryPath);
+        continue;
+      }
+      if (await isFile(resolved.absolutePath)) {
+        files.push(entryPath);
+      }
     }
   }
   return files;
+}
+
+async function isFile(absolutePath: string): Promise<boolean> {
+  try {
+    return (await fs.stat(absolutePath)).isFile();
+  } catch {
+    return false;
+  }
 }
 
 /** Reads a `paths` frontmatter field (string list, comma-separated string, or absent) shared by rules and skills. */
@@ -96,7 +130,23 @@ export async function discoverRules(
   const ancestorChain = getAncestorChain(ctx.repositoryRoot, ctx.cwd);
   for (const dir of ancestorChain) {
     const rulesRoot = path.join(dir, ".claude", "rules");
-    const files = await listMarkdownFilesRecursive(rulesRoot);
+    const outsideRepository: string[] = [];
+    const files = await listMarkdownFilesRecursive(
+      rulesRoot,
+      ctx.repositoryRoot,
+      outsideRepository,
+    );
+    for (const escaped of outsideRepository) {
+      diagnostics.push(
+        createDiagnostic(registry, {
+          level: "info",
+          code: "outside-repository",
+          slug: `rule-symlink:${relPath(escaped)}`,
+          message: `Rule ${relPath(escaped)} is a symlink resolving outside repositoryRoot and was not followed.`,
+          source: { path: relPath(escaped), scope: "repository", format: "markdown" },
+        }),
+      );
+    }
     for (const absolutePath of files) {
       if (excludes.matches(absolutePath)) {
         diagnostics.push(
@@ -178,7 +228,7 @@ export async function discoverRules(
     const descendantChain = getDescendantChain(ctx.cwd, targetDir);
     for (const dir of descendantChain) {
       const rulesRoot = path.join(dir, ".claude", "rules");
-      const files = await listMarkdownFilesRecursive(rulesRoot);
+      const files = await listMarkdownFilesRecursive(rulesRoot, ctx.repositoryRoot, []);
       if (files.length > 0) {
         diagnostics.push(
           createDiagnostic(registry, {

@@ -12,6 +12,7 @@ import {
   getAncestorChain,
   getDescendantChain,
   readFileIfExists,
+  resolveCandidate,
   targetDirectory,
   toRepoRelativePosix,
   type ValidatedContext,
@@ -64,8 +65,13 @@ async function listSkillDirectories(skillsRoot: string): Promise<string[]> {
   } catch {
     return [];
   }
+  // A symlinked entry is kept as a candidate and resolved by the caller: a
+  // `Dirent` reports a symlink-to-directory as a symlink rather than a
+  // directory, so filtering on `isDirectory()` alone would silently drop a
+  // skill directory that is shared by symlink - a common way to hand the same
+  // SKILL.md to both harnesses - and report it as missing from Claude Code.
   return entries
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
     .map((entry) => entry.name)
     .sort((a, b) => a.localeCompare(b));
 }
@@ -94,7 +100,25 @@ export async function discoverSkills(
     for (const dirName of directories) {
       const skillDir = path.join(skillsRoot, dirName);
       const skillMdPath = path.join(skillDir, "SKILL.md");
-      const content = await readFileIfExists(skillMdPath);
+      // Provenance keeps the visible path, so a symlinked skill still reports
+      // where Claude Code finds it; only the read follows the link.
+      const resolvedSkillDir = await resolveCandidate(ctx.repositoryRoot, skillsRoot, dirName);
+      if (!resolvedSkillDir.exists) {
+        continue;
+      }
+      if (!resolvedSkillDir.insideRoot) {
+        diagnostics.push(
+          createDiagnostic(registry, {
+            level: "info",
+            code: "outside-repository",
+            slug: `skill-symlink:${relPath(skillMdPath)}`,
+            message: `Skill directory ${relPath(skillDir)} resolves outside repositoryRoot and was not followed.`,
+            source: { path: relPath(skillMdPath), scope: "repository", format: "markdown" },
+          }),
+        );
+        continue;
+      }
+      const content = await readFileIfExists(path.join(resolvedSkillDir.absolutePath, "SKILL.md"));
       if (content === undefined) {
         continue;
       }
