@@ -118,9 +118,37 @@ describe("deterministic skill comparison", () => {
 
   it("reports an independent advertisement difference conservatively", () => {
     const left = skill("left", "deploy", ".claude/skills/deploy/SKILL.md", {
+      advertisement: { state: "hidden" },
+    });
+    const right = skill("right", "deploy", ".agents/skills/deploy/SKILL.md");
+    const result = compareSkills(config("claude", [left]), config("codex", [right]));
+    expect(result.findings).toContainEqual(
+      expect.objectContaining({ type: "different", severity: "low" }),
+    );
+  });
+
+  it("does not turn a one-sided budget risk into an advertisement difference", () => {
+    // Each harness measures its listing budget against its own constants, so
+    // one side reaching `budget-risk` on skills the other reports as
+    // `advertised` says nothing about the repository. Documented behavior keeps
+    // the skill listed either way, and budget constants are not a compatibility
+    // dimension, so identical skills must stay equivalent.
+    const left = skill("left", "deploy", ".claude/skills/deploy/SKILL.md", {
       advertisement: { state: "budget-risk" },
     });
     const right = skill("right", "deploy", ".agents/skills/deploy/SKILL.md");
+    const result = compareSkills(config("claude", [left]), config("codex", [right]));
+    expect(result.findings).toEqual([]);
+    expect(result.entities[0]?.status).toBe("equivalent");
+  });
+
+  it("still reports a real hidden-versus-advertised difference across a budget risk", () => {
+    const left = skill("left", "deploy", ".claude/skills/deploy/SKILL.md", {
+      advertisement: { state: "budget-risk" },
+    });
+    const right = skill("right", "deploy", ".agents/skills/deploy/SKILL.md", {
+      advertisement: { state: "hidden" },
+    });
     const result = compareSkills(config("claude", [left]), config("codex", [right]));
     expect(result.findings).toContainEqual(
       expect.objectContaining({ type: "different", severity: "low" }),

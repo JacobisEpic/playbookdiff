@@ -1,5 +1,6 @@
 import path from "node:path";
 import type {
+  AdvertisementState,
   CompatibilityFinding,
   EffectiveAgentConfig,
   EffectiveSkill,
@@ -303,11 +304,24 @@ function comparePair(
 
   const advertisementUnknown =
     left.skill.advertisement.state === "unknown" || right.skill.advertisement.state === "unknown";
-  const advertisementDiffers = left.skill.advertisement.state !== right.skill.advertisement.state;
+  // `budget-risk` says a harness's own aggregate listing budget may shorten or
+  // drop descriptions; documented behavior keeps the skill's name listed either
+  // way, so it is not a deterministic hidden/advertised state. The two harnesses
+  // measure it against different constants (a per-skill character cap versus an
+  // aggregate fallback), which makes a bare `budget-risk` vs `advertised`
+  // disagreement an artifact of those constants rather than of the repository's
+  // configuration. Harness-specific budget constants are not a compatibility
+  // dimension, so it is compared as advertised; the risk itself stays visible on
+  // the entity and in the adapter's own `budget-risk` diagnostic.
+  const comparableAdvertisement = (state: AdvertisementState): AdvertisementState =>
+    state === "budget-risk" ? "advertised" : state;
+  const leftAdvertisement = comparableAdvertisement(left.skill.advertisement.state);
+  const rightAdvertisement = comparableAdvertisement(right.skill.advertisement.state);
+  const advertisementDiffers = leftAdvertisement !== rightAdvertisement;
   const invocationExplainsVisibility =
     invocationDiffers &&
-    new Set([left.skill.advertisement.state, right.skill.advertisement.state]).has("hidden") &&
-    new Set([left.skill.advertisement.state, right.skill.advertisement.state]).has("advertised");
+    new Set([leftAdvertisement, rightAdvertisement]).has("hidden") &&
+    new Set([leftAdvertisement, rightAdvertisement]).has("advertised");
   if (advertisementUnknown) {
     hasUnknown = true;
     findings.push({
