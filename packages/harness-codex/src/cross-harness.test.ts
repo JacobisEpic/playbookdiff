@@ -136,6 +136,20 @@ describe("cross-harness instruction coverage", () => {
     expect(report.summary.byCategory.instruction?.divergent).toBe(1);
   });
 
+  it("keeps mirrored instructions equivalent when they contain an import-looking token", async () => {
+    // A scoped package name reads like `@path` import syntax but resolves to
+    // nothing. Both harnesses receive byte-identical files here, so the only
+    // defensible result is equivalence - fragmenting the Claude side would
+    // fail CI on configuration that is in fact perfectly mirrored.
+    const report = await compileBoth(fixture("unresolved-token-mirrored"));
+    expect(report.findings).toEqual([]);
+    expect(report.summary.byCategory.instruction).toEqual({
+      equivalent: 1,
+      divergent: 0,
+      unknown: 0,
+    });
+  });
+
   it("treats a valid @AGENTS.md import as fully equivalent", async () => {
     const report = await compileBoth(fixture("valid-import"));
     expect(report.findings).toEqual([]);

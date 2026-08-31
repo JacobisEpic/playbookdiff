@@ -180,7 +180,6 @@ export async function discoverInstructions(
     };
 
     for (const match of imports) {
-      emitSegment(content.slice(cursor, match.offsetStart), match.offsetStart);
       const refPos = positionAt(lineIndex, match.offsetStart);
       const refSource: SourceRef = {
         path: file,
@@ -189,12 +188,34 @@ export async function discoverInstructions(
         scope,
         format: "markdown",
       };
-      await resolveImport(match.target, absolutePath, chain, loadPhase, appliesTo, refSource);
-      cursor = match.offsetEnd;
+      // Only an import that actually expands may split this file. The
+      // preceding text is emitted from inside the callback so it still lands
+      // ahead of the imported content in `order`, while an import that
+      // contributes nothing (unresolved, outside the repository, excluded,
+      // cyclic, or too deep) leaves the surrounding text contiguous and keeps
+      // its own literal `@token` text, which is what the file still says.
+      const expanded = await resolveImport(
+        match.target,
+        absolutePath,
+        chain,
+        loadPhase,
+        appliesTo,
+        refSource,
+        () => emitSegment(content.slice(cursor, match.offsetStart), match.offsetStart),
+      );
+      if (expanded) {
+        cursor = match.offsetEnd;
+      }
     }
     emitSegment(content.slice(cursor), content.length);
   }
 
+  /**
+   * Emits any diagnostic the import warrants and, when it genuinely resolves to
+   * readable in-repository content, expands that content inline. Returns
+   * whether content was expanded, so the caller knows whether this import
+   * actually divides the importing file.
+   */
   async function resolveImport(
     target: string,
     fromAbsolutePath: string,
@@ -202,7 +223,8 @@ export async function discoverInstructions(
     loadPhase: LoadPhase,
     appliesTo: string,
     refSource: SourceRef,
-  ): Promise<void> {
+    emitPrecedingText: () => void,
+  ): Promise<boolean> {
     const from = relPath(fromAbsolutePath);
     if (chain.depth + 1 > MAX_IMPORT_DEPTH) {
       diagnostics.push(
@@ -214,7 +236,7 @@ export async function discoverInstructions(
           source: refSource,
         }),
       );
-      return;
+      return false;
     }
 
     const fromDir = path.dirname(fromAbsolutePath);
@@ -230,7 +252,7 @@ export async function discoverInstructions(
           source: refSource,
         }),
       );
-      return;
+      return false;
     }
     if (!resolved.exists) {
       diagnostics.push(
@@ -242,7 +264,7 @@ export async function discoverInstructions(
           source: refSource,
         }),
       );
-      return;
+      return false;
     }
     if (chain.visited.has(resolved.absolutePath)) {
       diagnostics.push(
@@ -254,7 +276,7 @@ export async function discoverInstructions(
           source: refSource,
         }),
       );
-      return;
+      return false;
     }
 
     const importedContent = await readFileIfExists(resolved.absolutePath);
@@ -268,7 +290,7 @@ export async function discoverInstructions(
           source: refSource,
         }),
       );
-      return;
+      return false;
     }
 
     const importedAbsolutePath = resolved.absolutePath;
@@ -282,13 +304,14 @@ export async function discoverInstructions(
           source: wholeFileSource(importedAbsolutePath, "repository"),
         }),
       );
-      return;
+      return false;
     }
 
     const nextChain: ImportChain = {
       visited: new Set(chain.visited).add(importedAbsolutePath),
       depth: chain.depth + 1,
     };
+    emitPrecedingText();
     await expandFile({
       absolutePath: importedAbsolutePath,
       content: importedContent,
@@ -300,6 +323,7 @@ export async function discoverInstructions(
       chain: nextChain,
       importReference: refSource,
     });
+    return true;
   }
 
   const ancestorChain = getAncestorChain(ctx.repositoryRoot, ctx.cwd);

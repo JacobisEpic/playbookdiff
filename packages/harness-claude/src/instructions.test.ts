@@ -224,6 +224,23 @@ describe("imports", () => {
     expect(result.instructions).toHaveLength(1);
     const diagnostic = result.diagnostics.find((d) => d.code === "unresolved");
     expect(diagnostic).toBeDefined();
+    // An import that resolves to nothing contributes no content, so the text it
+    // was written in still reads exactly as the file does.
+    expect(result.instructions[0]?.content).toContain("@missing.md");
+  });
+
+  it("keeps a file contiguous when an unresolved import-looking token sits mid-prose", async () => {
+    // A scoped package name in a heading looks like `@path` import syntax but
+    // resolves to nothing. It must not split the file, drop its own text, or
+    // manufacture a second instruction - all of which would break exact-content
+    // matching against an identical file on the other harness.
+    const root = path.join(fixturesRoot, "imports", "unresolved-inline");
+    const result = await discover({ repositoryRoot: root });
+    expect(result.instructions).toHaveLength(1);
+    expect(result.instructions[0]?.content).toBe(
+      "# @scope/package conventions\n\nRun the project tests before committing.\n\nUse the API package conventions.\n",
+    );
+    expect(result.diagnostics.find((d) => d.code === "unresolved")).toBeDefined();
   });
 
   it("does not follow an import that resolves outside the repository", async () => {
