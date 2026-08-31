@@ -17969,8 +17969,11 @@ function comparePair(left, right, entityKey, leftHarness, rightHarness) {
 		});
 	}
 	const advertisementUnknown = left.skill.advertisement.state === "unknown" || right.skill.advertisement.state === "unknown";
-	const advertisementDiffers = left.skill.advertisement.state !== right.skill.advertisement.state;
-	const invocationExplainsVisibility = invocationDiffers && (/* @__PURE__ */ new Set([left.skill.advertisement.state, right.skill.advertisement.state])).has("hidden") && (/* @__PURE__ */ new Set([left.skill.advertisement.state, right.skill.advertisement.state])).has("advertised");
+	const comparableAdvertisement = (state) => state === "budget-risk" ? "advertised" : state;
+	const leftAdvertisement = comparableAdvertisement(left.skill.advertisement.state);
+	const rightAdvertisement = comparableAdvertisement(right.skill.advertisement.state);
+	const advertisementDiffers = leftAdvertisement !== rightAdvertisement;
+	const invocationExplainsVisibility = invocationDiffers && (/* @__PURE__ */ new Set([leftAdvertisement, rightAdvertisement])).has("hidden") && (/* @__PURE__ */ new Set([leftAdvertisement, rightAdvertisement])).has("advertised");
 	if (advertisementUnknown) {
 		hasUnknown = true;
 		findings.push({
@@ -39142,7 +39145,6 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 			});
 		};
 		for (const match of imports) {
-			emitSegment(content.slice(cursor, match.offsetStart), match.offsetStart);
 			const refPos = positionAt(lineIndex, match.offsetStart);
 			const refSource = {
 				path: file,
@@ -39151,12 +39153,17 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				scope,
 				format: "markdown"
 			};
-			await resolveImport(match.target, absolutePath, chain, loadPhase, appliesTo, refSource);
-			cursor = match.offsetEnd;
+			if (await resolveImport(match.target, absolutePath, chain, loadPhase, appliesTo, refSource, () => emitSegment(content.slice(cursor, match.offsetStart), match.offsetStart))) cursor = match.offsetEnd;
 		}
 		emitSegment(content.slice(cursor), content.length);
 	}
-	async function resolveImport(target, fromAbsolutePath, chain, loadPhase, appliesTo, refSource) {
+	/**
+	* Emits any diagnostic the import warrants and, when it genuinely resolves to
+	* readable in-repository content, expands that content inline. Returns
+	* whether content was expanded, so the caller knows whether this import
+	* actually divides the importing file.
+	*/
+	async function resolveImport(target, fromAbsolutePath, chain, loadPhase, appliesTo, refSource, emitPrecedingText) {
 		const from = relPath(fromAbsolutePath);
 		if (chain.depth + 1 > MAX_IMPORT_DEPTH) {
 			diagnostics.push(createDiagnostic$1(registry, {
@@ -39166,7 +39173,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: `Import "${target}" exceeds the documented four-hop import depth and was not followed.`,
 				source: refSource
 			}));
-			return;
+			return false;
 		}
 		const fromDir = path.dirname(fromAbsolutePath);
 		const resolved = await resolveCandidate(ctx.repositoryRoot, fromDir, target);
@@ -39178,7 +39185,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: `Import "${target}" resolves outside the repository and is not followed in repo mode.`,
 				source: refSource
 			}));
-			return;
+			return false;
 		}
 		if (!resolved.exists) {
 			diagnostics.push(createDiagnostic$1(registry, {
@@ -39188,7 +39195,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: `Import "${target}" does not resolve to an existing file.`,
 				source: refSource
 			}));
-			return;
+			return false;
 		}
 		if (chain.visited.has(resolved.absolutePath)) {
 			diagnostics.push(createDiagnostic$1(registry, {
@@ -39198,7 +39205,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: `Import "${target}" would create a cycle. PlaybookDiff stopped recursion here as analyzer safety behavior; this is not a verified claim about Claude Code's own cycle handling.`,
 				source: refSource
 			}));
-			return;
+			return false;
 		}
 		const importedContent = await readFileIfExists$1(resolved.absolutePath);
 		if (importedContent === void 0) {
@@ -39209,7 +39216,7 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: `Import "${target}" could not be read.`,
 				source: refSource
 			}));
-			return;
+			return false;
 		}
 		const importedAbsolutePath = resolved.absolutePath;
 		if (excludes.matches(importedAbsolutePath)) {
@@ -39220,20 +39227,23 @@ async function discoverInstructions$1(ctx, excludes, registry) {
 				message: `Excluded by claudeMdExcludes: ${relPath(importedAbsolutePath)}`,
 				source: wholeFileSource(importedAbsolutePath, "repository")
 			}));
-			return;
+			return false;
 		}
+		const nextChain = {
+			visited: new Set(chain.visited).add(importedAbsolutePath),
+			depth: chain.depth + 1
+		};
+		emitPrecedingText();
 		await expandFile({
 			absolutePath: importedAbsolutePath,
 			content: importedContent,
 			scope: "repository",
 			loadPhase,
 			appliesTo,
-			chain: {
-				visited: new Set(chain.visited).add(importedAbsolutePath),
-				depth: chain.depth + 1
-			},
+			chain: nextChain,
 			importReference: refSource
 		});
+		return true;
 	}
 	const ancestorChain = getAncestorChain$1(ctx.repositoryRoot, ctx.cwd);
 	for (const dir of ancestorChain) await processDirectory(dir, "startup");
@@ -39399,7 +39409,7 @@ function matchesClaudeRulePath(patterns, targetRepoRelativePath) {
 		}
 	});
 }
-async function listMarkdownFilesRecursive(dir) {
+async function listMarkdownFilesRecursive(dir, repositoryRoot, outsideRepository) {
 	let entries;
 	try {
 		entries = await promises.readdir(dir, { withFileTypes: true });
@@ -39409,10 +39419,26 @@ async function listMarkdownFilesRecursive(dir) {
 	const files = [];
 	for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
 		const entryPath = path.join(dir, entry.name);
-		if (entry.isDirectory()) files.push(...await listMarkdownFilesRecursive(entryPath));
+		if (entry.isDirectory()) files.push(...await listMarkdownFilesRecursive(entryPath, repositoryRoot, outsideRepository));
 		else if (entry.isFile() && entry.name.endsWith(".md")) files.push(entryPath);
+		else if (entry.isSymbolicLink() && entry.name.endsWith(".md")) {
+			const resolved = await resolveCandidate(repositoryRoot, dir, entry.name);
+			if (!resolved.exists) continue;
+			if (!resolved.insideRoot) {
+				outsideRepository.push(entryPath);
+				continue;
+			}
+			if (await isFile(resolved.absolutePath)) files.push(entryPath);
+		}
 	}
 	return files;
+}
+async function isFile(absolutePath) {
+	try {
+		return (await promises.stat(absolutePath)).isFile();
+	} catch {
+		return false;
+	}
 }
 /** Reads a `paths` frontmatter field (string list, comma-separated string, or absent) shared by rules and skills. */
 function readPathsField(data) {
@@ -39430,7 +39456,20 @@ async function discoverRules(ctx, excludes, registry) {
 	const targetRelPath = ctx.targetPath ? relPath(ctx.targetPath) : void 0;
 	const ancestorChain = getAncestorChain$1(ctx.repositoryRoot, ctx.cwd);
 	for (const dir of ancestorChain) {
-		const files = await listMarkdownFilesRecursive(path.join(dir, ".claude", "rules"));
+		const rulesRoot = path.join(dir, ".claude", "rules");
+		const outsideRepository = [];
+		const files = await listMarkdownFilesRecursive(rulesRoot, ctx.repositoryRoot, outsideRepository);
+		for (const escaped of outsideRepository) diagnostics.push(createDiagnostic$1(registry, {
+			level: "info",
+			code: "outside-repository",
+			slug: `rule-symlink:${relPath(escaped)}`,
+			message: `Rule ${relPath(escaped)} is a symlink resolving outside repositoryRoot and was not followed.`,
+			source: {
+				path: relPath(escaped),
+				scope: "repository",
+				format: "markdown"
+			}
+		}));
 		for (const absolutePath of files) {
 			if (excludes.matches(absolutePath)) {
 				diagnostics.push(createDiagnostic$1(registry, {
@@ -39491,7 +39530,7 @@ async function discoverRules(ctx, excludes, registry) {
 		const descendantChain = getDescendantChain(ctx.cwd, targetDir);
 		for (const dir of descendantChain) {
 			const rulesRoot = path.join(dir, ".claude", "rules");
-			if ((await listMarkdownFilesRecursive(rulesRoot)).length > 0) diagnostics.push(createDiagnostic$1(registry, {
+			if ((await listMarkdownFilesRecursive(rulesRoot, ctx.repositoryRoot, [])).length > 0) diagnostics.push(createDiagnostic$1(registry, {
 				level: "info",
 				code: "unresolved",
 				slug: `nested-rules-root:${relPath(rulesRoot)}`,
@@ -39619,7 +39658,7 @@ async function listSkillDirectories(skillsRoot) {
 	} catch {
 		return [];
 	}
-	return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort((a, b) => a.localeCompare(b));
+	return entries.filter((entry) => entry.isDirectory() || entry.isSymbolicLink()).map((entry) => entry.name).sort((a, b) => a.localeCompare(b));
 }
 async function discoverSkills$1(ctx, registry) {
 	const skills = [];
@@ -39635,7 +39674,23 @@ async function discoverSkills$1(ctx, registry) {
 		for (const dirName of directories) {
 			const skillDir = path.join(skillsRoot, dirName);
 			const skillMdPath = path.join(skillDir, "SKILL.md");
-			const content = await readFileIfExists$1(skillMdPath);
+			const resolvedSkillDir = await resolveCandidate(ctx.repositoryRoot, skillsRoot, dirName);
+			if (!resolvedSkillDir.exists) continue;
+			if (!resolvedSkillDir.insideRoot) {
+				diagnostics.push(createDiagnostic$1(registry, {
+					level: "info",
+					code: "outside-repository",
+					slug: `skill-symlink:${relPath(skillMdPath)}`,
+					message: `Skill directory ${relPath(skillDir)} resolves outside repositoryRoot and was not followed.`,
+					source: {
+						path: relPath(skillMdPath),
+						scope: "repository",
+						format: "markdown"
+					}
+				}));
+				continue;
+			}
+			const content = await readFileIfExists$1(path.join(resolvedSkillDir.absolutePath, "SKILL.md"));
 			if (content === void 0) continue;
 			const frontmatter = extractFrontmatter$1(content);
 			if (frontmatter.parseError) diagnostics.push(createDiagnostic$1(registry, {
