@@ -69,6 +69,26 @@ Ensure your checkout includes the required Git history (for actions/checkout, us
 
 `cwd` and `path` mean exactly what they mean for the CLI; see [`docs/cli.md`](cli.md#--cwd-vs---path).
 
+### What the default configuration does and does not cover
+
+With no `cwd` and no `path`, the Action models an agent launched at the repository root and working on no particular file.
+That is the honest default, but it bounds what the run can see, and the bound is worth stating plainly.
+
+Claude Code reaches instructions, rules, and skills nested below the launch directory only _on demand_, once it reads a file in that subtree.
+Static analysis cannot know which files a future session will touch, so PlaybookDiff treats a nested source as conditional unless a `path` names it.
+The practical consequence is that a pull request which adds a nested Claude-only source - say a new `pkg/cmd/tool/CLAUDE.md` with no Codex counterpart - introduces a real divergence for anyone working in that subtree, and the default run still reports no new regression, because at the repository root neither harness receives that file.
+
+Set `path` to bring that subtree into scope:
+
+```yaml
+- uses: JacobisEpic/playbookdiff@v1
+  with:
+    path: pkg/cmd/tool/main.go
+```
+
+A single run models one launch directory and one work target, so a repository with several independently configured subtrees is covered by running the Action once per subtree (a matrix job, or repeated steps), not by one root-level run.
+PlaybookDiff deliberately does not infer targets from a pull request's changed files: that would silently pick one modeled session out of many possible ones, and every finding's scope would then depend on which files the PR happened to touch rather than on the repository's configuration.
+
 ### Automatic baseline/candidate detection
 
 On a `pull_request` event, the Action reads `pull_request.base.sha` and `pull_request.head.sha` directly from the event payload (`GITHUB_EVENT_PATH`) - it never calls the GitHub API.
