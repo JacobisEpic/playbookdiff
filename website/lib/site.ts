@@ -3,7 +3,7 @@ export const site = {
   description:
     "Detect repository-configuration drift between Claude Code and Codex. Compare instructions, skills, MCP configuration, and Git regressions with deterministic evidence.",
   repository: "https://github.com/JacobisEpic/playbookdiff",
-  baseline: "1bb33848fcd0f64ce9e6cdc9dcd380b6aef0b06b",
+  baseline: "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
 };
 
 // Set this to the verified production origin after deployment, never a preview URL.

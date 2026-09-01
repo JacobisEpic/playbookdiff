@@ -1,5 +1,5 @@
 {
-  "baseline": "1bb33848fcd0f64ce9e6cdc9dcd380b6aef0b06b",
+  "baseline": "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
   "source": "packages/harness-codex/src/cross-harness.test.ts",
   "fixture": "packages/harness-codex/test/fixtures/cross-harness/cwd-target",
   "target": "apps/api/file.ts",

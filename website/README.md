@@ -65,7 +65,7 @@ The metadata test currently asserts the pre-deployment state and must be updated
 
 ## Fixture data, not browser analysis
 
-`lib/examples.json` is a hand-curated presentation of the assertions in `packages/harness-codex/src/cross-harness.test.ts` at commit `1bb33848fcd0f64ce9e6cdc9dcd380b6aef0b06b`.
+`lib/examples.json` is a hand-curated presentation of the assertions in `packages/harness-codex/src/cross-harness.test.ts` at commit `2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f`.
 The source links are pinned to that baseline so concurrent changes cannot silently alter the example's meaning.
 Scenario A has two medium findings, while Scenario B has one medium instruction scope gap.
 The remaining scope gap is intentional: the baseline IR represents Claude applicability as `.` and Codex applicability as `apps/api`.
