@@ -13,14 +13,16 @@ This repository does not yet have a tagged release.
 The examples below show both forms:
 
 ```yaml
-# Once a v1 release exists:
-- uses: JacobisEpic/playbookdiff@v1
+# Once a release exists:
+- uses: JacobisEpic/playbookdiff@v0
 
 # For now, or when developing against this repository directly:
 - uses: JacobisEpic/playbookdiff@<commit-sha>
 ```
 
-See "Release readiness" at the end of this document for exactly what remains before `@v1` is real.
+A pinned commit SHA is the only form that resolves today, and pinning a SHA remains the safest choice for any third-party Action.
+
+See "Release readiness" at the end of this document for exactly what remains before a tag exists.
 
 ## Example workflow
 
@@ -41,8 +43,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: JacobisEpic/playbookdiff@v1
+      - uses: JacobisEpic/playbookdiff@v0
 ```
+
+That is the whole configuration. See [coverage](#what-one-run-covers) for what it analyzes.
 
 ### Checkout requirement
 
@@ -69,25 +73,52 @@ Ensure your checkout includes the required Git history (for actions/checkout, us
 
 `cwd` and `path` mean exactly what they mean for the CLI; see [`docs/cli.md`](cli.md#--cwd-vs---path).
 
-### What the default configuration does and does not cover
+### What one run covers
 
-With no `cwd` and no `path`, the Action models an agent launched at the repository root and working on no particular file.
-That is the honest default, but it bounds what the run can see, and the bound is worth stating plainly.
+With no `path` input, the Action does not analyze the repository root alone.
+It derives the contexts to analyze from the paths that differ between the pull request's base and head commits, so configuration nested under what the pull request touched is covered without any extra configuration.
 
-Claude Code reaches instructions, rules, and skills nested below the launch directory only _on demand_, once it reads a file in that subtree.
-Static analysis cannot know which files a future session will touch, so PlaybookDiff treats a nested source as conditional unless a `path` names it.
-The practical consequence is that a pull request which adds a nested Claude-only source - say a new `pkg/cmd/tool/CLAUDE.md` with no Codex counterpart - introduces a real divergence for anyone working in that subtree, and the default run still reports no new regression, because at the repository root neither harness receives that file.
+Concretely, a run always analyzes the repository-root startup context, and additionally:
 
-Set `path` to bring that subtree into scope:
+- the directory a changed configuration file governs, so adding `packages/api/CLAUDE.md` is analyzed as a session working inside `packages/api`;
+- each changed source file, because configuration nested above it, or scoped to paths like it, applies there;
+- a real tracked file matched by a changed path-scoped rule, so a rule whose scope the pull request does not otherwise exercise is still represented.
+
+Contexts are then collapsed by effective scope, so a hundred changed files in one directory become one analysis rather than a hundred.
+A finding reachable from several contexts is still one finding: deduplication happens on stable finding IDs before the regression delta is taken, so multi-context analysis cannot inflate a single regression into several.
+
+The `analyzed-target-count` output and the Step Summary both state how many contexts a run covered, because "no new regressions" only means something alongside what was looked at.
+
+Changed paths come from local Git object data between the two already-resolved commits.
+No fetch, no GitHub API, no token.
+
+#### Two boundaries that remain
+
+**Launch directory.** A run models one launch directory, taken from `cwd` (default the repository root).
+Codex builds its project instruction chain through the launch directory only, so a nested `AGENTS.md` is genuinely not received by a root-launched session, and PlaybookDiff will not pretend otherwise.
+Automatic derivation varies the _work target_, never the launch directory - which directory a developer starts their agent in is a property of how a team works, not something a pull request states.
+In a repository where developers routinely start inside a subdirectory, run the Action once per such directory:
 
 ```yaml
-- uses: JacobisEpic/playbookdiff@v1
-  with:
-    path: pkg/cmd/tool/main.go
+strategy:
+  matrix:
+    dir: [".", "apps/api", "apps/web"]
+steps:
+  - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+  - uses: JacobisEpic/playbookdiff@v0
+    with:
+      cwd: ${{ matrix.dir }}
 ```
 
-A single run models one launch directory and one work target, so a repository with several independently configured subtrees is covered by running the Action once per subtree (a matrix job, or repeated steps), not by one root-level run.
-PlaybookDiff deliberately does not infer targets from a pull request's changed files: that would silently pick one modeled session out of many possible ones, and every finding's scope would then depend on which files the PR happened to touch rather than on the repository's configuration.
+**Very large pull requests.** The number of derived contexts is bounded, so one CI step cannot become an unbounded number of analyses.
+When a pull request touches more distinct configuration scopes than the bound, the run says how many it did not analyze rather than implying full coverage.
+
+### Explicit `path`
+
+Supplying `path` analyzes exactly that one context and derives nothing else.
+Explicit intent stays predictable: if you named a work target, that is what you get.
 
 ### Automatic baseline/candidate detection
 
@@ -102,29 +133,30 @@ Outside `pull_request` events (`push`, `workflow_dispatch`, and everything else)
 `baseline` and `candidate` inputs are honored independently. Providing one does not require providing the other:
 
 ```yaml
-- uses: JacobisEpic/playbookdiff@v1
+- uses: JacobisEpic/playbookdiff@v0
   with:
     baseline: origin/main # overrides the PR default; candidate still defaults to the PR head
 ```
 
 ## Outputs
 
-| Output                           | Description                                                            |
-| -------------------------------- | ---------------------------------------------------------------------- |
-| `result`                         | `no-new-regressions` or `new-regressions`. Not set if analysis failed. |
-| `introduced-count`               | Findings introduced by the candidate, any severity.                    |
-| `introduced-actionable-count`    | Introduced findings with severity medium/high. Determines pass/fail.   |
-| `introduced-informational-count` | Introduced findings with severity low/info.                            |
-| `resolved-count`                 | Findings present in the baseline and absent from the candidate.        |
-| `unchanged-count`                | Findings present, unchanged, in both revisions.                        |
-| `baseline-sha`                   | Full resolved baseline commit SHA.                                     |
-| `candidate-sha`                  | Full resolved candidate commit SHA.                                    |
+| Output                           | Description                                                             |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `result`                         | `no-new-regressions` or `new-regressions`. Not set if analysis failed.  |
+| `introduced-count`               | Findings introduced by the candidate, any severity.                     |
+| `introduced-actionable-count`    | Introduced findings with severity medium/high. Determines pass/fail.    |
+| `introduced-informational-count` | Introduced findings with severity low/info.                             |
+| `resolved-count`                 | Findings present in the baseline and absent from the candidate.         |
+| `unchanged-count`                | Findings present, unchanged, in both revisions.                         |
+| `baseline-sha`                   | Full resolved baseline commit SHA.                                      |
+| `candidate-sha`                  | Full resolved candidate commit SHA.                                     |
+| `analyzed-target-count`          | How many contexts the run covered. `1` means the startup context alone. |
 
 `result` deliberately never says "compatible" or "pass": PlaybookDiff does not claim Claude Code and Codex behave identically, only that no new deterministic configuration regression was introduced.
 
 ```yaml
 - id: playbookdiff
-  uses: JacobisEpic/playbookdiff@v1
+  uses: JacobisEpic/playbookdiff@v0
 
 - run: echo "${{ steps.playbookdiff.outputs.introduced-actionable-count }}"
 ```
@@ -180,11 +212,14 @@ Verify the committed bundle matches source with `pnpm action:verify-bundle` (bui
 
 ## Release readiness
 
-Making `uses: JacobisEpic/playbookdiff@v1` work for real users still requires, in order:
+The Action's runtime is `node24`, which current official GitHub Actions metadata documentation lists as a supported JavaScript action runtime alongside `node20`.
 
-1. Merge this Action into `main`.
-2. Create a Git tag (for example `v1.0.0`).
-3. Point a movable major tag (`v1`) at that release, per GitHub's own versioning recommendation for Actions.
-4. Optionally, publish the Action to the GitHub Marketplace.
+Making `uses: JacobisEpic/playbookdiff@v0` work for real users still requires, in order:
 
-None of these steps were performed as part of this change; they are release operations, not implementation, and are left for a deliberate decision.
+1. Create a Git tag for the release (for example `v0.1.0`).
+2. Point a movable major tag (`v0`) at it, per GitHub's own versioning recommendation for Actions.
+3. Optionally, publish the Action to the GitHub Marketplace. Marketplace listing is not required - an Action resolves from a public repository and tag without it.
+
+A `v1` tag is deliberately not used yet. The CLI JSON contract and the Action's output set are still settling, and a `v1` would promise a stability that has not been earned; see the versioning discussion in the repository's release notes.
+
+None of these steps are performed by the implementation; they are release operations, left for a deliberate decision.
