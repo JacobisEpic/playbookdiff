@@ -6,9 +6,9 @@ export const site = {
   baseline: "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
 };
 
-// Set this to the verified production origin after deployment, never a preview URL.
-// Leaving it unset deliberately omits canonical/OG URLs rather than inventing a domain.
-export const productionOrigin: string | undefined = undefined;
+// The verified production origin, never a preview or deployment-specific URL.
+// Vercel's stable project alias, confirmed to return HTTP 200 anonymously.
+export const productionOrigin: string | undefined = "https://playbookdiff.vercel.app";
 
 export const sourceUrl = (file: string, kind: "blob" | "tree" = "blob") =>
   `${site.repository}/${kind}/${site.baseline}/${file}`;

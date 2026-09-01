@@ -96,7 +96,7 @@ test("local anchor links point to existing IDs", () => {
   );
 });
 
-test("metadata is present without an invented origin", () => {
+test("metadata uses the verified production origin", () => {
   for (const name of [
     "description",
     "og:title",
@@ -106,7 +106,8 @@ test("metadata is present without an invented origin", () => {
   ]) {
     assert.ok(html.includes('="' + name + '"'), name);
   }
-  assert.equal(html.includes('rel="canonical"'), false);
+  assert.ok(html.includes('<link rel="canonical" href="https://playbookdiff.vercel.app"'));
+  assert.ok(html.includes('property="og:url" content="https://playbookdiff.vercel.app"'));
   assert.doesNotMatch(html, /(?:content|href)="https?:\/\/(?:localhost|127\.0\.0\.1)/);
 });
 

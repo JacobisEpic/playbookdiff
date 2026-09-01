@@ -87,9 +87,6 @@ export default function Home() {
                 Explore the CLI <span aria-hidden="true">↓</span>
               </a>
             </div>
-            <p className="release-note">
-              Pre-release. Source access may be limited until public launch.
-            </p>
           </div>
           <div className="hero-terminal" aria-label="Illustrative CLI workflow">
             <div className="terminal-bar">
