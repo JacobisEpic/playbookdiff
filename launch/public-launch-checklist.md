@@ -126,9 +126,25 @@ No analytics were installed, and no traffic or download metrics exist.
 Package downloads are unavailable because the CLI is not published to npm.
 Action adoption is unmeasured; no third-party usage is claimed.
 
+## Concurrent website redesign
+
+A separate agent was mid-redesign of `website/` while this launch ran, with the work uncommitted in the shared worktree.
+Nothing in that work was committed, reverted, staged, or otherwise touched here.
+
+The launch fixes to `website/app/page.tsx`, `website/lib/site.ts`, and `website/tests/site.test.mjs` were therefore written as a commit built from the `HEAD` tree with Git plumbing, so the other agent's files on disk stayed byte-identical.
+
+Two consequences to carry forward when that redesign is committed:
+
+- The redesign's copy of `website/lib/site.ts` still has `productionOrigin` set to `undefined`. Committing it as-is silently reverts the canonical URL, `metadataBase`, and `og:url`. Re-apply `"https://playbookdiff.vercel.app"`.
+- The redesign's copy of `website/tests/site.test.mjs` still asserts the pre-deployment metadata state and, separately, was failing its own `semantic structure and limitations are present` assertion at the time of the launch. Reconcile both before merging.
+
+`website/AGENTS.md` and `website/CLAUDE.md` appeared during this work.
+They are generated and re-added by `next dev`, not authored; decide deliberately whether to commit or ignore them.
+
 ## Remaining
 
 - [ ] Owner reviews the [Vercel OSS application draft](vercel-oss-application.md), supplies the personal fields, and submits it before the verified September 13 deadline.
+- [ ] Land the concurrent `website/` redesign, preserving `productionOrigin`, per the section above.
 
 Everything else on the original checklist is complete.
 npm publication and a custom domain remain deliberately out of scope.
