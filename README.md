@@ -45,8 +45,8 @@ MEDIUM  Instruction missing
 
 ## Install
 
-PlaybookDiff is not published to npm yet, and there is no released Action tag.
-Until then, build it from source:
+The GitHub Action is released and usable directly (see [Use it in CI](#use-it-in-ci)).
+The CLI is not published to npm yet, so build it from source:
 
 ```sh
 git clone https://github.com/JacobisEpic/playbookdiff.git
@@ -91,9 +91,6 @@ See [the CLI reference](docs/cli.md) for `check`, `explain`, `diff`, and the `--
 
 ## Use it in CI
 
-> **Not yet released.** The workflow below is the intended usage once a tag exists.
-> No release tag exists today, so this snippet does not resolve yet - see [the GitHub Action reference](docs/github-action.md) for what a real install requires now.
-
 ```yaml
 on: pull_request
 
@@ -112,6 +109,7 @@ jobs:
 ```
 
 That is the whole configuration.
+`@v0` is a movable tag tracking the latest `0.x` release; pin `@v0.1.0`, or a commit SHA, if you prefer to control upgrades yourself.
 The Action analyzes the repository root plus the configuration scopes the pull request touched, and fails only when the pull request introduces a _new_ actionable regression - never on pre-existing divergence.
 It needs `contents: read`, no token, and no API access, so fork pull requests behave the same as internal ones.
 
@@ -153,8 +151,11 @@ Full detail in [scope and limitations](docs/limitations.md).
 
 ## Status
 
-Pre-release, heading for a public beta.
+Public beta, released as `v0.1.0`.
 The deterministic engine, the CLI, and the Action have been validated against real open-source repositories with substantial agent configuration; see [validation](docs/validation.md).
+
+`0.x` means the command-line output shape, the JSON contract, and the Action's output set may still change between minor versions as the tool meets more real repositories.
+What will not change is the refusal to guess: a result that cannot be established deterministically stays `unknown`.
 
 Semantic comparison, PR comments, a hosted service, and support for additional harnesses are intentionally not implemented.
 

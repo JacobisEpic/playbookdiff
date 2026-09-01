@@ -7,22 +7,21 @@ Pre-existing compatibility debt never blocks CI, because the Action reuses the e
 The Action is a thin wrapper: it contains no comparator, actionability, or regression logic of its own.
 It calls the same `runDiff` orchestration the CLI uses, parses the same `--json` contract, and renders the result as a GitHub Step Summary and a small set of outputs.
 
-## Current release status
-
-This repository does not yet have a tagged release.
-The examples below show both forms:
+## Versions
 
 ```yaml
-# Once a release exists:
+# Movable major tag, tracking the latest 0.x release:
 - uses: JacobisEpic/playbookdiff@v0
 
-# For now, or when developing against this repository directly:
+# Exact release:
+- uses: JacobisEpic/playbookdiff@v0.1.0
+
+# Exact commit, the strictest option for any third-party Action:
 - uses: JacobisEpic/playbookdiff@<commit-sha>
 ```
 
-A pinned commit SHA is the only form that resolves today, and pinning a SHA remains the safest choice for any third-party Action.
-
-See "Release readiness" at the end of this document for exactly what remains before a tag exists.
+`@v0` moves as `0.x` releases land, so a workflow using it picks up fixes without edits.
+While the tool is at `0.x`, the output set may still change between minor versions; pin `@v0.1.0` or a commit SHA if you would rather adopt those changes deliberately.
 
 ## Example workflow
 
@@ -210,16 +209,11 @@ Consuming this Action never requires pnpm, Node.js, or any PlaybookDiff developm
 Rebuild the bundle with `pnpm action:build` after changing `packages/action/src/`.
 Verify the committed bundle matches source with `pnpm action:verify-bundle` (builds, then fails if `git diff` finds any difference under `packages/action/dist`) - this is the check that would catch someone editing the Action's source and forgetting to regenerate the bundle.
 
-## Release readiness
+## Runtime and release
 
 The Action's runtime is `node24`, which current official GitHub Actions metadata documentation lists as a supported JavaScript action runtime alongside `node20`.
+The committed bundle is self-contained, so GitHub runs it without installing dependencies or building anything first.
 
-Making `uses: JacobisEpic/playbookdiff@v0` work for real users still requires, in order:
+A `v1` tag is deliberately not used. The CLI JSON contract and the Action's output set both changed during the run-up to this release, and `v1` would promise a stability that has not been earned yet; `0.x` states that honestly.
 
-1. Create a Git tag for the release (for example `v0.1.0`).
-2. Point a movable major tag (`v0`) at it, per GitHub's own versioning recommendation for Actions.
-3. Optionally, publish the Action to the GitHub Marketplace. Marketplace listing is not required - an Action resolves from a public repository and tag without it.
-
-A `v1` tag is deliberately not used yet. The CLI JSON contract and the Action's output set are still settling, and a `v1` would promise a stability that has not been earned; see the versioning discussion in the repository's release notes.
-
-None of these steps are performed by the implementation; they are release operations, left for a deliberate decision.
+The Action is not listed on the GitHub Marketplace, which is not required - an Action resolves from a public repository and tag without it.
