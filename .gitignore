@@ -10,3 +10,6 @@ coverage/
 !packages/action/dist/
 !packages/action/dist/index.mjs
 
+
+# Vercel CLI project link metadata (account/project identifiers stay local).
+.vercel/
