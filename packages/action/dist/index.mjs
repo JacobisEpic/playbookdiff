@@ -16940,6 +16940,7 @@ function buildOutputs(outcome) {
 		"introduced-informational-count": String(summary.introducedInformational),
 		"resolved-count": String(summary.resolved),
 		"unchanged-count": String(summary.unchanged),
+		"analyzed-target-count": String(json.analyzed.targets.length),
 		"baseline-sha": json.baseline.commit,
 		"candidate-sha": json.candidate.commit
 	};
@@ -18178,23 +18179,19 @@ function indexById(findings, report) {
 	return index;
 }
 /**
-* Compares two CompatibilityReports by stable finding ID to determine which
-* findings a candidate introduced, resolved, or left unchanged relative to a
-* baseline. Matching is by ID alone - never by source line numbers, prose, or
-* host paths - so a finding that merely shifted lines or was re-analyzed at a
-* different filesystem root is still recognized as the same finding.
+* The same ID-based delta over bare finding lists, for callers that compare
+* more than one analysis context per revision and have already merged each
+* revision's findings into a single deduplicated set. Taking findings rather
+* than reports keeps that merge honest: there is no synthesized
+* `CompatibilityReport` whose `left`, `right`, and `summary` would have to
+* claim to describe several contexts at once.
 *
-* Because severity is a pure function of a finding's category and type (both
-* embedded in its stable ID), the same ID can never carry a different
-* severity across two reports produced by `compareEffectiveConfigs`; there is
-* no third "changed" bucket to model.
-*
-* Pure: performs no I/O, does not mutate its inputs, and does not know about
-* Git, the filesystem, or the CLI's actionability policy.
+* Pure, and subject to the same uniqueness contract: each list must already
+* contain each stable ID at most once.
 */
-function diffCompatibilityReports(baseline, candidate) {
-	const baselineIndex = indexById(baseline.findings, "baseline");
-	const candidateIndex = indexById(candidate.findings, "candidate");
+function diffFindings(baselineFindings, candidateFindings) {
+	const baselineIndex = indexById(baselineFindings, "baseline");
+	const candidateIndex = indexById(candidateFindings, "candidate");
 	const introduced = [];
 	const unchanged = [];
 	for (const [id, finding] of candidateIndex) if (baselineIndex.has(id)) unchanged.push(finding);
@@ -39565,6 +39562,22 @@ async function discoverRules(ctx, excludes, registry) {
 	};
 }
 /**
+* Reads the `paths:` globs from one Claude rule or skill file's frontmatter.
+*
+* Exposed because deciding whether two work targets are interchangeable
+* depends on which path-scoped patterns match them, and that judgement belongs
+* to the same frontmatter parsing and matcher this adapter already owns rather
+* than to a caller re-deriving Claude's conventions. Returns an empty list for
+* a file with no frontmatter, no `paths` field, or unparseable frontmatter -
+* absence of a usable pattern is not an error here, it just means the file
+* conditions nothing.
+*/
+function readClaudePathPatterns(markdownSource) {
+	const frontmatter = extractFrontmatter$1(markdownSource);
+	if (frontmatter.parseError) return [];
+	return readPathsField(frontmatter.data) ?? [];
+}
+/**
 * Reads `claudeMdExcludes` from `<cwd>/.claude/settings.json` only - current
 * documentation states project settings are loaded from `<cwd>/.claude/`
 * without ancestor fallback, unlike CLAUDE.md/rules discovery.
@@ -42927,7 +42940,7 @@ async function compileCodexConfig(context) {
 	};
 }
 //#endregion
-//#region ../cli/dist/cli-PkEi2STM.js
+//#region ../cli/dist/cli-C2E2GuUm.js
 /**
 * A caller contract violation raised by an adapter while resolving
 * repository/cwd/targetPath (missing repository, path escapes the
@@ -43030,72 +43043,6 @@ function renderDiagnostics(harness, diagnostics) {
 	}
 	return lines;
 }
-function shortSha$1(commit) {
-	return commit.slice(0, 7);
-}
-function plural$1(count, noun) {
-	return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
-function renderSection(title, findings) {
-	if (findings.length === 0) return [];
-	const lines = [title, ""];
-	for (const finding of findings) {
-		lines.push(...renderFinding(finding));
-		lines.push("");
-	}
-	return lines;
-}
-function resultLine(summary) {
-	if (summary.introducedActionable > 0) return `Result: ${plural$1(summary.introducedActionable, "new compatibility regression")}`;
-	return "Result: no new actionable compatibility regressions";
-}
-function renderDiffHuman(context, baseline, candidate, delta, summary) {
-	const lines = [];
-	lines.push("PlaybookDiff");
-	lines.push("");
-	lines.push("Claude Code <-> Codex");
-	lines.push("Git compatibility diff");
-	lines.push("");
-	lines.push(`Repository: ${context.repository}`);
-	lines.push(`Baseline: ${baseline.revision} (${shortSha$1(baseline.commit)})`);
-	lines.push(`Candidate: ${candidate.revision} (${shortSha$1(candidate.commit)})`);
-	lines.push(`Launch cwd: ${context.cwd}`);
-	lines.push(`Target: ${context.targetPath ?? "(repository root)"}`);
-	lines.push("");
-	lines.push(plural$1(summary.introducedActionable, "new actionable regression"));
-	lines.push(plural$1(summary.introducedInformational, "new informational finding"));
-	lines.push(plural$1(summary.resolved, "resolved finding"));
-	lines.push(plural$1(summary.unchanged, "unchanged pre-existing finding"));
-	lines.push("");
-	lines.push(...renderSection("Introduced", delta.introduced));
-	lines.push(...renderSection("Resolved", delta.resolved));
-	if (summary.unchanged > 0) {
-		lines.push(`${plural$1(summary.unchanged, "pre-existing finding")} unchanged from the baseline (not shown; see "playbookdiff check" against a specific revision to inspect them).`);
-		lines.push("");
-	}
-	const diagnosticLines = [...renderDiagnostics("claude", candidate.diagnostics.claude), ...renderDiagnostics("codex", candidate.diagnostics.codex)];
-	if (diagnosticLines.length > 0) {
-		lines.push("Candidate diagnostics");
-		lines.push(...diagnosticLines);
-		lines.push("");
-	}
-	lines.push(resultLine(summary));
-	return lines.join("\n");
-}
-function toDiffJson(context, baseline, candidate, delta, summary) {
-	const output = {
-		context,
-		baseline,
-		candidate,
-		diff: {
-			introduced: delta.introduced,
-			resolved: delta.resolved,
-			unchanged: delta.unchanged,
-			summary
-		}
-	};
-	return JSON.stringify(output, null, 2);
-}
 const execFileAsync = promisify(execFile);
 /**
 * A `git` invocation failed (non-zero exit, or `git`/the given `cwd` could
@@ -43129,6 +43076,377 @@ async function runGit(args, options) {
 	} catch (error) {
 		throw new GitCommandError(args, error instanceof Error ? error.message : String(error));
 	}
+}
+/**
+* Repository paths that differ between two already-resolved commits.
+*
+* Both sides of a rename or copy are reported. Git expresses a rename as one
+* entry with an old and a new path, and the two can sit in different
+* directories governed by different configuration, so dropping either side
+* would lose a scope that genuinely changed. Reporting both cannot double-count
+* a regression: derived analysis targets are deduplicated by effective scope,
+* and the delta itself is taken over stable finding IDs.
+*
+* Reads only local object data between commits the caller already resolved. It
+* never fetches, never touches the working tree, and never runs repository
+* code.
+*/
+async function listChangedPaths(repository, baselineCommit, candidateCommit) {
+	const { stdout } = await runGit([
+		"diff",
+		"--name-status",
+		"--find-renames",
+		"--find-copies",
+		"-z",
+		"--no-textconv",
+		"--no-ext-diff",
+		baselineCommit,
+		candidateCommit
+	], { cwd: repository });
+	return parseNameStatusZ(stdout);
+}
+/**
+* Parses `git diff --name-status -z` output.
+*
+* The `-z` form is NUL-separated rather than newline-separated and leaves
+* paths completely unquoted and unescaped, so a path containing a newline,
+* quote, or non-ASCII byte parses correctly instead of arriving mangled.
+* Status codes are followed by one path, except `R`/`C`, which carry a
+* similarity score and are followed by two.
+*/
+function parseNameStatusZ(stdout) {
+	const fields = stdout.split("\0");
+	const paths = [];
+	let index = 0;
+	while (index < fields.length) {
+		const status = fields[index];
+		index += 1;
+		if (status === void 0 || status.length === 0) continue;
+		const expected = status.startsWith("R") || status.startsWith("C") ? 2 : 1;
+		for (let taken = 0; taken < expected; taken += 1) {
+			const value = fields[index];
+			index += 1;
+			if (value !== void 0 && value.length > 0) paths.push(value);
+		}
+	}
+	return [...new Set(paths)].sort();
+}
+/**
+* One file's contents at a commit, or `undefined` when the path does not exist
+* there. A path that is added by the candidate simply has no baseline blob, and
+* vice versa for a deletion, so absence is an ordinary outcome rather than a
+* failure.
+*
+* `<commit>:<path>` is passed as a single argument-array element and never
+* through a shell, and `git show` on a blob reads object data without checking
+* anything out.
+*/
+async function readFileAtCommit(repository, commit, path) {
+	try {
+		const { stdout } = await runGit([
+			"show",
+			"--no-textconv",
+			`${commit}:${path}`
+		], { cwd: repository });
+		return stdout;
+	} catch {
+		return;
+	}
+}
+/** Every tracked path at a commit, read from the commit's tree rather than a checkout. */
+async function listTrackedPaths(repository, commit) {
+	const { stdout } = await runGit([
+		"ls-tree",
+		"-r",
+		"--name-only",
+		"-z",
+		commit
+	], { cwd: repository });
+	return stdout.split("\0").filter((entry) => entry.length > 0);
+}
+const INSTRUCTION_BASENAMES = /* @__PURE__ */ new Set([
+	"CLAUDE.md",
+	"CLAUDE.local.md",
+	"AGENTS.md",
+	"AGENTS.override.md"
+]);
+const CONFIGURATION_DIRECTORIES = /* @__PURE__ */ new Set([
+	".claude",
+	".agents",
+	".codex"
+]);
+const ROOT = ".";
+function posixDirname(path) {
+	const index = path.lastIndexOf("/");
+	return index === -1 ? ROOT : path.slice(0, index);
+}
+function posixBasename(path) {
+	const index = path.lastIndexOf("/");
+	return index === -1 ? path : path.slice(index + 1);
+}
+/**
+* The repository directory whose subtree a changed configuration file governs,
+* or `undefined` when the path is not recognized agent configuration.
+*
+* A configuration file does not govern the directory that physically contains
+* it: `apps/api/.claude/rules/go.md` governs `apps/api`, not
+* `apps/api/.claude/rules`. Collapsing the harness-specific container directory
+* is what lets a changed rule, skill, or MCP file resolve to the same scope as
+* a changed instruction file beside it.
+*/
+function governingDirectory(path) {
+	const segments = path.split("/");
+	const containerIndex = segments.findIndex((segment) => CONFIGURATION_DIRECTORIES.has(segment));
+	if (containerIndex !== -1) {
+		const prefix = segments.slice(0, containerIndex);
+		return prefix.length === 0 ? ROOT : prefix.join("/");
+	}
+	const basename = posixBasename(path);
+	if (INSTRUCTION_BASENAMES.has(basename) || basename === ".mcp.json") return posixDirname(path);
+}
+function isConfigurationPath(path) {
+	return governingDirectory(path) !== void 0;
+}
+/**
+* The scope a target shares with every other target that would compile the same
+* effective configuration.
+*
+* Two work targets are interchangeable when they sit in the same directory - so
+* a harness's descent toward them visits the same instruction, rule, and skill
+* directories - and when the same path-scoped patterns match them. Restricting
+* the pattern side to patterns that actually changed is what keeps this bounded:
+* an unchanged path-scoped rule produces the same finding at both revisions and
+* therefore cannot turn into a regression, so it can never be the reason two
+* contexts must be analyzed separately.
+*/
+function scopeKey(target, changedPatterns) {
+	const { path } = target;
+	if (path === void 0) return "\0startup";
+	return `${target.reason === "configuration-scope" ? path : posixDirname(path)}\0${changedPatterns.filter((pattern) => matchesClaudeRulePath([pattern], path)).sort().join("\0")}`;
+}
+/**
+* Orders derived contexts deterministically: the startup context first, then by
+* path. Output must not depend on Git's enumeration order or on filesystem
+* iteration, so the same revision pair always produces the same analyses.
+*/
+function compareTargets(left, right) {
+	if (left.path === void 0) return right.path === void 0 ? 0 : -1;
+	if (right.path === void 0) return 1;
+	return left.path < right.path ? -1 : left.path > right.path ? 1 : 0;
+}
+/**
+* Chooses which analysis contexts represent a revision pair, given the paths
+* that differ between the two commits.
+*
+* The startup context is always included, so root-level configuration is
+* covered exactly as it was before automatic derivation existed. Beyond that:
+*
+* - a changed configuration file contributes its governing directory, because a
+*   harness that reaches nested configuration on demand only does so once it
+*   works on something in that subtree;
+* - a changed source file contributes itself, because configuration nested
+*   above it, or scoped to paths like it, applies there;
+* - a path-scoped pattern from a changed rule or skill contributes a real
+*   tracked file it matches, supplied by the caller, so a rule whose scope
+*   nothing else in the pull request exercises is still represented.
+*
+* Contexts are then deduplicated by effective scope and bounded. Nothing here
+* invents a file: every derived path is either a changed path, a directory that
+* contains changed configuration, or a tracked path the caller located.
+*/
+function deriveAnalysisTargets(input) {
+	const changedPatterns = input.changedPathPatterns ?? [];
+	const limit = input.limit ?? 48;
+	const candidates = [{ reason: "startup" }];
+	for (const path of [...input.changedPaths].sort()) if (!isConfigurationPath(path)) candidates.push({
+		path,
+		reason: "changed-source"
+	});
+	for (const path of [...input.patternRepresentatives ?? []].sort()) candidates.push({
+		path,
+		reason: "path-scoped-rule"
+	});
+	const governingDirectories = /* @__PURE__ */ new Set();
+	for (const path of input.changedPaths) {
+		const directory = governingDirectory(path);
+		if (directory !== void 0 && directory !== ROOT) governingDirectories.add(directory);
+	}
+	for (const directory of [...governingDirectories].sort()) candidates.push({
+		path: directory,
+		reason: "configuration-scope"
+	});
+	const seen = /* @__PURE__ */ new Set();
+	const targets = [];
+	let omitted = 0;
+	for (const candidate of candidates) {
+		const key = scopeKey(candidate, changedPatterns);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		if (targets.length >= limit) {
+			omitted += 1;
+			continue;
+		}
+		targets.push(candidate);
+	}
+	return {
+		targets: targets.sort(compareTargets),
+		omitted
+	};
+}
+/**
+* Picks one tracked path per pattern to represent a changed path-scoped rule or
+* skill, preferring a path the pull request already changed so the modeled
+* context stays close to what the pull request is about, and otherwise falling
+* back to the first matching tracked path.
+*
+* Returning nothing when a pattern matches no tracked path is deliberate: a
+* scope the repository has no files in is not a scope any session can reach, and
+* manufacturing one would report divergence that no developer can encounter.
+*/
+function selectPatternRepresentatives(input) {
+	const changed = [...input.changedPaths].sort();
+	const tracked = [...input.trackedPaths].sort();
+	const representatives = /* @__PURE__ */ new Set();
+	for (const pattern of input.patterns) {
+		const fromChanged = changed.find((path) => matchesClaudeRulePath([pattern], path));
+		if (fromChanged !== void 0) {
+			representatives.add(fromChanged);
+			continue;
+		}
+		const fromTracked = tracked.find((path) => matchesClaudeRulePath([pattern], path));
+		if (fromTracked !== void 0) representatives.add(fromTracked);
+	}
+	return [...representatives].sort();
+}
+/**
+* Claude configuration files whose frontmatter can carry `paths:` globs. Only
+* these are read for patterns, which keeps the number of extra Git reads
+* proportional to how much configuration a pull request touched rather than to
+* repository size.
+*/
+function carriesPathPatterns(path) {
+	return /(^|\/)\.claude\/rules\/.+\.md$/.test(path) || /(^|\/)\.claude\/skills\/[^/]+\/SKILL\.md$/.test(path);
+}
+async function collectChangedPathPatterns(repository, commits, changedPaths) {
+	const patterns = /* @__PURE__ */ new Set();
+	for (const path of changedPaths.filter(carriesPathPatterns)) for (const commit of commits) {
+		const content = await readFileAtCommit(repository, commit, path);
+		if (content === void 0) continue;
+		for (const pattern of readClaudePathPatterns(content)) patterns.add(pattern);
+	}
+	return [...patterns].sort();
+}
+/**
+* Works out which analysis contexts represent a revision pair, reading only
+* local Git object data for the two commits the caller already resolved.
+*
+* Both revisions contribute: a rule's patterns are read at each commit so a
+* pattern that only exists on one side still shapes the derivation, and the
+* resulting target list is applied identically to both revisions. That symmetry
+* is what keeps introduced and resolved meaningful - the two sides are never
+* compared through different sets of contexts.
+*
+* No fetch, no checkout, no repository code, and no GitHub API.
+*/
+async function deriveTargetsForRevisionPair(options) {
+	const { repository, baselineCommit, candidateCommit } = options;
+	const changedPaths = await listChangedPaths(repository, baselineCommit, candidateCommit);
+	const changedPathPatterns = await collectChangedPathPatterns(repository, [baselineCommit, candidateCommit], changedPaths);
+	let patternRepresentatives = [];
+	if (changedPathPatterns.length > 0) {
+		const trackedPaths = await listTrackedPaths(repository, candidateCommit);
+		patternRepresentatives = selectPatternRepresentatives({
+			patterns: changedPathPatterns,
+			changedPaths: changedPaths.filter((path) => !isConfigurationPath(path)),
+			trackedPaths
+		});
+	}
+	return {
+		...deriveAnalysisTargets({
+			changedPaths,
+			changedPathPatterns,
+			patternRepresentatives,
+			...options.limit !== void 0 ? { limit: options.limit } : {}
+		}),
+		changedPathCount: changedPaths.length
+	};
+}
+function shortSha$1(commit) {
+	return commit.slice(0, 7);
+}
+function plural$1(count, noun) {
+	return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+function renderSection(title, findings) {
+	if (findings.length === 0) return [];
+	const lines = [title, ""];
+	for (const finding of findings) {
+		lines.push(...renderFinding(finding));
+		lines.push("");
+	}
+	return lines;
+}
+function resultLine(summary) {
+	if (summary.introducedActionable > 0) return `Result: ${plural$1(summary.introducedActionable, "new compatibility regression")}`;
+	return "Result: no new actionable compatibility regressions";
+}
+/**
+* One line stating the coverage this run had, so an empty result is read as
+* "nothing new in what was analyzed" rather than "nothing to find anywhere".
+*/
+function renderAnalyzedTargets(analyzed) {
+	if (!analyzed.derived) return `Target: ${analyzed.targets[0]?.path ?? "(repository root)"}`;
+	const scopes = analyzed.targets.filter((target) => target.path !== void 0).length;
+	const base = `Analyzed: startup context${scopes > 0 ? ` and ${plural$1(scopes, "changed scope")}` : ""} derived from ${plural$1(analyzed.changedPathCount, "changed path")}`;
+	return analyzed.omitted > 0 ? `${base} (${analyzed.omitted} further scopes not analyzed)` : base;
+}
+function renderDiffHuman(context, baseline, candidate, delta, summary, analyzed) {
+	const lines = [];
+	lines.push("PlaybookDiff");
+	lines.push("");
+	lines.push("Claude Code <-> Codex");
+	lines.push("Git compatibility diff");
+	lines.push("");
+	lines.push(`Repository: ${context.repository}`);
+	lines.push(`Baseline: ${baseline.revision} (${shortSha$1(baseline.commit)})`);
+	lines.push(`Candidate: ${candidate.revision} (${shortSha$1(candidate.commit)})`);
+	lines.push(`Launch cwd: ${context.cwd}`);
+	lines.push(renderAnalyzedTargets(analyzed));
+	lines.push("");
+	lines.push(plural$1(summary.introducedActionable, "new actionable regression"));
+	lines.push(plural$1(summary.introducedInformational, "new informational finding"));
+	lines.push(plural$1(summary.resolved, "resolved finding"));
+	lines.push(plural$1(summary.unchanged, "unchanged pre-existing finding"));
+	lines.push("");
+	lines.push(...renderSection("Introduced", delta.introduced));
+	lines.push(...renderSection("Resolved", delta.resolved));
+	if (summary.unchanged > 0) {
+		lines.push(`${plural$1(summary.unchanged, "pre-existing finding")} unchanged from the baseline (not shown; see "playbookdiff check" against a specific revision to inspect them).`);
+		lines.push("");
+	}
+	const diagnosticLines = [...renderDiagnostics("claude", candidate.diagnostics.claude), ...renderDiagnostics("codex", candidate.diagnostics.codex)];
+	if (diagnosticLines.length > 0) {
+		lines.push("Candidate diagnostics");
+		lines.push(...diagnosticLines);
+		lines.push("");
+	}
+	lines.push(resultLine(summary));
+	return lines.join("\n");
+}
+function toDiffJson(context, baseline, candidate, delta, summary, analyzed) {
+	const output = {
+		context,
+		analyzed,
+		baseline,
+		candidate,
+		diff: {
+			introduced: delta.introduced,
+			resolved: delta.resolved,
+			unchanged: delta.unchanged,
+			summary
+		}
+	};
+	return JSON.stringify(output, null, 2);
 }
 /** The `<baseline>..<candidate>` argument was not a well-formed two-revision range. */
 var InvalidRevisionRangeError = class extends Error {
@@ -43297,23 +43615,79 @@ function buildDiffSummary(introduced, resolved, unchanged) {
 		unchanged: unchanged.length
 	};
 }
-async function analyzeAtRevision(repository, revision, label, cwd, targetPath) {
+/**
+* Analyzes one revision once per modeled target, inside a single disposable
+* worktree, and merges the results into one deduplicated finding set for that
+* revision.
+*
+* Merging by stable finding ID, rather than keeping per-target deltas, is what
+* makes multi-target regression semantics correct: a finding that any baseline
+* context already produced is part of the repository's existing state, so it can
+* never be reported as introduced just because some other context also reaches
+* it. The retained instance is the first in target order, which is
+* deterministic.
+*/
+async function analyzeAtRevision(repository, revision, label, cwd, targets) {
 	return withMaterializedRevision(repository, revision, label, async (directory, commit) => {
-		try {
-			return {
-				result: await analyzeRepository({
+		const findings = /* @__PURE__ */ new Map();
+		let primary;
+		for (const target of targets) {
+			let result;
+			try {
+				result = await analyzeRepository({
 					repository: directory,
 					cwd,
-					...targetPath !== void 0 ? { targetPath } : {}
-				}),
-				revision,
-				commit
-			};
-		} catch (error) {
-			if (isAnalysisContextError(error)) throw new DiffRevisionAnalysisError(label, revision);
-			throw error;
+					...target.path !== void 0 ? { targetPath: target.path } : {}
+				});
+			} catch (error) {
+				if (isAnalysisContextError(error)) {
+					if (target.reason !== "startup" && targets.length > 1) continue;
+					throw new DiffRevisionAnalysisError(label, revision);
+				}
+				throw error;
+			}
+			primary ??= result;
+			for (const finding of result.report.findings) if (!findings.has(finding.id)) findings.set(finding.id, finding);
 		}
+		if (primary === void 0) throw new DiffRevisionAnalysisError(label, revision);
+		return {
+			result: primary,
+			findings: [...findings.values()],
+			revision,
+			commit
+		};
 	});
+}
+/**
+* Decides which contexts this run analyzes.
+*
+* An explicit `targetPath` is honored exactly as given and never combined with
+* derived contexts, so a caller who named a work target gets that one analysis
+* and nothing else. Automatic derivation applies only when it was requested and
+* no target was named; if derivation cannot read the revision pair's changed
+* paths, analysis falls back to the startup context rather than failing, since
+* that is the behavior callers had before derivation existed.
+*/
+async function resolveAnalyzedTargets(options, baselineRevision, candidateRevision) {
+	if (options.targetPath !== void 0 || options.deriveTargets !== true) return {
+		targets: [{
+			reason: "startup",
+			...options.targetPath !== void 0 ? { path: options.targetPath } : {}
+		}],
+		changedPathCount: 0,
+		omitted: 0,
+		derived: false
+	};
+	const baselineCommit = await resolveRevision(options.repository, baselineRevision, "baseline");
+	const candidateCommit = await resolveRevision(options.repository, candidateRevision, "candidate");
+	return {
+		...await deriveTargetsForRevisionPair({
+			repository: options.repository,
+			baselineCommit,
+			candidateCommit
+		}),
+		derived: true
+	};
 }
 /**
 * Compares PlaybookDiff analysis at two Git revisions of the same repository
@@ -43327,9 +43701,10 @@ async function runDiff(options) {
 	try {
 		await assertGitWorkTree(options.repository);
 		const { baseline: baselineRevision, candidate: candidateRevision } = parseRevisionRange(options.range);
-		const baselineOutcome = await analyzeAtRevision(options.repository, baselineRevision, "baseline", options.cwd, options.targetPath);
-		const candidateOutcome = await analyzeAtRevision(options.repository, candidateRevision, "candidate", options.cwd, options.targetPath);
-		const delta = diffCompatibilityReports(baselineOutcome.result.report, candidateOutcome.result.report);
+		const analyzed = await resolveAnalyzedTargets(options, baselineRevision, candidateRevision);
+		const baselineOutcome = await analyzeAtRevision(options.repository, baselineRevision, "baseline", options.cwd, analyzed.targets);
+		const candidateOutcome = await analyzeAtRevision(options.repository, candidateRevision, "candidate", options.cwd, analyzed.targets);
+		const delta = diffFindings(baselineOutcome.findings, candidateOutcome.findings);
 		const summary = buildDiffSummary(delta.introduced, delta.resolved, delta.unchanged);
 		const exitCode = determineDiffExitCode(delta.introduced);
 		const context = buildCliContext(options.repository, candidateOutcome.result.claude);
@@ -43351,7 +43726,7 @@ async function runDiff(options) {
 		};
 		return {
 			exitCode,
-			stdout: options.json ? toDiffJson(context, baseline, candidate, delta, summary) : renderDiffHuman(context, baseline, candidate, delta, summary)
+			stdout: options.json ? toDiffJson(context, baseline, candidate, delta, summary, analyzed) : renderDiffHuman(context, baseline, candidate, delta, summary, analyzed)
 		};
 	} catch (error) {
 		if (isDiffInputError(error)) return {
@@ -43381,6 +43756,7 @@ async function runAction(options) {
 		range: `${options.baseline}..${options.candidate}`,
 		cwd: options.cwd,
 		...options.targetPath !== void 0 ? { targetPath: options.targetPath } : {},
+		deriveTargets: options.deriveTargets ?? true,
 		json: true
 	});
 	if (outcome.exitCode === 2) return {
@@ -43460,6 +43836,24 @@ function renderFindingMarkdown(finding) {
 	return lines;
 }
 /**
+* States what the run covered.
+*
+* A reader needs this to interpret a green result: "no new regressions" means
+* nothing new appeared in the contexts listed here, and saying which contexts
+* those were is the difference between a claim about a pull request and a claim
+* about a whole repository.
+*/
+function renderAnalyzedLine(json) {
+	const { analyzed } = json;
+	if (!analyzed.derived) {
+		const target = analyzed.targets[0]?.path ?? json.context.targetPath;
+		return target !== void 0 ? `the requested target \`${escapeMarkdown(target)}\`` : "the repository-root startup context";
+	}
+	const scopes = analyzed.targets.filter((target) => target.path !== void 0);
+	const base = scopes.length === 0 ? `the repository-root startup context (${plural(analyzed.changedPathCount, "changed path")}, no nested scope affected)` : `the repository-root startup context and ${plural(scopes.length, "changed scope")}, derived from ${plural(analyzed.changedPathCount, "changed path")}`;
+	return analyzed.omitted > 0 ? `${base}; ${analyzed.omitted} further scopes were not analyzed` : base;
+}
+/**
 * Renders a deterministic GitHub Step Summary in Markdown from the same
 * `diff --json` contract the CLI already produces. Contains no comparison
 * or actionability logic: `summary.introducedActionable` (already computed
@@ -43476,7 +43870,7 @@ function renderStepSummary(json) {
 	lines.push(`**Baseline:** ${escapeMarkdown(json.baseline.revision)} (\`${shortSha(json.baseline.commit)}\`)`);
 	lines.push(`**Candidate:** ${escapeMarkdown(json.candidate.revision)} (\`${shortSha(json.candidate.commit)}\`)`);
 	lines.push(`**Launch cwd:** ${escapeMarkdown(json.context.cwd)}`);
-	lines.push(`**Target:** ${json.context.targetPath !== void 0 ? escapeMarkdown(json.context.targetPath) : "(repository root)"}`);
+	lines.push(`**Analyzed:** ${renderAnalyzedLine(json)}`);
 	lines.push("");
 	lines.push("## Result");
 	lines.push("");
@@ -43537,7 +43931,8 @@ async function main() {
 		baseline: revisions.baseline,
 		candidate: revisions.candidate,
 		cwd,
-		...targetPath !== void 0 ? { targetPath } : {}
+		...targetPath !== void 0 ? { targetPath } : {},
+		deriveTargets: true
 	});
 	if (outcome.status === "error") {
 		import_core.setFailed(enrichAnalysisErrorMessage(outcome.message));
@@ -43551,6 +43946,7 @@ async function main() {
 	import_core.info(`Introduced: ${summary.introduced} (${summary.introducedActionable} actionable, ${summary.introducedInformational} informational)`);
 	import_core.info(`Resolved: ${summary.resolved}`);
 	import_core.info(`Unchanged: ${summary.unchanged}`);
+	import_core.info(`Analyzed contexts: ${outcome.json.analyzed.targets.length}`);
 	await import_core.summary.addRaw(renderStepSummary(outcome.json)).write();
 	if (outcome.status === "regressions") import_core.setFailed(`PlaybookDiff found ${summary.introducedActionable} new actionable Claude Code <-> Codex compatibility regression(s).`);
 	else import_core.info("No new actionable Claude Code <-> Codex compatibility regressions.");
