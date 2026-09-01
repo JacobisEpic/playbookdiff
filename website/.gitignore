@@ -6,3 +6,9 @@ coverage/
 next-env.d.ts
 .vercel/
 .env*
+
+# Written by `next dev` (node_modules/next/dist/server/lib/generate-agent-files.js),
+# not authored project configuration. The repository's own agent instructions
+# live in the root AGENTS.md/CLAUDE.md.
+AGENTS.md
+CLAUDE.md

@@ -35,47 +35,48 @@ The example buttons require a browser interaction check in addition to these lig
 
 ## Vercel deployment
 
-This task did not create or deploy a Vercel project.
-After the owner has reconciled this branch and approved deployment:
+The site is deployed as the `playbookdiff` Vercel project, Git-connected to `JacobisEpic/playbookdiff`.
+A push to `main` produces the production deployment at <https://playbookdiff.vercel.app>; a branch or pull request produces a preview.
+The Vercel CLI is for setup, inspection, and troubleshooting only - running `vercel deploy --prod` alongside the Git integration just duplicates a build for the same commit.
 
-1. Import the GitHub repository into a Vercel project.
-2. Set **Root Directory** to `website`.
-3. Set **Framework Preset** to `Next.js`.
-4. Set **Install Command** to `npm ci`.
-5. Set **Build Command** to `npm run build`.
-6. Leave **Output Directory** at the Next.js default.
-7. Select **Node.js 24.x**.
-8. Leave environment variables empty.
-9. Keep access to files outside the root directory disabled.
-10. Use the isolated branch for a preview only if the owner chooses, then select the integrated branch for production.
+Project settings, recorded in `launch/public-launch-checklist.md`:
+
+| Setting          | Value           |
+| ---------------- | --------------- |
+| Root Directory   | `website`       |
+| Framework        | Next.js         |
+| Install Command  | `npm ci`        |
+| Build Command    | `npm run build` |
+| Output Directory | Next.js default |
+| Node.js          | 24.x            |
+| Environment      | No variables    |
 
 The local npm lockfile pins dependencies independently from the monorepo.
 `turbopack.root` and `outputFileTracingRoot` are explicitly scoped to this directory.
 The homepage is prerendered at build time; the fixture selector is the only client component.
-Vercel can create preview deployments for website pull requests without a database or external service.
+`.vercel/` and `.env*` are ignored, so the CLI's project link metadata and the `VERCEL_OIDC_TOKEN` it writes stay local.
 
 ## Canonical URL and social previews
 
 Title, description, Open Graph text, Twitter text, and a small SVG favicon are implemented.
-No production domain has been chosen or claimed.
-Set `productionOrigin` in `lib/site.ts` to the verified HTTPS production origin after deployment, then rebuild to emit canonical and Open Graph URLs.
-Do not use a localhost or temporary preview origin as the canonical URL.
-Social image metadata is deliberately omitted until a canonical deployment exists; a future simple branded image can be added without changing the page architecture.
-The metadata test currently asserts the pre-deployment state and must be updated when the production origin is set.
+`productionOrigin` in `lib/site.ts` is the verified stable production origin, <https://playbookdiff.vercel.app>, and drives `metadataBase`, the canonical link, and `og:url`.
+Never set it to a localhost address or to a deployment-specific preview URL; `tests/site.test.mjs` asserts the rendered canonical and `og:url` and rejects any other `*.vercel.app` host, so a regression fails the build gate rather than shipping quietly.
+Social image metadata is deliberately omitted; a future simple branded image can be added without changing the page architecture.
 
 ## Fixture data, not browser analysis
 
 `lib/examples.json` is a hand-curated presentation of the assertions in `packages/harness-codex/src/cross-harness.test.ts` at commit `2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f`.
-The source links are pinned to that baseline so concurrent changes cannot silently alter the example's meaning.
-Scenario A has two medium findings, while Scenario B has one medium instruction scope gap.
-The remaining scope gap is intentional: the baseline IR represents Claude applicability as `.` and Codex applicability as `apps/api`.
+Fixture evidence links are pinned to that baseline so concurrent changes cannot silently alter the example's meaning.
+Documentation and project links follow the current `main` branch.
+Scenario A has two medium findings, while Scenario B has zero findings and four equivalent entities.
+Changing only `cwd` from `.` to `apps/api` brings the nested instruction and skill into Codex's discovery chain.
 The website does not import, reimplement, or execute the comparator.
 Finding ID prefixes are explicitly shortened, not presented as executable complete IDs.
 
 ## Content boundaries
 
-The site describes Phase 6 capabilities only.
-It does not claim a released GitHub Action, published npm package, public repository, adoption metrics, semantic analysis, or behavioral equivalence.
-Repository links may require access until the owner makes the project public.
-Claude's Phase 7 work is complete separately on `main` but is not included in this branch.
-See `launch/post-merge-integration.md` for the owner-authorized reconciliation steps after this branch is finished.
+The site describes the current deterministic engine, harness adapters, CLI, released GitHub Action, and Git regression analysis.
+The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, because `v0.1.0` and the movable `v0` tag are published and the Action was smoke-tested from an unrelated public repository.
+It does not claim a published npm package, adoption metrics, semantic analysis, or behavioral equivalence.
+Repository links point at the public repository and are verified anonymously.
+The CI regression visual is based on the checked-in baseline-debt-plus-new-regression fixture.

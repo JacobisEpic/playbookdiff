@@ -56,7 +56,7 @@ They may not discover the same playbook.
 
 PlaybookDiff compares repository-defined instructions, skills, MCP configuration, and scope.
 Run `check` to see the differences, `explain` to follow the evidence, or `diff main..HEAD` to find newly introduced regressions.
-The example on the project site shows why changing the launch directory from `.` to `apps/api` changes the report from two findings to one.
+The example on the project site shows why changing the launch directory from `.` to `apps/api` changes the report from two findings to zero.
 It is read-only and deterministic: different prose stays unknown unless compatibility can actually be proved.
 
 Launch links: use the verified public repository and deployed site URL only.

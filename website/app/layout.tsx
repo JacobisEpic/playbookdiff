@@ -3,20 +3,16 @@ import { productionOrigin, site } from "../lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(productionOrigin),
   title: "PlaybookDiff | Same repo. Different agents. Know the difference.",
   description: site.description,
-  ...(productionOrigin
-    ? {
-        metadataBase: new URL(productionOrigin),
-        alternates: { canonical: "/" },
-      }
-    : {}),
+  alternates: { canonical: "/" },
   openGraph: {
     title: "PlaybookDiff | Catch agent configuration drift",
     description: site.description,
     siteName: site.name,
     type: "website",
-    ...(productionOrigin ? { url: productionOrigin } : {}),
+    url: productionOrigin,
   },
   twitter: {
     card: "summary",

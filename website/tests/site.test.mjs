@@ -8,28 +8,46 @@ const html = await readFile(path.join(root, ".next/server/app/index.html"), "utf
 const examples = JSON.parse(await readFile(path.join(root, "lib/examples.json"), "utf8"));
 const packageJson = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
 
-test("production homepage renders the product and primary CTA", () => {
+test("production homepage renders the product and primary CTAs", () => {
   assert.match(html, /Same repo\./);
   assert.match(html, /Different agents\./);
   assert.match(html, /Know the difference\./);
+  assert.match(html, /See a real report/);
   assert.match(html, /View on GitHub/);
   assert.match(html, /https:\/\/github.com\/JacobisEpic\/playbookdiff/);
 });
 
-test("all supported CLI commands and honest source-install status render", () => {
+test("both supported run surfaces render with honest distribution status", () => {
   for (const command of [
     "playbookdiff check .",
     "playbookdiff explain &lt;finding-id&gt; .",
-    "playbookdiff diff main..HEAD",
+    "playbookdiff diff origin/main..HEAD",
   ]) {
     assert.ok(html.includes(command), command);
   }
-  assert.match(html, /Public package installation is not assumed/);
-  assert.match(html, /pnpm --filter playbookdiff build/);
-  assert.match(
-    html,
-    /New medium\/high findings exit 1; existing debt does not\. Analysis errors exit 2\./,
-  );
+  assert.match(html, /The CLI is not published to npm yet/);
+  assert.match(html, /pnpm build/);
+  assert.match(html, /node packages\/cli\/dist\/bin\.js check \./);
+  // The Action is released at the movable v0 tag and externally smoke-tested,
+  // so the usable snippet must be on the page rather than described in prose.
+  assert.ok(html.includes("uses: JacobisEpic/playbookdiff@v0"), "action reference");
+  assert.match(html, /actions\/checkout@v4/);
+  // npm distribution does not exist; nothing may imply that it does.
+  assert.doesNotMatch(html, /npm (?:i |install )(?:-g )?playbookdiff|npx playbookdiff/);
+});
+
+test("no stale pre-launch or private-repository claim survives", () => {
+  for (const stale of [
+    /Public launch in progress/i,
+    /until the repository opens/i,
+    /release tags? (?:may remain limited|are still pending|is still pending)/i,
+    /repository access may remain limited/i,
+    /source access (?:is |may be |may remain )?limited/i,
+    /pre-release/i,
+    /not (?:yet )?public/i,
+  ]) {
+    assert.doesNotMatch(html, stale, String(stale));
+  }
 });
 
 test("example data preserves the checked-in A/B assertions", () => {
@@ -41,6 +59,8 @@ test("example data preserves the checked-in A/B assertions", () => {
   assert.equal(examples.api.count, 0);
   assert.equal(examples.root.equivalent, 2);
   assert.equal(examples.api.equivalent, 4);
+  assert.deepEqual(examples.root.codex.notReceived, ["apps/api/AGENTS.md", "api-skill"]);
+  assert.deepEqual(examples.api.codex.notReceived, []);
   assert.deepEqual(
     examples.root.findings.map((f) => f.type),
     ["missing", "capability-gap"],
@@ -54,11 +74,45 @@ test("example data preserves the checked-in A/B assertions", () => {
 });
 
 test("demo is labeled as static fixture data, never a live analyzer", () => {
-  assert.match(html, /Example analysis/);
-  assert.match(html, /This browser does not analyze your repository/);
-  assert.match(html, /Prefix shown; logical key and stable digest shortened/);
+  assert.match(html, /Fixture-backed analysis/);
+  assert.match(html, /This browser does not inspect your repository/);
+  assert.match(html, /This fixture shows a shortened prefix/);
+  assert.match(html, new RegExp("baseline " + examples.baseline.slice(0, 7)));
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /aria-pressed="false"/);
+  // The prerendered state is the repository-root scenario.
+  assert.match(html, /Scope changes the result/);
+  assert.ok(html.includes(examples.root.count + " findings"));
+});
+
+test("the cleared scenario ships in the client bundle, not only the default state", async () => {
+  // The apps/api branch renders only after interaction, so it never appears in
+  // the prerendered HTML. Assert it is in the shipped chunk instead of weakening
+  // the claim that changing cwd alone clears the report.
+  const chunks = path.join(root, ".next/static/chunks");
+  const sources = await Promise.all(
+    (await readdir(chunks, { recursive: true }))
+      .filter((entry) => entry.endsWith(".js"))
+      .map((entry) => readFile(path.join(chunks, entry), "utf8")),
+  );
+  for (const phrase of [
+    "No differences for this context",
+    "Both harnesses receive the same fixture configuration.",
+  ]) {
+    assert.ok(
+      sources.some((source) => source.includes(phrase)),
+      phrase,
+    );
+  }
+});
+
+test("GitHub Action value is shown with verified regression behavior", () => {
+  assert.match(html, /Existing debt does not make every pull request fail/);
+  assert.match(html, /1 existing \+ 1 new/);
+  assert.match(html, /1 new actionable compatibility regression/);
+  assert.match(html, /Released as/);
+  assert.match(html, /v0\.1\.0/);
+  assert.match(html, /contents: read/);
 });
 
 test("provenance contains only repo-relative evidence paths", () => {
@@ -84,9 +138,12 @@ test("local anchor links point to existing IDs", () => {
     ),
   ].map((match) => match[1]);
   assert.ok(sourceLinks.length >= 6);
-  for (const link of sourceLinks) assert.ok(link.includes("/" + examples.baseline + "/"), link);
+  const pinnedLinks = sourceLinks.filter((link) => link.includes("/" + examples.baseline + "/"));
+  const currentLinks = sourceLinks.filter((link) => link.includes("/main/"));
+  assert.ok(pinnedLinks.length >= 3);
+  assert.ok(currentLinks.length >= 6);
   assert.ok(
-    sourceLinks.some((link) =>
+    pinnedLinks.some((link) =>
       link.endsWith(
         "/tree/" +
           examples.baseline +
@@ -106,9 +163,30 @@ test("metadata uses the verified production origin", () => {
   ]) {
     assert.ok(html.includes('="' + name + '"'), name);
   }
+  // Guards against regressing to `productionOrigin = undefined` or to a
+  // deployment-specific preview host, either of which breaks canonical/OG.
   assert.ok(html.includes('<link rel="canonical" href="https://playbookdiff.vercel.app"'));
   assert.ok(html.includes('property="og:url" content="https://playbookdiff.vercel.app"'));
   assert.doesNotMatch(html, /(?:content|href)="https?:\/\/(?:localhost|127\.0\.0\.1)/);
+  assert.doesNotMatch(
+    html,
+    /(?:content|href)="https:\/\/(?!playbookdiff\.vercel\.app)[^"]*\.vercel\.app/,
+  );
+});
+
+test("compared surfaces are stated as a table, not as marketing claims", () => {
+  assert.match(html, /Claude Code reads/);
+  assert.match(html, /Codex reads/);
+  for (const surface of [
+    "CLAUDE.md, .claude/rules/",
+    "AGENTS.md",
+    ".claude/skills/",
+    ".agents/skills/",
+    ".mcp.json",
+    ".codex/config.toml",
+  ]) {
+    assert.ok(html.includes(surface), surface);
+  }
 });
 
 test("semantic structure and limitations are present", () => {
@@ -116,11 +194,12 @@ test("semantic structure and limitations are present", () => {
   assert.match(html, /<html lang="en"/);
   assert.match(html, /Skip to content/);
   for (const phrase of [
-    "Unknown is better",
+    "Unknown beats guessed",
+    "No model calls",
     "machine-effective",
     "runtime capabilities",
-    "uncommitted edits",
-    "zero findings",
+    "working-tree Git diffing",
+    "semantic relationship unknown",
   ]) {
     assert.ok(html.includes(phrase), phrase);
   }

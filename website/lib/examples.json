@@ -7,6 +7,16 @@
     "cwd": ".",
     "count": 2,
     "equivalent": 2,
+    "claude": {
+      "instructions": ["CLAUDE.md", "apps/api/CLAUDE.md"],
+      "skills": ["root-skill", "api-skill"],
+      "notReceived": []
+    },
+    "codex": {
+      "instructions": ["AGENTS.md"],
+      "skills": ["root-skill"],
+      "notReceived": ["apps/api/AGENTS.md", "api-skill"]
+    },
     "note": "Claude Code reaches the nested API configuration on demand. Codex builds its project chain through the launch directory, so from the root it never sees the nested files at all.",
     "findings": [
       {
@@ -31,6 +41,16 @@
     "cwd": "apps/api",
     "count": 0,
     "equivalent": 4,
+    "claude": {
+      "instructions": ["CLAUDE.md", "apps/api/CLAUDE.md"],
+      "skills": ["root-skill", "api-skill"],
+      "notReceived": []
+    },
+    "codex": {
+      "instructions": ["AGENTS.md", "apps/api/AGENTS.md"],
+      "skills": ["root-skill", "api-skill"],
+      "notReceived": []
+    },
     "note": "Launching inside apps/api brings the nested files into Codex's chain too. Both harnesses now receive the same instructions and the same skills, so every compared entity is equivalent and nothing is reported.",
     "findings": []
   }
