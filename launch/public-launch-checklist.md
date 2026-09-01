@@ -1,61 +1,134 @@
-# Public launch checklist
+# Public launch record
 
-> **Historical process document.**
-> Written on a pre-merge branch, before the GitHub Action work and this repository's website work were on `main` together.
-> That reconciliation has since happened, so statements below about pending integration, separate branches, and superseded test totals describe a state that no longer exists.
-> For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
+Launch date: September 1, 2026.
+Launch commit: `51df7bc` (tagged `v0.1.0`); repository `main` has moved on since, as recorded below.
+This file replaces the pre-launch checklist it grew out of.
+Items are recorded as observed, not as intended.
+For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
 
-Evidence date: August 29, 2026, with program terms, repository visibility, description, homepage, topics, stars, forks, and release status rechecked on August 30.
-Source baseline: `1bb3384`; live GitHub metadata was read without changing settings.
-Claude's Phase 7 is now complete separately on `main`; reconciliation and release verification remain pending, and none of its code is included here.
-Status vocabulary: **already satisfied**, **needs work**, **pending post-branch reconciliation**, **human action required**.
+## Completed
 
-## Blockers
+| Item                       | State                                                                                                           |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Public repository          | Done. <https://github.com/JacobisEpic/playbookdiff> is `PUBLIC`; anonymous clone and raw file fetches verified. |
+| Repository description     | Done. "Read-only compatibility checker for Claude Code and Codex repository configuration."                     |
+| Homepage                   | Done. <https://playbookdiff.vercel.app>                                                                         |
+| Topics                     | Done. Ten topics, listed under [Repository metadata](#repository-metadata).                                     |
+| MIT license                | Done. GitHub detects `mit` from `LICENSE`.                                                                      |
+| Code of Conduct            | Done. GitHub detects `CODE_OF_CONDUCT.md`.                                                                      |
+| Security policy            | Done. `SECURITY.md` detected; private vulnerability reporting enabled via the API.                              |
+| Contributing guide         | Done. `CONTRIBUTING.md` publicly reachable.                                                                     |
+| Release/tag                | Done. `v0.1.0` published as the latest release; `v0` is the movable major tag. Both resolve to `51df7bc`.       |
+| GitHub Action              | Done. Smoke-tested from an unrelated public repository; see [Action verification](#action-verification).        |
+| CLI distribution           | Done as a source/tarball path. `npm pack` output installs and runs in an unrelated consumer environment.        |
+| Website deployment         | Done. Production alias returns HTTP 200 anonymously.                                                            |
+| GitHub/Vercel integration  | Done. `main` push produces a production deployment; branch push produces a preview deployment.                  |
+| Public link audit          | Done. Every README, docs, community, and website link checked anonymously; all returned 200.                    |
+| Metrics baseline           | Done. Recorded under [Launch metrics baseline](#launch-metrics-baseline).                                       |
+| Application evidence links | Done. Every link in the application draft verified anonymously.                                                 |
 
-| Item                       | Current state                                                                    | Required action                                                                                                                                                       |
-| -------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public repository          | Human action required: GitHub reports `isPrivate: true`.                         | Review source/history for secrets and private information, then have the owner make the repository public before applying.                                            |
-| Vercel deployment          | Human action required: deployment-ready code only; no project or domain created. | After integration, deploy with root `website` using `website/README.md`; verify the anonymous URL.                                                                    |
-| Application evidence links | Needs work: GitHub links are currently access-restricted.                        | Check repository, license, community files, docs, and demo in a signed-out browser after launch.                                                                      |
-| Application submission     | Human action required: draft prepared, not submitted.                            | Verify the [official deadline](https://vercel.com/open-source-program), complete personal fields, and submit before September 13; exact cutoff time was not verified. |
+## Repository metadata
 
-## High priority
+| Signal           | Observed value                                                                                                                            |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Visibility       | `PUBLIC`                                                                                                                                  |
+| Default branch   | `main`                                                                                                                                    |
+| Description      | Read-only compatibility checker for Claude Code and Codex repository configuration.                                                       |
+| Homepage         | <https://playbookdiff.vercel.app>                                                                                                         |
+| Topics           | `claude-code`, `codex`, `ai-agents`, `agents-md`, `claude-md`, `mcp`, `developer-tools`, `static-analysis`, `github-action`, `typescript` |
+| Issues           | Enabled                                                                                                                                   |
+| Discussions      | Disabled, deliberately                                                                                                                    |
+| Actions          | Enabled                                                                                                                                   |
+| Branch rules     | None; governance kept light for a single-maintainer project                                                                               |
+| Primary language | TypeScript                                                                                                                                |
 
-| Item                     | Current state                                                                                                     | Required action                                                                                                                      |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Repository description   | Needs work: empty.                                                                                                | Apply a description from `project-positioning.md` after owner approval.                                                              |
-| Homepage                 | Needs work: empty.                                                                                                | Set the verified production website URL after deployment.                                                                            |
-| Topics                   | Needs work: none returned.                                                                                        | Use the proposed relevant lowercase topics; add `github-actions` only after the integration is verified.                             |
-| MIT license              | Already satisfied: `LICENSE` and GitHub license metadata identify MIT.                                            | Recheck public visibility after launch.                                                                                              |
-| Code of Conduct          | Already satisfied: `CODE_OF_CONDUCT.md` defines community standards.                                              | Verify its private reporting mechanism works; it currently refers to GitHub security advisories, whose availability was not checked. |
-| Contributing guide       | Already satisfied: setup, evidence rules, fixture expectations, and PR guidance exist.                            | Add website-specific contributor guidance later if needed; this branch does not edit the root guide.                                 |
-| README                   | Already satisfied for Phase 6 CLI and Git diff; needs final integration review.                                   | Claude/owner should reconcile CI/release status and link the deployed website.                                                       |
-| GitHub Action            | Pending post-branch reconciliation: Phase 7 complete separately on `main`, not included or claimed released here. | Independently review functionality, permissions, packaging, documentation, and release process after integration.                    |
-| Release/tag              | Needs work: no tags in the baseline and no GitHub releases returned.                                              | Publish a tested release and a real installation path; verify registry ownership before recommending package installation.           |
-| CLI/package distribution | Needs work: source build documented; public installation unverified.                                              | Test from a clean consumer environment and update website wording only when supported.                                               |
-| Screenshot/demo          | Already satisfied in code: fixture selector and source links; visual QA recorded in `validation.md`.              | Capture approved launch screenshots from the final deployed page, excluding internal launch documents.                               |
-| Example use case         | Already satisfied: checked-in cwd/target fixture changes two findings to one.                                     | Add a real independent repository case with permission before citing external use.                                                   |
-| Application copy         | Already satisfied: prepared in `vercel-oss-application.md`.                                                       | Replace status-sensitive paragraphs with verified post-integration facts.                                                            |
-| Metrics baseline         | Already satisfied for snapshot: 0 stars, 0 forks, one listed contributor, no releases.                            | Capture a dated public baseline; other usage and download metrics remain unavailable.                                                |
-| Public announcement      | Needs work: draft in `project-positioning.md`.                                                                    | Publish only after links and installation instructions work anonymously.                                                             |
-| Feedback channels        | Needs work: contributor guide exists, but public access is blocked.                                               | Verify public Issues and PR workflows after launch; test private conduct/security reporting separately.                              |
+## Release
 
-## Nice to have
+- Tag `v0.1.0` -> `51df7bc`, published September 1, 2026.
+- Tag `v0` -> `51df7bc`, movable across compatible `0.x` releases.
+- Marked as the latest release rather than a GitHub pre-release: `0.x` already states the stability contract, and the Action at `@v0` is meant to be used, so flagging it "not ready for production" would have been inaccurate and would have hidden it from the repository sidebar.
+- Release notes cover capabilities, design properties, both usage paths, and link to the limitations and security documents.
+- Notes name no validation-target repository and claim no adoption.
 
-| Item                               | Current state                                                             | Recommended action                                                                                             |
-| ---------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Issue templates                    | Needs work: no `.github` templates in baseline.                           | Check the integrated tree first, then add a minimal configuration-reproduction template only if still missing. |
-| Security policy                    | Needs work: no `SECURITY.md` in baseline.                                 | Publish safe private vulnerability-reporting instructions, especially for untrusted repository inputs.         |
-| Canonical/social image             | Needs work: no production origin chosen; text metadata and favicon exist. | Set the verified canonical origin and consider a simple social image after deployment.                         |
-| Website measurement                | Deliberately absent.                                                      | Consider privacy-conscious measurement only after explicit owner approval; no analytics SDK is installed.      |
-| Additional harnesses/report viewer | Future evaluation only.                                                   | Prioritize real demand and deterministic evidence; do not promise delivery to strengthen an application.       |
+## Action verification
 
-## Final submission gate
+The Action was tested from `JacobisEpic/playbookdiff-action-smoke-test`, a disposable public repository containing only invented placeholder configuration.
+Both runs resolved `JacobisEpic/playbookdiff@v0` to `51df7bc` from outside this repository.
 
-- [ ] Repository, source, license, and community documents are publicly accessible.
-- [ ] Website is deployed and all primary links work signed out.
-- [ ] Release and Action claims match integrated, tested code.
-- [ ] No invented adoption, downloads, users, or contributor counts appear in copy.
-- [ ] Credits plan is limited to the OSS project.
-- [ ] Application terms and deadline were checked again on the live official page.
-- [ ] Owner reviewed and submitted the application personally.
+| Scenario | Change                                              | Result                                                                                    |
+| -------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Pass     | Source-only edit, no configuration touched.         | `result=no-new-regressions`, 0 introduced, `analyzed-target-count=2`, job succeeded.      |
+| Fail     | Added `server/CLAUDE.md` with no Codex counterpart. | `result=new-regressions`, 1 introduced actionable, `analyzed-target-count=2`, job failed. |
+
+Verified in the real GitHub runtime, not by local simulation:
+
+- External tag resolution to the intended release commit.
+- Changed-path derivation producing the nested `server` scope alongside the repository root.
+- Exactly one finding for one regression, with no duplication across contexts.
+- `GITHUB_TOKEN` reduced to `Contents: read` and `Metadata: read`.
+- No dependency installation step, no build step, no GitHub API call.
+- Step Summary rendering, reproduced byte-for-byte from the same released bundle.
+
+Neither pull request was merged; both were closed after verification.
+
+## Dogfood workflow
+
+`.github/workflows/playbookdiff.yml` deliberately keeps `uses: ./` rather than `uses: JacobisEpic/playbookdiff@v0`.
+`@v0` would re-test the artifact that already shipped, whereas `./` tests the Action as the pull request under review leaves it, including an unbuilt bundle or a regression in the engine the Action wraps.
+External consumers are pointed at `@v0` from `README.md` and `docs/github-action.md`.
+
+## Vercel deployment
+
+| Setting               | Value                                   |
+| --------------------- | --------------------------------------- |
+| Account/scope         | `jacobisepic` / `jacobisepics-projects` |
+| Project               | `playbookdiff`                          |
+| Root Directory        | `website`                               |
+| Framework             | Next.js                                 |
+| Install Command       | `npm ci`                                |
+| Build Command         | `npm run build`                         |
+| Output Directory      | Next.js default                         |
+| Node.js               | 24.x                                    |
+| Environment variables | None                                    |
+| Custom domain         | None                                    |
+| Production branch     | `main`                                  |
+| Production URL        | <https://playbookdiff.vercel.app>       |
+
+Root Directory is set on the Vercel project itself, so Git-triggered builds use `website/` rather than the monorepo root.
+`.vercel/` and `.env*` are both ignored, so the CLI's project link metadata and the `VERCEL_OIDC_TOKEN` it writes into `website/.env.local` stay local.
+
+### Maintenance workflow
+
+Normal operation is Git-driven: push to `main` deploys production, and a branch or pull request produces a preview.
+The Vercel CLI is for initial setup, inspection, and explicit troubleshooting only.
+Do not routinely run `vercel deploy --prod` alongside the Git integration; that produces duplicate builds for the same commit.
+
+## Launch metrics baseline
+
+Captured September 1, 2026 from public GitHub metadata.
+Zero is the honest starting value and is recorded as such.
+
+| Signal                   | Value                                       |
+| ------------------------ | ------------------------------------------- |
+| Stars                    | 0                                           |
+| Forks                    | 0                                           |
+| Open issues              | 0                                           |
+| Open pull requests       | 0                                           |
+| Releases                 | 1 (`v0.1.0`)                                |
+| Contributors             | 1 (`JacobisEpic`); no external contributors |
+| Repository created       | 2026-08-28                                  |
+| Made public              | 2026-09-01                                  |
+| `v0.1.0` published       | 2026-09-01T20:15:05Z                        |
+| Website production URL   | <https://playbookdiff.vercel.app>           |
+| Action public smoke test | Pass and fail scenarios both verified       |
+
+No analytics were installed, and no traffic or download metrics exist.
+Package downloads are unavailable because the CLI is not published to npm.
+Action adoption is unmeasured; no third-party usage is claimed.
+
+## Remaining
+
+- [ ] Owner reviews the [Vercel OSS application draft](vercel-oss-application.md), supplies the personal fields, and submits it before the verified September 13 deadline.
+
+Everything else on the original checklist is complete.
+npm publication and a custom domain remain deliberately out of scope.

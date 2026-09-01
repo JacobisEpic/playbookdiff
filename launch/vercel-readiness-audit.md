@@ -4,6 +4,9 @@
 > Written on a pre-merge branch, before the GitHub Action work and this repository's website work were on `main` together.
 > That reconciliation has since happened, so statements below about pending integration, separate branches, and superseded test totals describe a state that no longer exists.
 > For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
+>
+> The blocking gaps identified below were closed on September 1, 2026: the repository is public, `v0.1.0` is released, and the site is deployed.
+> Current launch state is recorded in [`public-launch-checklist.md`](public-launch-checklist.md), and the refreshed program terms in [`vercel-oss-application.md`](vercel-oss-application.md).
 
 Audit date: August 29, 2026.
 Program terms and live repository visibility, description, homepage, topics, stars, forks, license, and release status rechecked on August 30, 2026.

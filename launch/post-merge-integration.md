@@ -4,6 +4,9 @@
 > Written on a pre-merge branch, before the GitHub Action work and this repository's website work were on `main` together.
 > That reconciliation has since happened, so statements below about pending integration, separate branches, and superseded test totals describe a state that no longer exists.
 > For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
+>
+> All eleven reconciliation steps below were completed on September 1, 2026.
+> The outcome is recorded in [`public-launch-checklist.md`](public-launch-checklist.md); this file is kept for the reasoning, not as outstanding work.
 
 This branch begins at `1bb3384` and adds files only under `website/` and `launch/`.
 Claude's Phase 7 work is now complete separately on `main`, as reported by the owner on August 30, 2026.
