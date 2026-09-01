@@ -14,8 +14,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Uses the Action directly from this checkout (`./`, where action.yml
-      # lives) rather than `JacobisEpic/playbookdiff@v0`: no release tag
-      # exists yet, and this dogfoods exactly the version of the Action
-      # this PR itself is changing.
+      # Deliberately uses the Action from this checkout (`./`, where action.yml
+      # lives) rather than the published `JacobisEpic/playbookdiff@v0`.
+      #
+      # `@v0` would test the last release; `./` tests the Action as this pull
+      # request leaves it, including an unbuilt bundle or a regression in the
+      # engine the Action wraps. Dogfooding is worth more when it exercises the
+      # candidate rather than the artifact that already shipped.
+      #
+      # External consumers should use `JacobisEpic/playbookdiff@v0`; see
+      # docs/github-action.md.
       - uses: ./
