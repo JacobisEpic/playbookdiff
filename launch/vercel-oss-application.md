@@ -1,9 +1,9 @@
 # Vercel OSS application preparation
 
-Prepared on August 29, 2026 against PlaybookDiff baseline `1bb3384`.
-Program terms and repository visibility rechecked on August 30, 2026.
+Prepared on August 29, 2026 against PlaybookDiff baseline `1bb3384`, and reconciled against the current product on August 31, 2026.
 This is a draft, not a submitted application.
 Do not submit until the repository is public and the evidence links work without authentication.
+Program terms were last checked on August 30, 2026; recheck the live page at submission, since the terms below may have moved.
 
 ## Verified program context
 
@@ -33,12 +33,11 @@ Developers retain native configuration files, run analysis locally without model
 
 ## Observed prompt: anything else
 
-The project has implemented a deterministic engine, two harness adapters, the `check` and `explain` CLI commands, and committed-revision `diff` analysis.
-The Phase 6 handoff reports 271 passing tests and cold validation; that suite was not independently rerun during this website track.
-This branch adds a standalone Vercel-ready project site with a fixture-backed interactive example, precise limitations, and source-linked documentation.
-The owner reports that Phase 7 GitHub Action work is complete separately on `main`; it has not been incorporated or independently validated by this branch and is not claimed as released here.
-The project is new: there is no verified adoption story yet, and the application should emphasize the concrete problem, existing implementation, and a measurable public-launch plan.
-Replace this paragraph's deployment and release status with newly verified facts immediately before submitting.
+The project has implemented a deterministic engine, two harness adapters, the `check`, `explain`, and `diff` CLI commands, and a reusable GitHub Action that fails a pull request only when it introduces a new compatibility regression.
+The repository ships a standalone Vercel-ready project site with a fixture-backed interactive example, precise limitations, and source-linked documentation.
+The analyzer has been validated end to end against public open-source repositories with substantial agent configuration, with every finding manually audited and every defect found that way fixed and locked with a regression test; the methodology is published in `docs/validation.md`.
+The project is new: there is no adoption story yet, and the application should emphasize the concrete problem, the existing implementation, and a measurable public-launch plan rather than traction.
+Before submitting, recheck and restate the current test total, the release status, the repository's visibility, and whether the site is deployed - all of which change independently of this document.
 
 ## Supporting narrative: problem and audience
 

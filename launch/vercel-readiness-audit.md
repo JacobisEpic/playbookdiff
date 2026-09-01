@@ -1,5 +1,10 @@
 # Vercel OSS readiness audit
 
+> **Historical process document.**
+> Written on a pre-merge branch, before the GitHub Action work and this repository's website work were on `main` together.
+> That reconciliation has since happened, so statements below about pending integration, separate branches, and superseded test totals describe a state that no longer exists.
+> For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
+
 Audit date: August 29, 2026.
 Program terms and live repository visibility, description, homepage, topics, stars, forks, license, and release status rechecked on August 30, 2026.
 Contributor counts remain the August 29 snapshot; no new usage measurements are implied.

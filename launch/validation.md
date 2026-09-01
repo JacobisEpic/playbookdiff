@@ -1,5 +1,10 @@
 # Launch-track validation
 
+> **Historical process document.**
+> Written on a pre-merge branch, before the GitHub Action work and this repository's website work were on `main` together.
+> That reconciliation has since happened, so statements below about pending integration, separate branches, and superseded test totals describe a state that no longer exists.
+> For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
+
 Final validation date: August 30, 2026.
 Product evidence is pinned to baseline `1bb33848fcd0f64ce9e6cdc9dcd380b6aef0b06b`.
 Only the standalone website's established tooling was executed during this final pass.

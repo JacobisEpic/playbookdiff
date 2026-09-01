@@ -13,7 +13,7 @@ export function ExampleReport() {
         <span className="eyebrow">
           <span className="status-dot" /> Example analysis
         </span>
-        <span className="demo-version">Fixture / Phase 6</span>
+        <span className="demo-version">Live fixture</span>
       </div>
       <div className="demo-context">
         <fieldset className="launch-controls">
@@ -84,6 +84,12 @@ export function ExampleReport() {
             <span>Claude Code ↔ Codex</span>
           </p>
           <div className="findings" aria-label="Example findings">
+            {report.findings.length === 0 ? (
+              <p className="findings-empty">
+                Both harnesses receive the same instructions and the same skills from this launch
+                directory, so there is nothing to report.
+              </p>
+            ) : null}
             {report.findings.map((finding) => (
               <article className="finding" key={finding.type}>
                 <div className="finding-top">

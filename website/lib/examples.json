@@ -7,7 +7,7 @@
     "cwd": ".",
     "count": 2,
     "equivalent": 2,
-    "note": "Claude discovers the nested API configuration on demand. Codex remains bounded by the root launch directory.",
+    "note": "Claude Code reaches the nested API configuration on demand. Codex builds its project chain through the launch directory, so from the root it never sees the nested files at all.",
     "findings": [
       {
         "type": "missing",
@@ -29,18 +29,9 @@
   },
   "api": {
     "cwd": "apps/api",
-    "count": 1,
-    "equivalent": 3,
-    "note": "Both harnesses now discover the API skill. The missing configuration gaps resolve, but the normalized instruction scopes still differ.",
-    "findings": [
-      {
-        "type": "scope-gap",
-        "title": "API instruction scope still differs",
-        "category": "instruction",
-        "idPrefix": "instruction:scope-gap:",
-        "detail": "The same text is present on both sides. The baseline IR records Claude applicability as . and Codex applicability as apps/api, so this remains a scope gap.",
-        "evidence": ["apps/api/CLAUDE.md", "apps/api/AGENTS.md"]
-      }
-    ]
+    "count": 0,
+    "equivalent": 4,
+    "note": "Launching inside apps/api brings the nested files into Codex's chain too. Both harnesses now receive the same instructions and the same skills, so every compared entity is equivalent and nothing is reported.",
+    "findings": []
   }
 }

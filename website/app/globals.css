@@ -1471,3 +1471,13 @@ h1 > span {
     animation: none !important;
   }
 }
+
+.findings-empty {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}

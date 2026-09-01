@@ -1,5 +1,10 @@
 # Post-merge integration notes
 
+> **Historical process document.**
+> Written on a pre-merge branch, before the GitHub Action work and this repository's website work were on `main` together.
+> That reconciliation has since happened, so statements below about pending integration, separate branches, and superseded test totals describe a state that no longer exists.
+> For current product facts see [`README.md`](../README.md), [`docs/limitations.md`](../docs/limitations.md), and [`docs/validation.md`](../docs/validation.md).
+
 This branch begins at `1bb3384` and adds files only under `website/` and `launch/`.
 Claude's Phase 7 work is now complete separately on `main`, as reported by the owner on August 30, 2026.
 The read-only local ref check found `main` at `672fa0894bc935d965672d161bda79ff815a8f01`.
