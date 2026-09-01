@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
 
       # Uses the Action directly from this checkout (`./`, where action.yml
-      # lives) rather than `JacobisEpic/playbookdiff@v1`: no release tag
+      # lives) rather than `JacobisEpic/playbookdiff@v0`: no release tag
       # exists yet, and this dogfoods exactly the version of the Action
       # this PR itself is changing.
       - uses: ./
