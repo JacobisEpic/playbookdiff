@@ -35,6 +35,7 @@ async function main(): Promise<void> {
     candidate: revisions.candidate,
     cwd,
     ...(targetPath !== undefined ? { targetPath } : {}),
+    deriveTargets: true,
   });
 
   if (outcome.status === "error") {
@@ -53,6 +54,7 @@ async function main(): Promise<void> {
   );
   core.info(`Resolved: ${summary.resolved}`);
   core.info(`Unchanged: ${summary.unchanged}`);
+  core.info(`Analyzed contexts: ${outcome.json.analyzed.targets.length}`);
 
   await core.summary.addRaw(renderStepSummary(outcome.json)).write();
 

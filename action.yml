@@ -46,6 +46,11 @@ outputs:
     description: Findings present in the baseline and absent from the candidate.
   unchanged-count:
     description: Findings present, unchanged, in both the baseline and the candidate.
+  analyzed-target-count:
+    description: >-
+      How many analysis contexts this run covered. One means the
+      repository-root startup context alone; more means configuration scopes
+      derived from the pull request's changed paths were also analyzed.
   baseline-sha:
     description: The full resolved baseline commit SHA.
   candidate-sha:

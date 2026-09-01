@@ -214,4 +214,138 @@ describe("bundled Action entry point (dist/index.mjs)", () => {
       await repo.cleanup();
     }
   });
+
+  it("catches a nested Claude-only regression with no path input at all", async () => {
+    // The default workflow: `uses:` and nothing else. Before contexts were
+    // derived from changed paths, this pull request passed CI.
+    const repo = await createTestGitRepo();
+    try {
+      await repo.writeFile("CLAUDE.md", "Run tests before pushing.\n");
+      await repo.writeFile("AGENTS.md", "Run tests before pushing.\n");
+      await repo.writeFile("server/routes.go", "package server\n");
+      const baseline = await repo.commitAll("baseline: mirrored root");
+      await repo.writeFile("server/CLAUDE.md", "# Server\n\nUse the server conventions.\n");
+      const candidate = await repo.commitAll("candidate: nested Claude-only instruction");
+
+      const { status, outputs, summary } = await runBundle({
+        INPUT_BASELINE: baseline,
+        INPUT_CANDIDATE: candidate,
+        GITHUB_WORKSPACE: repo.root,
+      });
+
+      expect(status).not.toBe(0);
+      expect(outputs.result).toBe("new-regressions");
+      expect(outputs["introduced-actionable-count"]).toBe("1");
+      expect(Number(outputs["analyzed-target-count"])).toBeGreaterThan(1);
+      expect(summary).toContain("changed scope");
+    } finally {
+      await repo.cleanup();
+    }
+  });
+
+  it("counts a regression once when many changed files reach the same nested configuration", async () => {
+    const repo = await createTestGitRepo();
+    try {
+      await repo.writeFile("CLAUDE.md", "Run tests before pushing.\n");
+      await repo.writeFile("AGENTS.md", "Run tests before pushing.\n");
+      for (let index = 0; index < 25; index += 1) {
+        await repo.writeFile(`server/file${index}.go`, "package server\n");
+      }
+      const baseline = await repo.commitAll("baseline");
+      await repo.writeFile("server/CLAUDE.md", "# Server\n\nUse the server conventions.\n");
+      for (let index = 0; index < 25; index += 1) {
+        await repo.writeFile(`server/file${index}.go`, `package server // ${index}\n`);
+      }
+      const candidate = await repo.commitAll("candidate: config plus many edits");
+
+      const { outputs } = await runBundle({
+        INPUT_BASELINE: baseline,
+        INPUT_CANDIDATE: candidate,
+        GITHUB_WORKSPACE: repo.root,
+      });
+
+      expect(outputs["introduced-actionable-count"]).toBe("1");
+      // One scope, so the 25 edits collapse: the startup context plus it.
+      expect(outputs["analyzed-target-count"]).toBe("2");
+    } finally {
+      await repo.cleanup();
+    }
+  });
+
+  it("does not fail on pre-existing debt that a newly analyzed context also reaches", async () => {
+    const repo = await createTestGitRepo();
+    try {
+      await repo.writeFile("CLAUDE.md", "Run tests before pushing.\n");
+      await repo.writeFile("server/CLAUDE.md", "# Server\n\nUse the server conventions.\n");
+      await repo.writeFile("server/routes.go", "package server\n");
+      const baseline = await repo.commitAll("baseline: existing nested debt");
+      await repo.writeFile("server/routes.go", "package server\n\nfunc Route() {}\n");
+      const candidate = await repo.commitAll("candidate: touch source under it");
+
+      const { status, outputs } = await runBundle({
+        INPUT_BASELINE: baseline,
+        INPUT_CANDIDATE: candidate,
+        GITHUB_WORKSPACE: repo.root,
+      });
+
+      expect(status).toBe(0);
+      expect(outputs.result).toBe("no-new-regressions");
+      expect(outputs["introduced-actionable-count"]).toBe("0");
+      expect(Number(outputs["unchanged-count"])).toBeGreaterThan(0);
+    } finally {
+      await repo.cleanup();
+    }
+  });
+
+  it("analyzes only the requested context when a path input is given", async () => {
+    const repo = await createTestGitRepo();
+    try {
+      await repo.writeFile("CLAUDE.md", "Run tests before pushing.\n");
+      await repo.writeFile("AGENTS.md", "Run tests before pushing.\n");
+      await repo.writeFile("server/routes.go", "package server\n");
+      const baseline = await repo.commitAll("baseline");
+      await repo.writeFile("server/CLAUDE.md", "# Server\n\nUse the server conventions.\n");
+      await repo.writeFile("web/CLAUDE.md", "# Web\n\nUse the web conventions.\n");
+      const candidate = await repo.commitAll("candidate: two nested scopes");
+
+      const { outputs } = await runBundle({
+        INPUT_BASELINE: baseline,
+        INPUT_CANDIDATE: candidate,
+        INPUT_PATH: "server/routes.go",
+        GITHUB_WORKSPACE: repo.root,
+      });
+
+      expect(outputs["analyzed-target-count"]).toBe("1");
+      expect(outputs["introduced-actionable-count"]).toBe("1");
+    } finally {
+      await repo.cleanup();
+    }
+  });
+
+  it("needs no token, API access, or network to derive contexts", async () => {
+    // Changed paths come from local Git object data only. Stripping every
+    // GitHub token from the environment must not change the result.
+    const repo = await createTestGitRepo();
+    try {
+      await repo.writeFile("CLAUDE.md", "Run tests before pushing.\n");
+      await repo.writeFile("AGENTS.md", "Run tests before pushing.\n");
+      const baseline = await repo.commitAll("baseline");
+      await repo.writeFile("server/CLAUDE.md", "# Server\n\nUse the server conventions.\n");
+      const candidate = await repo.commitAll("candidate");
+
+      const { outputs } = await runBundle({
+        INPUT_BASELINE: baseline,
+        INPUT_CANDIDATE: candidate,
+        GITHUB_WORKSPACE: repo.root,
+        GITHUB_TOKEN: undefined,
+        INPUT_GITHUB_TOKEN: undefined,
+        GITHUB_API_URL: undefined,
+      });
+
+      expect(outputs["introduced-actionable-count"]).toBe("1");
+      expect(Number(outputs["analyzed-target-count"])).toBeGreaterThan(1);
+    } finally {
+      await repo.cleanup();
+    }
+  });
 });

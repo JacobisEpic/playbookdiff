@@ -19,6 +19,7 @@ function finding(overrides: Partial<CompatibilityFinding> = {}): CompatibilityFi
 function makeJson(diff: Partial<DiffJsonOutput["diff"]> = {}): DiffJsonOutput {
   return {
     context: { repository: ".", cwd: ".", targetPath: "apps/web/src/page.tsx" },
+    analyzed: { targets: [{ reason: "startup" }], changedPathCount: 0, omitted: 0, derived: false },
     baseline: {
       revision: "main",
       commit: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
@@ -60,7 +61,7 @@ describe("renderStepSummary", () => {
     const output = renderStepSummary(makeJson());
     expect(output).toContain("**Baseline:** main (`a1b2c3d`)");
     expect(output).toContain("**Candidate:** HEAD (`f6e5d4c`)");
-    expect(output).toContain("**Target:** apps/web/src/page.tsx");
+    expect(output).toContain("**Analyzed:** the requested target `apps/web/src/page.tsx`");
   });
 
   it("shows a success result with no Introduced/Resolved sections when nothing changed", () => {

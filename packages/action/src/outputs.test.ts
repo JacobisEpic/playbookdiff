@@ -6,6 +6,7 @@ import type { ActionOutcome } from "./run-action.js";
 function makeJson(overrides: Partial<DiffJsonOutput["diff"]["summary"]> = {}): DiffJsonOutput {
   return {
     context: { repository: ".", cwd: "." },
+    analyzed: { targets: [{ reason: "startup" }], changedPathCount: 0, omitted: 0, derived: false },
     baseline: { revision: "main", commit: "a".repeat(40), diagnostics: { claude: [], codex: [] } },
     candidate: { revision: "HEAD", commit: "b".repeat(40), diagnostics: { claude: [], codex: [] } },
     diff: {
@@ -29,6 +30,7 @@ describe("buildOutputs", () => {
     const outcome: ActionOutcome = { status: "success", json: makeJson() };
     expect(buildOutputs(outcome)).toEqual({
       result: "no-new-regressions",
+      "analyzed-target-count": "1",
       "introduced-count": "0",
       "introduced-actionable-count": "0",
       "introduced-informational-count": "0",

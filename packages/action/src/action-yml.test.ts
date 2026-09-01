@@ -51,6 +51,7 @@ describe("action.yml", () => {
     const outputNames = Object.keys(doc.outputs ?? {}).sort();
     expect(outputNames).toEqual(
       [
+        "analyzed-target-count",
         "baseline-sha",
         "candidate-sha",
         "introduced-actionable-count",

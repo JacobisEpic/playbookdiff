@@ -17,6 +17,7 @@ export function buildOutputs(
     "introduced-informational-count": String(summary.introducedInformational),
     "resolved-count": String(summary.resolved),
     "unchanged-count": String(summary.unchanged),
+    "analyzed-target-count": String(json.analyzed.targets.length),
     "baseline-sha": json.baseline.commit,
     "candidate-sha": json.candidate.commit,
   };

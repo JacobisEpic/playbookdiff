@@ -12,6 +12,13 @@ export type RunActionOptions = {
   candidate: string;
   cwd: string;
   targetPath?: string;
+  /**
+   * Derive analysis contexts from the revision pair's changed paths when the
+   * caller named no `targetPath`. On by default for the Action, because a
+   * workflow that says only `uses:` should still cover configuration nested
+   * under what the pull request touched.
+   */
+  deriveTargets?: boolean;
 };
 
 /**
@@ -26,6 +33,7 @@ export async function runAction(options: RunActionOptions): Promise<ActionOutcom
     range: `${options.baseline}..${options.candidate}`,
     cwd: options.cwd,
     ...(options.targetPath !== undefined ? { targetPath: options.targetPath } : {}),
+    deriveTargets: options.deriveTargets ?? true,
     json: true,
   });
 

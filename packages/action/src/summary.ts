@@ -67,6 +67,32 @@ function renderFindingMarkdown(finding: CompatibilityFinding): string[] {
 }
 
 /**
+ * States what the run covered.
+ *
+ * A reader needs this to interpret a green result: "no new regressions" means
+ * nothing new appeared in the contexts listed here, and saying which contexts
+ * those were is the difference between a claim about a pull request and a claim
+ * about a whole repository.
+ */
+export function renderAnalyzedLine(json: DiffJsonOutput): string {
+  const { analyzed } = json;
+  if (!analyzed.derived) {
+    const target = analyzed.targets[0]?.path ?? json.context.targetPath;
+    return target !== undefined
+      ? `the requested target \`${escapeMarkdown(target)}\``
+      : "the repository-root startup context";
+  }
+  const scopes = analyzed.targets.filter((target) => target.path !== undefined);
+  const base =
+    scopes.length === 0
+      ? `the repository-root startup context (${plural(analyzed.changedPathCount, "changed path")}, no nested scope affected)`
+      : `the repository-root startup context and ${plural(scopes.length, "changed scope")}, derived from ${plural(analyzed.changedPathCount, "changed path")}`;
+  return analyzed.omitted > 0
+    ? `${base}; ${analyzed.omitted} further scopes were not analyzed`
+    : base;
+}
+
+/**
  * Renders a deterministic GitHub Step Summary in Markdown from the same
  * `diff --json` contract the CLI already produces. Contains no comparison
  * or actionability logic: `summary.introducedActionable` (already computed
@@ -88,9 +114,7 @@ export function renderStepSummary(json: DiffJsonOutput): string {
     `**Candidate:** ${escapeMarkdown(json.candidate.revision)} (\`${shortSha(json.candidate.commit)}\`)`,
   );
   lines.push(`**Launch cwd:** ${escapeMarkdown(json.context.cwd)}`);
-  lines.push(
-    `**Target:** ${json.context.targetPath !== undefined ? escapeMarkdown(json.context.targetPath) : "(repository root)"}`,
-  );
+  lines.push(`**Analyzed:** ${renderAnalyzedLine(json)}`);
   lines.push("");
 
   lines.push("## Result");
