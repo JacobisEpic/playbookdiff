@@ -1,6 +1,10 @@
 import type { CompatibilityFinding, CompatibilityReportDelta } from "@playbookdiff/core";
 import { describe, expect, it } from "vitest";
-import type { CompatibilityDiffSummary, RevisionSummary } from "../commands/diff.js";
+import type {
+  AnalyzedTargets,
+  CompatibilityDiffSummary,
+  RevisionSummary,
+} from "../commands/diff.js";
 import type { CliContext } from "./context.js";
 import { renderDiffHuman } from "./diff-human.js";
 
@@ -35,6 +39,14 @@ function summary(overrides: Partial<CompatibilityDiffSummary> = {}): Compatibili
 const context: CliContext = { repository: ".", cwd: ".", targetPath: "apps/web/src/page.tsx" };
 const emptyDelta: CompatibilityReportDelta = { introduced: [], resolved: [], unchanged: [] };
 
+/** The single explicitly-requested context, matching a run that was given a --path. */
+const explicitTarget: AnalyzedTargets = {
+  targets: [{ path: "apps/web/src/page.tsx", reason: "startup" }],
+  changedPathCount: 0,
+  omitted: 0,
+  derived: false,
+};
+
 describe("renderDiffHuman", () => {
   it("shows revision labels with short SHAs and full cwd/target context", () => {
     const output = renderDiffHuman(
@@ -43,6 +55,7 @@ describe("renderDiffHuman", () => {
       revision("HEAD", "def4567890def4567890def4567890def4567890"),
       emptyDelta,
       summary(),
+      explicitTarget,
     );
     expect(output).toContain("Baseline: main (abc1234)");
     expect(output).toContain("Candidate: HEAD (def4567)");
@@ -58,6 +71,7 @@ describe("renderDiffHuman", () => {
       revision("HEAD", "b".repeat(40)),
       { introduced: [introducedFinding], resolved: [], unchanged: [finding()] },
       summary({ introduced: 1, introducedActionable: 1, unchanged: 1 }),
+      explicitTarget,
     );
     const introducedIndex = output.indexOf("Introduced");
     const unchangedMentionIndex = output.indexOf("unchanged from the baseline");
@@ -74,6 +88,7 @@ describe("renderDiffHuman", () => {
       revision("HEAD", "b".repeat(40)),
       { introduced: [], resolved: [], unchanged: [unchangedFinding] },
       summary({ unchanged: 1 }),
+      explicitTarget,
     );
     expect(output).not.toContain(unchangedFinding.id);
     expect(output).toContain("1 unchanged pre-existing finding");
@@ -89,6 +104,7 @@ describe("renderDiffHuman", () => {
       revision("HEAD", "b".repeat(40)),
       { introduced: [], resolved: [resolvedFinding], unchanged: [] },
       summary({ resolved: 1 }),
+      explicitTarget,
     );
     expect(output).toContain("Resolved");
     expect(output).toContain(resolvedFinding.id);
@@ -107,6 +123,7 @@ describe("renderDiffHuman", () => {
       revision("HEAD", "b".repeat(40)),
       { introduced: [infoFinding], resolved: [], unchanged: [] },
       summary({ introduced: 1, introducedInformational: 1 }),
+      explicitTarget,
     );
     expect(output).toContain("1 new informational finding");
     expect(output).toContain("Result: no new actionable compatibility regressions");
@@ -119,6 +136,7 @@ describe("renderDiffHuman", () => {
       revision("HEAD", "b".repeat(40)),
       emptyDelta,
       summary(),
+      explicitTarget,
     );
     expect(output).not.toMatch(/\/(tmp|var)\//);
   });

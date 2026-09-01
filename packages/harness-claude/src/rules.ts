@@ -264,3 +264,22 @@ export async function discoverRules(
 
   return { instructions, provenance, diagnostics };
 }
+
+/**
+ * Reads the `paths:` globs from one Claude rule or skill file's frontmatter.
+ *
+ * Exposed because deciding whether two work targets are interchangeable
+ * depends on which path-scoped patterns match them, and that judgement belongs
+ * to the same frontmatter parsing and matcher this adapter already owns rather
+ * than to a caller re-deriving Claude's conventions. Returns an empty list for
+ * a file with no frontmatter, no `paths` field, or unparseable frontmatter -
+ * absence of a usable pattern is not an error here, it just means the file
+ * conditions nothing.
+ */
+export function readClaudePathPatterns(markdownSource: string): string[] {
+  const frontmatter = extractFrontmatter(markdownSource);
+  if (frontmatter.parseError) {
+    return [];
+  }
+  return readPathsField(frontmatter.data) ?? [];
+}

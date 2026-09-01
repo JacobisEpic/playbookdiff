@@ -1,6 +1,10 @@
 import type { CompatibilityFinding, CompatibilityReportDelta } from "@playbookdiff/core";
 import { describe, expect, it } from "vitest";
-import type { CompatibilityDiffSummary, RevisionSummary } from "../commands/diff.js";
+import type {
+  AnalyzedTargets,
+  CompatibilityDiffSummary,
+  RevisionSummary,
+} from "../commands/diff.js";
 import type { CliContext } from "./context.js";
 import { toDiffJson } from "./diff-json.js";
 
@@ -23,6 +27,13 @@ const summary: CompatibilityDiffSummary = {
   unchanged: 0,
 };
 
+const analyzed: AnalyzedTargets = {
+  targets: [{ reason: "startup" }],
+  changedPathCount: 0,
+  omitted: 0,
+  derived: false,
+};
+
 function finding(id: string): CompatibilityFinding {
   return {
     id,
@@ -42,8 +53,8 @@ describe("toDiffJson", () => {
       resolved: [],
       unchanged: [],
     };
-    const first = toDiffJson(context, baseline, candidate, delta, summary);
-    const second = toDiffJson(context, baseline, candidate, delta, summary);
+    const first = toDiffJson(context, baseline, candidate, delta, summary, analyzed);
+    const second = toDiffJson(context, baseline, candidate, delta, summary, analyzed);
     expect(first).toBe(second);
 
     const parsed = JSON.parse(first);
@@ -58,14 +69,14 @@ describe("toDiffJson", () => {
 
   it("contains no escape control character (never mixes ANSI styling into JSON output)", () => {
     const delta: CompatibilityReportDelta = { introduced: [], resolved: [], unchanged: [] };
-    const output = toDiffJson(context, baseline, candidate, delta, summary);
+    const output = toDiffJson(context, baseline, candidate, delta, summary, analyzed);
     const escapeCharacter = String.fromCharCode(27);
     expect(output.indexOf(escapeCharacter)).toBe(-1);
   });
 
   it("never embeds a full baseline/candidate CompatibilityReport, only the delta", () => {
     const delta: CompatibilityReportDelta = { introduced: [], resolved: [], unchanged: [] };
-    const parsed = JSON.parse(toDiffJson(context, baseline, candidate, delta, summary));
+    const parsed = JSON.parse(toDiffJson(context, baseline, candidate, delta, summary, analyzed));
     expect(parsed.baseline.findings).toBeUndefined();
     expect(parsed.candidate.findings).toBeUndefined();
     expect(parsed.baseline.summary).toBeUndefined();

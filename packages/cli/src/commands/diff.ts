@@ -1,6 +1,8 @@
 import type { CompatibilityFinding, Diagnostic } from "@playbookdiff/core";
-import { diffCompatibilityReports } from "@playbookdiff/core";
-import { analyzeRepository, isAnalysisContextError } from "../analysis.js";
+import { diffFindings } from "@playbookdiff/core";
+import { analyzeRepository, isAnalysisContextError, type AnalysisResult } from "../analysis.js";
+import { deriveTargetsForRevisionPair } from "../derive-targets.js";
+import type { AnalysisTarget } from "../targets.js";
 import { EXIT_ANALYSIS_ERROR, determineDiffExitCode, isActionableFinding } from "../exit-codes.js";
 import { buildCliContext } from "../format/context.js";
 import { renderDiffHuman } from "../format/diff-human.js";
@@ -12,6 +14,7 @@ import {
   InvalidRevisionRangeError,
   RevisionResolutionError,
   parseRevisionRange,
+  resolveRevision,
 } from "../git/revisions.js";
 import type { CommandOutcome } from "./outcome.js";
 
@@ -21,6 +24,22 @@ export type DiffOptions = {
   cwd: string;
   targetPath?: string;
   json: boolean;
+  /**
+   * When true and no `targetPath` is given, analysis contexts are derived from
+   * the paths that differ between the two revisions instead of analyzing the
+   * startup context alone. An explicit `targetPath` always wins: a caller who
+   * named a work target gets exactly that one, so explicit intent stays
+   * predictable.
+   */
+  deriveTargets?: boolean;
+};
+
+/** What was actually analyzed, so output can state it rather than implying full coverage. */
+export type AnalyzedTargets = {
+  targets: AnalysisTarget[];
+  changedPathCount: number;
+  omitted: number;
+  derived: boolean;
 };
 
 export type RevisionSummary = {
@@ -79,28 +98,99 @@ export function buildDiffSummary(
   };
 }
 
+/**
+ * Analyzes one revision once per modeled target, inside a single disposable
+ * worktree, and merges the results into one deduplicated finding set for that
+ * revision.
+ *
+ * Merging by stable finding ID, rather than keeping per-target deltas, is what
+ * makes multi-target regression semantics correct: a finding that any baseline
+ * context already produced is part of the repository's existing state, so it can
+ * never be reported as introduced just because some other context also reaches
+ * it. The retained instance is the first in target order, which is
+ * deterministic.
+ */
 async function analyzeAtRevision(
   repository: string,
   revision: string,
   label: "baseline" | "candidate",
   cwd: string,
-  targetPath: string | undefined,
+  targets: readonly AnalysisTarget[],
 ) {
   return withMaterializedRevision(repository, revision, label, async (directory, commit) => {
-    try {
-      const result = await analyzeRepository({
-        repository: directory,
-        cwd,
-        ...(targetPath !== undefined ? { targetPath } : {}),
-      });
-      return { result, revision, commit };
-    } catch (error) {
-      if (isAnalysisContextError(error)) {
-        throw new DiffRevisionAnalysisError(label, revision);
+    const findings = new Map<string, CompatibilityFinding>();
+    let primary: AnalysisResult | undefined;
+    for (const target of targets) {
+      let result: AnalysisResult;
+      try {
+        result = await analyzeRepository({
+          repository: directory,
+          cwd,
+          ...(target.path !== undefined ? { targetPath: target.path } : {}),
+        });
+      } catch (error) {
+        if (isAnalysisContextError(error)) {
+          // A derived target can name a path this revision does not contain;
+          // that is the ordinary shape of an addition or a deletion, and the
+          // adapters already model a work target that does not exist yet. Only
+          // the caller's own explicitly requested context is a hard error.
+          if (target.reason !== "startup" && targets.length > 1) {
+            continue;
+          }
+          throw new DiffRevisionAnalysisError(label, revision);
+        }
+        throw error;
       }
-      throw error;
+      primary ??= result;
+      for (const finding of result.report.findings) {
+        if (!findings.has(finding.id)) {
+          findings.set(finding.id, finding);
+        }
+      }
     }
+    if (primary === undefined) {
+      throw new DiffRevisionAnalysisError(label, revision);
+    }
+    return { result: primary, findings: [...findings.values()], revision, commit };
   });
+}
+
+/**
+ * Decides which contexts this run analyzes.
+ *
+ * An explicit `targetPath` is honored exactly as given and never combined with
+ * derived contexts, so a caller who named a work target gets that one analysis
+ * and nothing else. Automatic derivation applies only when it was requested and
+ * no target was named; if derivation cannot read the revision pair's changed
+ * paths, analysis falls back to the startup context rather than failing, since
+ * that is the behavior callers had before derivation existed.
+ */
+async function resolveAnalyzedTargets(
+  options: DiffOptions,
+  baselineRevision: string,
+  candidateRevision: string,
+): Promise<AnalyzedTargets> {
+  if (options.targetPath !== undefined || options.deriveTargets !== true) {
+    return {
+      targets: [
+        {
+          reason: "startup",
+          ...(options.targetPath !== undefined ? { path: options.targetPath } : {}),
+        },
+      ],
+      changedPathCount: 0,
+      omitted: 0,
+      derived: false,
+    };
+  }
+  const baselineCommit = await resolveRevision(options.repository, baselineRevision, "baseline");
+  const candidateCommit = await resolveRevision(options.repository, candidateRevision, "candidate");
+  const derived = await deriveTargetsForRevisionPair({
+    repository: options.repository,
+    baselineCommit,
+    candidateCommit,
+  });
+  return { ...derived, derived: true };
 }
 
 /**
@@ -118,25 +208,24 @@ export async function runDiff(options: DiffOptions): Promise<CommandOutcome> {
       options.range,
     );
 
+    const analyzed = await resolveAnalyzedTargets(options, baselineRevision, candidateRevision);
+
     const baselineOutcome = await analyzeAtRevision(
       options.repository,
       baselineRevision,
       "baseline",
       options.cwd,
-      options.targetPath,
+      analyzed.targets,
     );
     const candidateOutcome = await analyzeAtRevision(
       options.repository,
       candidateRevision,
       "candidate",
       options.cwd,
-      options.targetPath,
+      analyzed.targets,
     );
 
-    const delta = diffCompatibilityReports(
-      baselineOutcome.result.report,
-      candidateOutcome.result.report,
-    );
+    const delta = diffFindings(baselineOutcome.findings, candidateOutcome.findings);
     const summary = buildDiffSummary(delta.introduced, delta.resolved, delta.unchanged);
     const exitCode = determineDiffExitCode(delta.introduced);
 
@@ -159,8 +248,8 @@ export async function runDiff(options: DiffOptions): Promise<CommandOutcome> {
     };
 
     const stdout = options.json
-      ? toDiffJson(context, baseline, candidate, delta, summary)
-      : renderDiffHuman(context, baseline, candidate, delta, summary);
+      ? toDiffJson(context, baseline, candidate, delta, summary, analyzed)
+      : renderDiffHuman(context, baseline, candidate, delta, summary, analyzed);
     return { exitCode, stdout };
   } catch (error) {
     if (isDiffInputError(error)) {

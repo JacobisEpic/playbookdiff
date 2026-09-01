@@ -44,6 +44,10 @@ const checkCommand = defineCommand({
       repository: args.repository,
       cwd: args.cwd,
       ...(args.path !== undefined && args.path !== "" ? { targetPath: args.path } : {}),
+      // With no --path, contexts are derived from the paths the range changed,
+      // so running this locally answers the same question CI answers. An
+      // explicit --path still analyzes exactly that one context.
+      deriveTargets: true,
       json: args.json === true,
     });
     writeOutcome(outcome);
@@ -90,6 +94,10 @@ const explainCommand = defineCommand({
       repository: args.repository,
       cwd: args.cwd,
       ...(args.path !== undefined && args.path !== "" ? { targetPath: args.path } : {}),
+      // With no --path, contexts are derived from the paths the range changed,
+      // so running this locally answers the same question CI answers. An
+      // explicit --path still analyzes exactly that one context.
+      deriveTargets: true,
       json: args.json === true,
     });
     writeOutcome(outcome);
@@ -138,6 +146,10 @@ const diffCommand = defineCommand({
       repository: args.repository,
       cwd: args.cwd,
       ...(args.path !== undefined && args.path !== "" ? { targetPath: args.path } : {}),
+      // With no --path, contexts are derived from the paths the range changed,
+      // so running this locally answers the same question CI answers. An
+      // explicit --path still analyzes exactly that one context.
+      deriveTargets: true,
       json: args.json === true,
     });
     writeOutcome(outcome);

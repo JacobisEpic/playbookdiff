@@ -1,5 +1,9 @@
 import type { CompatibilityReportDelta } from "@playbookdiff/core";
-import type { CompatibilityDiffSummary, RevisionSummary } from "../commands/diff.js";
+import type {
+  AnalyzedTargets,
+  CompatibilityDiffSummary,
+  RevisionSummary,
+} from "../commands/diff.js";
 import type { CliContext } from "./context.js";
 
 /**
@@ -12,6 +16,13 @@ import type { CliContext } from "./context.js";
  */
 export type DiffJsonOutput = {
   context: CliContext;
+  /**
+   * The contexts this run actually analyzed. Present so a consumer can tell an
+   * empty result that covered one startup context apart from one that covered
+   * several derived scopes, rather than reading absence of findings as proof of
+   * coverage.
+   */
+  analyzed: AnalyzedTargets;
   baseline: RevisionSummary;
   candidate: RevisionSummary;
   diff: {
@@ -28,9 +39,11 @@ export function toDiffJson(
   candidate: RevisionSummary,
   delta: CompatibilityReportDelta,
   summary: CompatibilityDiffSummary,
+  analyzed: AnalyzedTargets,
 ): string {
   const output: DiffJsonOutput = {
     context,
+    analyzed,
     baseline,
     candidate,
     diff: {

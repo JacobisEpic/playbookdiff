@@ -53,8 +53,26 @@ export function diffCompatibilityReports(
   baseline: CompatibilityReport,
   candidate: CompatibilityReport,
 ): CompatibilityReportDelta {
-  const baselineIndex = indexById(baseline.findings, "baseline");
-  const candidateIndex = indexById(candidate.findings, "candidate");
+  return diffFindings(baseline.findings, candidate.findings);
+}
+
+/**
+ * The same ID-based delta over bare finding lists, for callers that compare
+ * more than one analysis context per revision and have already merged each
+ * revision's findings into a single deduplicated set. Taking findings rather
+ * than reports keeps that merge honest: there is no synthesized
+ * `CompatibilityReport` whose `left`, `right`, and `summary` would have to
+ * claim to describe several contexts at once.
+ *
+ * Pure, and subject to the same uniqueness contract: each list must already
+ * contain each stable ID at most once.
+ */
+export function diffFindings(
+  baselineFindings: readonly CompatibilityFinding[],
+  candidateFindings: readonly CompatibilityFinding[],
+): CompatibilityReportDelta {
+  const baselineIndex = indexById(baselineFindings, "baseline");
+  const candidateIndex = indexById(candidateFindings, "candidate");
 
   const introduced: CompatibilityFinding[] = [];
   const unchanged: CompatibilityFinding[] = [];

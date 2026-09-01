@@ -1,5 +1,9 @@
 import type { CompatibilityReportDelta } from "@playbookdiff/core";
-import type { CompatibilityDiffSummary, RevisionSummary } from "../commands/diff.js";
+import type {
+  AnalyzedTargets,
+  CompatibilityDiffSummary,
+  RevisionSummary,
+} from "../commands/diff.js";
 import type { CliContext } from "./context.js";
 import { renderDiagnostics, renderFinding } from "./human.js";
 
@@ -28,12 +32,26 @@ function resultLine(summary: CompatibilityDiffSummary): string {
   return "Result: no new actionable compatibility regressions";
 }
 
+/**
+ * One line stating the coverage this run had, so an empty result is read as
+ * "nothing new in what was analyzed" rather than "nothing to find anywhere".
+ */
+export function renderAnalyzedTargets(analyzed: AnalyzedTargets): string {
+  if (!analyzed.derived) {
+    return `Target: ${analyzed.targets[0]?.path ?? "(repository root)"}`;
+  }
+  const scopes = analyzed.targets.filter((target) => target.path !== undefined).length;
+  const base = `Analyzed: startup context${scopes > 0 ? ` and ${plural(scopes, "changed scope")}` : ""} derived from ${plural(analyzed.changedPathCount, "changed path")}`;
+  return analyzed.omitted > 0 ? `${base} (${analyzed.omitted} further scopes not analyzed)` : base;
+}
+
 export function renderDiffHuman(
   context: CliContext,
   baseline: RevisionSummary,
   candidate: RevisionSummary,
   delta: CompatibilityReportDelta,
   summary: CompatibilityDiffSummary,
+  analyzed: AnalyzedTargets,
 ): string {
   const lines: string[] = [];
   lines.push("PlaybookDiff");
@@ -45,7 +63,7 @@ export function renderDiffHuman(
   lines.push(`Baseline: ${baseline.revision} (${shortSha(baseline.commit)})`);
   lines.push(`Candidate: ${candidate.revision} (${shortSha(candidate.commit)})`);
   lines.push(`Launch cwd: ${context.cwd}`);
-  lines.push(`Target: ${context.targetPath ?? "(repository root)"}`);
+  lines.push(renderAnalyzedTargets(analyzed));
   lines.push("");
   lines.push(plural(summary.introducedActionable, "new actionable regression"));
   lines.push(plural(summary.introducedInformational, "new informational finding"));
