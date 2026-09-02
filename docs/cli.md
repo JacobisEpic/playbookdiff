@@ -3,6 +3,12 @@
 `playbookdiff` is the terminal entry point for the deterministic comparator implemented in `packages/core`.
 It compiles a repository's effective Claude Code and Codex configuration, compares them, and prints the resulting `CompatibilityReport`.
 
+## Distribution status
+
+The CLI is prepared for npm distribution but has not been published to the registry.
+The release artifact is built and installed in a clean temporary consumer environment by `pnpm cli:verify-package` in conventional CI.
+Until the first npm publication is complete, use the source installation below.
+
 ## Development invocation
 
 The CLI package is `packages/cli` and builds to a real executable at `packages/cli/dist/bin.js`.
@@ -25,8 +31,16 @@ or through the root convenience script, which forwards arguments:
 pnpm playbookdiff check .
 ```
 
-This workspace does not currently install `playbookdiff` onto `PATH` (it is not a dependency of any other workspace package, so pnpm has no reason to link its `bin` entry).
-Installing the package globally (`npm install -g .` from `packages/cli`, or publishing it) makes the plain `playbookdiff` command available, using the `bin` field already declared in `packages/cli/package.json`.
+This workspace does not install `playbookdiff` onto `PATH` because it is not a dependency of another workspace package.
+After building, install the package globally from the checkout to get the plain command:
+
+```sh
+npm install --global ./packages/cli
+playbookdiff --help
+```
+
+Do not present a registry installation as public until the first publication is verified.
+The maintained publication procedure is in [the release guide](releasing.md).
 
 ## Commands
 

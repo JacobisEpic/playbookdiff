@@ -1,98 +1,122 @@
 # PlaybookDiff
 
+[![CI](https://github.com/JacobisEpic/playbookdiff/actions/workflows/ci.yml/badge.svg)](https://github.com/JacobisEpic/playbookdiff/actions/workflows/ci.yml)
+
 > Make sure Claude Code and Codex are working from the same playbook.
 
-PlaybookDiff is a read-only compatibility checker for repositories that configure more than one coding agent.
-It compiles the instructions, skills, and MCP servers that Claude Code and Codex each actually receive, compares them deterministically, and explains where they diverge.
+PlaybookDiff is a deterministic, read-only compatibility checker for repositories that configure both Claude Code and Codex.
+It compiles the instructions, skills, and MCP servers each harness effectively receives, then reports proven differences with source evidence.
 
-It never modifies the repository it analyzes, never runs anything from it, and never claims the two agents will behave the same.
+A raw diff of `CLAUDE.md` and `AGENTS.md` is not enough.
+The harnesses use different discovery rules, nested scopes, imports, settings, and skill conventions, so two files can look parallel while producing different effective configuration.
 
-## Why it exists
+PlaybookDiff never modifies the repository it analyzes, executes its code, connects to MCP servers, resolves secrets, or calls a model.
+It compares configuration, not agent behavior.
 
-Repositories increasingly carry configuration for several agents at once - `CLAUDE.md` beside `AGENTS.md`, `.claude/rules/`, `.claude/skills/` beside `.agents/skills/`, `.mcp.json` beside `.codex/config.toml`.
+## Effective configuration in one example
 
-Nothing keeps them in sync.
-The two harnesses discover configuration by different rules, so files that look parallel in a directory listing are often not parallel in effect, and a change that updates one side and forgets the other produces no error anywhere.
-The drift is only visible when an agent behaves differently from the one your teammate is using.
-
-PlaybookDiff makes that difference explicit, and fails CI when a pull request introduces a new one.
-
-## What it catches
-
-Concrete examples, all of which are ordinary and none of which any existing tool reports:
-
-- A `CLAUDE.md` carrying real guidance, next to an `AGENTS.md` that only says "see CLAUDE.md" - a path mentioned in prose is not an import, so one agent gets the guidance and the other gets a sentence.
-- A new `packages/api/CLAUDE.md` with no Codex counterpart, so the two agents work from different rules inside that package.
-- A skill whose frontmatter blocks user invocation in one harness using a field the other does not recognize, leaving it invokable there.
-- An MCP server defined for one agent and not the other, or defined for both with different arguments.
-- A path-scoped rule that applies to `**/*_test.go` in one harness and has no counterpart in the other.
-
-Here is what a finding looks like:
+Suppose a repository contains matching root and `apps/api` instructions and skills for both agents.
+When an agent works on `apps/api/file.ts` but was launched from the repository root, Claude Code can discover the nested configuration on demand while Codex remains bounded by its launch-directory chain.
 
 ```text
-MEDIUM  Instruction missing
-        Claude Code has 112 instruction content units for this effective scope that Codex
-        does not receive. Both sides also have differing prose here, but that difference can
-        only account for part of the gap, so this coverage is deterministically one-sided.
-        Semantic equivalence of the remaining text has not been evaluated.
-        Evidence:
-          - Claude Code instruction with unmatched content: CLAUDE.md:1-463 (repository)
-            "# CLAUDE.md
-
-            This file provides guidance to Claude Code when working with code in this…"
-        ID: instruction:missing:right:coverage-appliesto-excludedfrom-loadphase-startu:ef872bca
+your-repo/
+├── CLAUDE.md                         Claude Code instruction
+├── AGENTS.md                         Codex instruction
+├── .claude/skills/root-skill/        Claude Code skill
+├── .agents/skills/root-skill/        Codex skill
+└── apps/api/
+    ├── CLAUDE.md                     reached by Claude Code
+    ├── AGENTS.md                     not reached by Codex from cwd=.
+    ├── .claude/skills/api-skill/     reached by Claude Code
+    └── .agents/skills/api-skill/     not reached by Codex from cwd=.
 ```
 
-## Install
+The files are all present and their contents match.
+The effective configuration still diverges because only one harness receives the nested instruction and skill in that context.
 
-The GitHub Action is released and usable directly (see [Use it in CI](#use-it-in-ci)).
-The CLI is not published to npm yet, so build it from source:
+The checked-in [effective-scope example](examples/effective-scope/README.md) reproduces this result using the real adapters and a test-protected fixture.
+
+## What PlaybookDiff models
+
+| Surface       | Claude Code                                                                        | Codex                                                                       | Comparison                                                                            |
+| ------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Instructions  | `CLAUDE.md`, `.claude/CLAUDE.md`, imports, nested instructions, `.claude/rules/**` | `AGENTS.md`, `AGENTS.override.md`, fallback names, nested instruction chain | Exact content, effective scope, load phase, and proven one-sided coverage             |
+| Skills        | `.claude/skills/*/SKILL.md` and supported frontmatter                              | `.agents/skills/*/SKILL.md` and `agents/openai.yaml` invocation policy      | Presence, discovery state, invocation policy, advertisement, and description          |
+| MCP servers   | `.mcp.json`                                                                        | `mcp_servers` in `.codex/config.toml`                                       | Name, transport, command, ordered arguments, URL, and symbolic environment references |
+| Git revisions | Baseline effective configuration                                                   | Candidate effective configuration                                           | Introduced, resolved, and unchanged findings matched by stable ID                     |
+
+Skill bodies, runtime MCP availability, user or managed configuration, hooks, permissions, plugin systems, and agent behavior are not compared.
+See the [complete supported-semantics matrix](docs/limitations.md) for the precise boundaries.
+
+## Try the CLI
+
+The CLI package is prepared and locally verified as an npm tarball, but it has not been published to npm.
+Until the first publication, build it from source with Node.js 24.11 or newer within the 24.x release line and pnpm 11.24.0:
 
 ```sh
 git clone https://github.com/JacobisEpic/playbookdiff.git
 cd playbookdiff
-pnpm install
+pnpm install --frozen-lockfile
 pnpm build
-```
-
-Requires Node.js 24 (24.11.0 or newer, within 24.x) and pnpm 11.24.0.
-
-That produces a real executable at `packages/cli/dist/bin.js`.
-Run it against any repository:
-
-```sh
 node packages/cli/dist/bin.js check /path/to/your/repo
 ```
 
-To get a plain `playbookdiff` command, install the built package globally from `packages/cli`:
+You can also install the built package globally from the checkout to get the plain command:
 
 ```sh
-npm install -g ./packages/cli
+npm install --global ./packages/cli
+playbookdiff check /path/to/your/repo
 ```
 
-## Run it locally
+The primary commands are:
 
-```sh
-playbookdiff check .
+```text
+playbookdiff check [repository]
+playbookdiff explain <finding-id> [repository]
+playbookdiff diff <baseline>..<candidate> [repository]
 ```
 
-The most useful workflow is asking whether a change introduced a new divergence, without failing on divergence that was already there:
+`diff` reports only findings introduced or resolved between two committed Git revisions.
+It does not fail on divergence that already existed, modify the working tree, move `HEAD`, run Git hooks, or fetch.
 
-```sh
-playbookdiff diff origin/main..HEAD
+Exit codes are `0` for no actionable divergence, `1` for actionable findings, and `2` when analysis cannot run.
+See the [CLI reference](docs/cli.md) for all options and the important distinction between `--cwd` and `--path`.
+
+## Representative output
+
+```text
+PlaybookDiff
+
+Claude Code <-> Codex
+
+Launch cwd: .
+Target: apps/api/file.ts
+
+Findings: 2 medium, 0 low, 0 info
+
+MEDIUM  Instruction missing
+        Claude Code has an instruction for this effective scope, while Codex has no
+        deterministic corresponding instruction.
+        Evidence:
+          - Claude Code instruction: apps/api/CLAUDE.md:1-2 (repository)
+
+MEDIUM  Skill capability gap
+        The api-skill skill is repository-discovered only for Claude Code, not Codex.
+        Evidence:
+          - Claude Code skill: apps/api/.claude/skills/api-skill/SKILL.md (repository)
 ```
 
-With no `--path`, `diff` derives the contexts to analyze from the paths the range changed, so configuration nested under what you touched is covered.
-It never modifies your working tree, branch, or `HEAD`, and never fetches.
+Every finding includes stable identity, provenance, context, confidence, and evidence in human-readable and JSON output.
 
-Exit codes: `0` no actionable divergence, `1` actionable findings exist, `2` the analysis could not run.
+## Use it in GitHub Actions
 
-See [the CLI reference](docs/cli.md) for `check`, `explain`, `diff`, and the `--cwd` versus `--path` distinction.
-
-## Use it in CI
+The released Action compares the pull request base and candidate, then fails only for newly introduced actionable findings.
 
 ```yaml
-on: pull_request
+name: PlaybookDiff
+
+on:
+  pull_request:
 
 permissions:
   contents: read
@@ -108,61 +132,66 @@ jobs:
       - uses: JacobisEpic/playbookdiff@v0
 ```
 
-That is the whole configuration.
-`@v0` is a movable tag tracking the latest `0.x` release; pin `@v0.1.0`, or a commit SHA, if you prefer to control upgrades yourself.
-The Action analyzes the repository root plus the configuration scopes the pull request touched, and fails only when the pull request introduces a _new_ actionable regression - never on pre-existing divergence.
-It needs `contents: read`, no token, and no API access, so fork pull requests behave the same as internal ones.
+`v0` tracks the latest compatible `0.x` Action release.
+Pin `JacobisEpic/playbookdiff@v0.1.0` or a commit SHA when you need immutable resolution.
+The Action requires no token beyond `contents: read`, performs no API calls, and works for fork pull requests.
+See the [GitHub Action reference](docs/github-action.md) for inputs, outputs, coverage, and release details.
 
-## What "unknown" means
+## Equivalent, divergent, and unknown
 
-PlaybookDiff reports three outcomes, and the third is the important one.
+- **Equivalent** means the compared configuration matches under a deterministic rule.
+- **Divergent** means a structural difference is proven from repository evidence.
+- **Unknown** means the available evidence is insufficient to decide without guessing.
 
-**Equivalent** means the compared configuration matched exactly.
-**Divergent** means a deterministic structural difference was proved.
-**Unknown** means the analyzer mechanically established that the available evidence is not enough to decide.
+Different prose is the common example of `unknown`.
+PlaybookDiff can prove two instruction bodies differ, but it cannot prove differently worded guidance is equivalent or conflicting without semantic interpretation.
+That result is informational and never fails CI.
 
-The most common unknown is prose: two instruction files that say roughly the same thing in different words.
-PlaybookDiff can prove the text differs. It cannot prove differently worded guidance conflicts, so it says so instead of guessing in either direction.
+`unknown` is therefore a useful boundary, not a fallback.
+It tells reviewers exactly where deterministic analysis stops.
 
-Unknown findings are informational and never fail CI.
-An unknown is not a shrug - it is a claim, backed by the same determinism as the rest, that this particular question cannot be answered without semantic analysis.
+## Safety and deliberate non-claims
 
-## What it does not claim
+PlaybookDiff:
 
-- **Not that two agents behave the same.** It compares configuration, not behavior. Identical configuration does not make different models act alike.
-- **Not that differing prose means the same thing, or conflicts.** That is reported as unknown, permanently, by design.
-- **Not that a configured capability works.** A configured MCP server proves the repository configured it, not that it is reachable, authenticated, or approved.
-- **Not that it sees your whole setup.** It describes repository-defined configuration. User-level, machine-level, and managed configuration are not visible to it.
-- **Not that divergence is a mistake.** Plenty of divergence is deliberate. PlaybookDiff tells you it exists; whether it should is your call.
+- reads repository files without changing them
+- never executes analyzed scripts, binaries, hooks, skills, or package commands
+- never connects to configured MCP servers or tests their runtime availability
+- never resolves secret values or serializes host paths into findings
+- never calls a model or requires an API key
+- never claims that matching configuration makes different agents behave alike
+- never treats differently worded prose as semantically equivalent or conflicting
+- never assumes that divergence is a mistake
 
-Full detail in [scope and limitations](docs/limitations.md).
+The [security model](docs/security.md), [comparison specification](docs/comparison.md), and [validation strategy](docs/validation.md) document how these properties are enforced.
 
 ## Documentation
 
-- [CLI reference](docs/cli.md) - commands, `--cwd` versus `--path`, exit codes, JSON output
-- [GitHub Action](docs/github-action.md) - inputs, outputs, coverage, security posture
-- [Scope and limitations](docs/limitations.md) - supported semantics matrix and what is unsupported
-- [Validation](docs/validation.md) - how the analyzer is tested and what that does not prove
-- [Security model](docs/security.md) - read-only, no execution, no network, no secret resolution
-- [Comparison specification](docs/comparison.md) - the deterministic comparison rules
-- [Git diff specification](docs/git-diff.md) - regression semantics
-- [Architecture](docs/architecture.md) - how the pieces fit together
-- Harness specifications: [Claude Code](docs/harnesses/claude.md), [Codex](docs/harnesses/codex.md)
+- [CLI reference](docs/cli.md)
+- [GitHub Action](docs/github-action.md)
+- [Scope and limitations](docs/limitations.md)
+- [Security model](docs/security.md)
+- [Comparison specification](docs/comparison.md)
+- [Git diff specification](docs/git-diff.md)
+- [Architecture](docs/architecture.md)
+- [Validation strategy](docs/validation.md)
+- [Release process](docs/releasing.md)
+- Harness specifications: [Claude Code](docs/harnesses/claude.md) and [Codex](docs/harnesses/codex.md)
 
-## Status
+## Project status
 
-Public beta, released as `v0.1.0`.
-The deterministic engine, the CLI, and the Action have been validated against real open-source repositories with substantial agent configuration; see [validation](docs/validation.md).
+The current public release is `v0.1.0`.
+The deterministic engine, CLI, and GitHub Action are usable, while the CLI's first npm publication remains a manual release step.
 
-`0.x` means the command-line output shape, the JSON contract, and the Action's output set may still change between minor versions as the tool meets more real repositories.
-What will not change is the refusal to guess: a result that cannot be established deterministically stays `unknown`.
+During `0.x`, command output, JSON contracts, and Action outputs may change between minor releases.
+The core policy will not: when compatibility cannot be established deterministically, the result stays `unknown`.
 
-Semantic comparison, PR comments, a hosted service, and support for additional harnesses are intentionally not implemented.
+Additional harnesses, semantic comparison, PR comments, and a hosted analysis service are deliberately outside the current release scope.
 
 ## Contributing
 
-Harness behavior must be supported by official documentation or a reproducible fixture - never by intuition.
-See [CONTRIBUTING](CONTRIBUTING.md).
+Harness behavior must be supported by current official documentation or a reproducible fixture, never by intuition.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

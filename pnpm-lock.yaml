@@ -47,10 +47,6 @@ importers:
         version: 2.9.0
 
   packages/cli:
-    dependencies:
-      citty:
-        specifier: ^0.2.2
-        version: 0.2.2
     devDependencies:
       '@playbookdiff/core':
         specifier: workspace:*
@@ -61,6 +57,9 @@ importers:
       '@playbookdiff/harness-codex':
         specifier: workspace:*
         version: link:../harness-codex
+      citty:
+        specifier: 0.2.2
+        version: 0.2.2
 
   packages/core: {}
 

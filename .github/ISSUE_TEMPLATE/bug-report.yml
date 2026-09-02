@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a CLI, Action, packaging, or documentation defect.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include secrets, private repository content, or host paths.
+        Report security issues through the private advisory link instead.
+  - type: input
+    id: version
+    attributes:
+      label: PlaybookDiff version
+      description: Use `playbookdiff --version`, an Action tag, or a commit SHA.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - CLI analysis
+        - Git diff
+        - GitHub Action
+        - npm package artifact
+        - Documentation or website
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide an invented minimal repository layout, exact command, and relevant flags.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include sanitized output and the exit code.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Node.js version.
+      placeholder: macOS 15, Node.js 24.20.0
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, private configuration, and absolute host paths from this report.
+          required: true

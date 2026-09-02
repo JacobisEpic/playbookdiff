@@ -30,7 +30,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "type": "module",
   "sideEffects": false,
@@ -40,19 +41,20 @@
       "import": "./dist/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsdown",
     "clean": "node -e \"import('node:fs').then(({ rmSync }) => rmSync('dist', { recursive: true, force: true }))\"",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "citty": "^0.2.2"
-  },
   "devDependencies": {
     "@playbookdiff/core": "workspace:*",
     "@playbookdiff/harness-claude": "workspace:*",
-    "@playbookdiff/harness-codex": "workspace:*"
+    "@playbookdiff/harness-codex": "workspace:*",
+    "citty": "0.2.2"
   },
   "engines": {
     "node": ">=24.11.0 <25"
