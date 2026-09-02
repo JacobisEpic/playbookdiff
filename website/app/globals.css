@@ -13,11 +13,13 @@
   --line: #e4e1d8;
   --line-strong: #cbc8bd;
 
-  --accent: #14635d;
-  --accent-deep: #0f4a45;
-  --accent-soft: #e3efec;
+  --brand-orange: #e2542a;
+  --brand-purple: #5946e6;
+  --accent: #5946e6;
+  --accent-deep: #4535c9;
+  --accent-soft: #ecebfd;
   --accent-contrast: #ffffff;
-  --accent-on-dark: #8cc3b9;
+  --accent-on-dark: #a99cff;
 
   --warm: #a3600f;
   --warm-soft: #fbf0dc;
@@ -429,6 +431,7 @@ pre code {
   --accent: #f4f2ec;
   --accent-deep: #ffffff;
   --accent-contrast: #15171b;
+  --brand-purple: #a99cff;
   --warm: #e0a75d;
   --warm-soft: rgba(224, 167, 93, 0.13);
   --warm-line: rgba(224, 167, 93, 0.42);
@@ -446,7 +449,7 @@ pre code {
   --line-strong: #cbc8bd;
   --muted: #63676d;
   --muted-strong: #454951;
-  --accent: #14635d;
+  --accent: #5946e6;
   --accent-contrast: #ffffff;
   --warm: #a3600f;
   --warm-soft: #fbf0dc;
@@ -493,16 +496,15 @@ pre code {
 }
 
 .logo-mark {
-  display: inline-grid;
-  width: 34px;
+  width: auto;
   height: 34px;
-  place-items: center;
-  padding-right: 2px;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font: 700 17px/1 var(--mono);
-  letter-spacing: -0.17em;
+  flex: 0 0 auto;
+}
+
+.logo-word {
+  width: auto;
+  height: 21px;
+  flex: 0 0 auto;
 }
 
 .logo-label {
@@ -660,18 +662,25 @@ pre code {
 
 /* The two agents are told apart by weight, not hue: colour stays reserved for
    the analyzer's own equivalent / divergent / unknown vocabulary. */
-.agent-mark-claude,
-.agent-receipt-claude .agent-mark {
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
+/* The two agents carry the brand's own colours: Claude orange, Codex purple. */
+.agent-mark-claude {
+  border: 1px solid var(--brand-orange);
+  background: var(--brand-orange);
+  color: #fff;
 }
 
-.agent-mark-codex,
-.agent-receipt-codex .agent-mark {
-  border: 1px solid currentcolor;
-  background: transparent;
-  color: inherit;
+.agent-mark-codex {
+  border: 1px solid var(--brand-purple);
+  background: var(--brand-purple);
+  color: #fff;
+}
+
+.agent-receipt-claude {
+  border-top-color: var(--brand-orange);
+}
+
+.agent-receipt-codex {
+  border-top-color: var(--brand-purple);
 }
 .hero-report figcaption,
 .regression-visual figcaption {

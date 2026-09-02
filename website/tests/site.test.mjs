@@ -235,6 +235,13 @@ test("semantic structure and limitations are present", () => {
   }
 });
 
+test("the brand mark and favicon ship with the page", () => {
+  // The header mark is decorative; the word mark image carries the alt text.
+  assert.match(html, /src="\/brand\/mascots-reading\.png"[^>]*alt=""/);
+  assert.match(html, /src="\/brand\/wordmark-on-dark\.png"[^>]*alt="PlaybookDiff"/);
+  assert.match(html, /rel="icon"[^>]*\/icon\.png/);
+});
+
 test("website dependencies are standalone and minimal", () => {
   assert.deepEqual(Object.keys(packageJson.dependencies).sort(), ["next", "react", "react-dom"]);
   assert.equal(JSON.stringify(packageJson).includes("workspace:"), false);
