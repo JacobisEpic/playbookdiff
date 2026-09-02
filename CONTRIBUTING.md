@@ -22,15 +22,24 @@ pnpm lint
 pnpm fmt:check
 pnpm test
 pnpm build
+pnpm action:verify-bundle
+pnpm cli:verify-package
 ```
 
-If your change touches `packages/core`, `packages/cli`, or either harness package, the committed GitHub Action bundle also has to be rebuilt, because it vendors them:
+The website is a separate npm project outside the pnpm workspace:
 
 ```sh
-pnpm action:verify-bundle
+cd website
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+npm test
 ```
 
-That rebuilds the bundle and fails if the committed one was stale, so run it before opening a pull request.
+`action:verify-bundle` rebuilds the committed Action artifact and fails if it is stale.
+`cli:verify-package` packs the CLI, installs it into a clean temporary project, checks its runtime manifest, and runs the installed executable.
+Temporary package artifacts are removed automatically.
 
 ## Fixture philosophy
 

@@ -34,5 +34,5 @@ Findings themselves are not vulnerabilities: a compatibility finding describes a
 
 ## Supported versions
 
-PlaybookDiff has not had a tagged release yet.
-Until it does, the `main` branch is what is supported, and fixes land there.
+Security fixes are provided for the latest `0.x` release and the `main` branch.
+Reporters using older `0.x` versions may be asked to upgrade before a report is investigated.

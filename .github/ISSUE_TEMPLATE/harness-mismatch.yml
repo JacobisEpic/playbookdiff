@@ -1,0 +1,61 @@
+name: Harness behavior mismatch
+description: Report a place where PlaybookDiff appears to model Claude Code or Codex incorrectly.
+title: "harness: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Harness behavior must be supported by current official documentation or a minimal reproducible observation.
+        Use invented fixture content and remove secrets, private configuration, and host paths.
+  - type: dropdown
+    id: harness
+    attributes:
+      label: Harness
+      options:
+        - Claude Code
+        - Codex
+        - Cross-harness comparison
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Harness version
+      description: Provide the exact harness version used for the observation.
+    validations:
+      required: true
+  - type: textarea
+    id: layout
+    attributes:
+      label: Minimal repository layout and content
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: playbookdiff
+    attributes:
+      label: PlaybookDiff command and sanitized JSON result
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Harness evidence
+      description: Link official documentation or describe exact reproducible steps against the real harness.
+    validations:
+      required: true
+  - type: textarea
+    id: difference
+    attributes:
+      label: Expected model difference
+      description: Explain which normalized result or uncertainty should change and why.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: The reproduction uses invented content and contains no secrets, private configuration, or absolute host paths.
+          required: true

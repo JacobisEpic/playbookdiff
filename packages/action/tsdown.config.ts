@@ -8,7 +8,7 @@ import { defineConfig } from "tsdown";
  */
 export default defineConfig({
   clean: true,
-  deps: { alwaysBundle: () => true },
+  deps: { alwaysBundle: () => true, onlyBundle: false },
   dts: false,
   entry: ["src/index.ts"],
   format: "esm",

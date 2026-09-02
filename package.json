@@ -10,6 +10,8 @@
     "action:test": "pnpm --filter @playbookdiff/action test",
     "action:verify-bundle": "pnpm action:build && git diff --exit-code -- packages/action/dist",
     "build": "turbo run build",
+    "cli:third-party-notices": "node scripts/generate-cli-third-party-notices.mjs",
+    "cli:verify-package": "node scripts/verify-cli-package.mjs",
     "clean": "turbo run clean",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",

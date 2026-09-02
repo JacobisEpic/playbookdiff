@@ -1,8 +1,10 @@
 node_modules/
+.pnpm-store/
 .turbo/
 dist/
 coverage/
 *.tsbuildinfo
+*.tgz
 .DS_Store
 
 # The GitHub Action's runtime bundle must be committed: GitHub does not
