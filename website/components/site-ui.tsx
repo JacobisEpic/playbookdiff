@@ -86,3 +86,81 @@ export function ProductFrame({
     </div>
   );
 }
+
+export type TreeNode = {
+  id: string;
+  indent: number;
+  name: string;
+  kind: string;
+  harness?: string;
+};
+
+const HARNESS_LABEL: Record<string, string> = {
+  claude: "Claude Code",
+  codex: "Codex",
+};
+
+export function RepoTree({
+  root,
+  nodes,
+  unreached,
+  caption,
+}: {
+  root: string;
+  nodes: TreeNode[];
+  unreached: string[];
+  caption?: ReactNode;
+}) {
+  const missing = new Set(unreached);
+
+  return (
+    <div className="repo-tree">
+      <div className="repo-tree-head">
+        <span className="repo-tree-root">{root}/</span>
+        <span className="repo-tree-legend">
+          <span>
+            <i className="reach-mark reach-yes" aria-hidden="true" /> reached
+          </span>
+          <span>
+            <i className="reach-mark reach-no" aria-hidden="true" /> never reached
+          </span>
+        </span>
+      </div>
+      <ul>
+        {nodes.map((node) => {
+          const unread = missing.has(node.id);
+          const owner = node.harness ? HARNESS_LABEL[node.harness] : undefined;
+          return (
+            <li
+              key={node.id}
+              className={`tree-row tree-${node.kind === "dir" || node.kind === "target" ? node.kind : "file"}${
+                unread ? " tree-unreached" : ""
+              }`}
+              style={{ "--indent": node.indent } as React.CSSProperties}
+            >
+              <span className="tree-name">
+                <span className="tree-branch" aria-hidden="true" />
+                <code>{node.name}</code>
+              </span>
+              {owner ? (
+                <span className="tree-owner">
+                  <i
+                    className={`reach-mark ${unread ? "reach-no" : "reach-yes"}`}
+                    aria-hidden="true"
+                  />
+                  <span className="tree-owner-name">{owner}</span>
+                  <span className="tree-kind">{node.kind}</span>
+                </span>
+              ) : (
+                <span className="tree-owner tree-owner-none">
+                  {node.kind === "target" ? "the file you asked about" : null}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {caption ? <p className="repo-tree-caption">{caption}</p> : null}
+    </div>
+  );
+}

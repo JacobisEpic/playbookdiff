@@ -12,7 +12,7 @@ test("production homepage renders the product and primary CTAs", () => {
   assert.match(html, /Same repo\./);
   assert.match(html, /Different agents\./);
   assert.match(html, /Know the difference\./);
-  assert.match(html, /See a real report/);
+  assert.match(html, /See it on a real repo/);
   assert.match(html, /View on GitHub/);
   assert.match(html, /https:\/\/github.com\/JacobisEpic\/playbookdiff/);
 });
@@ -74,14 +74,14 @@ test("example data preserves the checked-in A/B assertions", () => {
 });
 
 test("demo is labeled as static fixture data, never a live analyzer", () => {
-  assert.match(html, /Fixture-backed analysis/);
-  assert.match(html, /This browser does not inspect your repository/);
+  assert.match(html, /Nothing here reads your repository/);
+  assert.match(html, /the page ships the answers with it/);
   assert.match(html, /This fixture shows a shortened prefix/);
   assert.match(html, new RegExp("baseline " + examples.baseline.slice(0, 7)));
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /aria-pressed="false"/);
   // The prerendered state is the repository-root scenario.
-  assert.match(html, /Scope changes the result/);
+  assert.match(html, /One agent is missing part of the playbook/);
   assert.ok(html.includes(examples.root.count + " findings"));
 });
 
@@ -96,8 +96,8 @@ test("the cleared scenario ships in the client bundle, not only the default stat
       .map((entry) => readFile(path.join(chunks, entry), "utf8")),
   );
   for (const phrase of [
-    "No differences for this context",
-    "Both harnesses receive the same fixture configuration.",
+    "Both agents got the same playbook",
+    "All four instructions and skills match on both sides.",
   ]) {
     assert.ok(
       sources.some((source) => source.includes(phrase)),
@@ -107,12 +107,41 @@ test("the cleared scenario ships in the client bundle, not only the default stat
 });
 
 test("GitHub Action value is shown with verified regression behavior", () => {
-  assert.match(html, /Existing debt does not make every pull request fail/);
+  assert.match(html, /Pre-existing debt and resolved findings never do/);
   assert.match(html, /1 existing \+ 1 new/);
   assert.match(html, /1 new actionable compatibility regression/);
   assert.match(html, /Released as/);
   assert.match(html, /v0\.1\.0/);
   assert.match(html, /contents: read/);
+  // The Action's documented behaviour, not a vague CI claim.
+  for (const phrase of [
+    "introduced-actionable-count",
+    "analyzed-target-count",
+    "no-new-regressions",
+    "Match findings by stable ID",
+  ]) {
+    assert.ok(html.includes(phrase), phrase);
+  }
+});
+
+test("the repository tree states reachability for both agents", () => {
+  const tree = examples.tree;
+  assert.ok(tree.nodes.length >= 9);
+  for (const node of tree.nodes) {
+    assert.ok(html.includes(node.name), node.name);
+  }
+  // Exactly the two files Codex cannot reach from the repository root.
+  assert.deepEqual(examples.root.unreached, ["apps/api/AGENTS.md", "api-skill-codex"]);
+  assert.deepEqual(examples.api.unreached, []);
+  for (const id of examples.root.unreached) {
+    assert.ok(
+      tree.nodes.some((node) => node.id === id),
+      id,
+    );
+  }
+  assert.match(html, /never reached/);
+  assert.match(html, /Claude Code ends up with/);
+  assert.match(html, /Codex ends up with/);
 });
 
 test("provenance contains only repo-relative evidence paths", () => {
@@ -195,6 +224,7 @@ test("semantic structure and limitations are present", () => {
   assert.match(html, /Skip to content/);
   for (const phrase of [
     "Unknown beats guessed",
+    "Compile",
     "No model calls",
     "machine-effective",
     "runtime capabilities",

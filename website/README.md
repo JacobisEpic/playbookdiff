@@ -39,7 +39,7 @@ The site is deployed as the `playbookdiff` Vercel project, Git-connected to `Jac
 A push to `main` produces the production deployment at <https://playbookdiff.vercel.app>; a branch or pull request produces a preview.
 The Vercel CLI is for setup, inspection, and troubleshooting only - running `vercel deploy --prod` alongside the Git integration just duplicates a build for the same commit.
 
-Project settings, recorded in `launch/public-launch-checklist.md`:
+The production project uses these settings:
 
 | Setting          | Value           |
 | ---------------- | --------------- |

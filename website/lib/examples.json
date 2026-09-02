@@ -17,7 +17,7 @@
       "skills": ["root-skill"],
       "notReceived": ["apps/api/AGENTS.md", "api-skill"]
     },
-    "note": "Claude Code reaches the nested API configuration on demand. Codex builds its project chain through the launch directory, so from the root it never sees the nested files at all.",
+    "note": "Every file exists on both sides. Codex builds its chain from the launch directory, so from the repository root it never reaches the two nested files at all.",
     "findings": [
       {
         "type": "missing",
@@ -35,7 +35,8 @@
         "detail": "The target makes the nested Claude skill conditionally discoverable. Codex has not discovered the nested skill from this cwd.",
         "evidence": ["apps/api/.claude/skills/api-skill/SKILL.md"]
       }
-    ]
+    ],
+    "unreached": ["apps/api/AGENTS.md", "api-skill-codex"]
   },
   "api": {
     "cwd": "apps/api",
@@ -51,7 +52,81 @@
       "skills": ["root-skill", "api-skill"],
       "notReceived": []
     },
-    "note": "Launching inside apps/api brings the nested files into Codex's chain too. Both harnesses now receive the same instructions and the same skills, so every compared entity is equivalent and nothing is reported.",
-    "findings": []
+    "note": "Launching inside apps/api puts the nested files in Codex's chain too. Both agents now hold the same instructions and the same skills, so nothing is reported.",
+    "findings": [],
+    "unreached": []
+  },
+  "tree": {
+    "root": "your-repo",
+    "nodes": [
+      {
+        "id": "CLAUDE.md",
+        "indent": 0,
+        "name": "CLAUDE.md",
+        "harness": "claude",
+        "kind": "Instruction"
+      },
+      {
+        "id": "AGENTS.md",
+        "indent": 0,
+        "name": "AGENTS.md",
+        "harness": "codex",
+        "kind": "Instruction"
+      },
+      {
+        "id": "root-skill-claude",
+        "indent": 0,
+        "name": ".claude/skills/root-skill/",
+        "harness": "claude",
+        "kind": "Skill"
+      },
+      {
+        "id": "root-skill-codex",
+        "indent": 0,
+        "name": ".agents/skills/root-skill/",
+        "harness": "codex",
+        "kind": "Skill"
+      },
+      {
+        "id": "apps-api",
+        "indent": 0,
+        "name": "apps/api/",
+        "kind": "dir"
+      },
+      {
+        "id": "apps/api/CLAUDE.md",
+        "indent": 1,
+        "name": "CLAUDE.md",
+        "harness": "claude",
+        "kind": "Instruction"
+      },
+      {
+        "id": "apps/api/AGENTS.md",
+        "indent": 1,
+        "name": "AGENTS.md",
+        "harness": "codex",
+        "kind": "Instruction"
+      },
+      {
+        "id": "api-skill-claude",
+        "indent": 1,
+        "name": ".claude/skills/api-skill/",
+        "harness": "claude",
+        "kind": "Skill"
+      },
+      {
+        "id": "api-skill-codex",
+        "indent": 1,
+        "name": ".agents/skills/api-skill/",
+        "harness": "codex",
+        "kind": "Skill"
+      },
+      {
+        "id": "target",
+        "indent": 1,
+        "name": "file.ts",
+        "kind": "target"
+      }
+    ]
   }
 }
