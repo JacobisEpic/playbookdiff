@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(productionOrigin),
-  title: "PlaybookDiff | Same repo. Different agents. Know the difference.",
+  title: "PlaybookDiff | Keep Claude Code and Codex in sync",
   description: site.description,
   alternates: { canonical: "/" },
   openGraph: {
-    title: "PlaybookDiff | Catch agent configuration drift",
+    title: "PlaybookDiff | Keep Claude Code and Codex in sync",
     description: site.description,
     siteName: site.name,
     type: "website",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "PlaybookDiff | Catch agent configuration drift",
+    title: "PlaybookDiff | Keep Claude Code and Codex in sync",
     description: site.description,
   },
 };
