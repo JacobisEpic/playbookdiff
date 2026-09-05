@@ -167,6 +167,9 @@ export default function Home() {
               <a className="nav-optional" href="#workflow">
                 CI
               </a>
+              <a className="nav-optional" href="#demo">
+                Demo
+              </a>
               <a className="nav-optional" href="#discovery">
                 Why it works
               </a>
@@ -183,6 +186,11 @@ export default function Home() {
 
         <section className="hero container" aria-labelledby="hero-title">
           <div className="hero-copy">
+            <p className="hero-eyebrow">
+              <span>Open-source analyzer</span>
+              <span aria-hidden="true">/</span>
+              {site.release}
+            </p>
             <h1 id="hero-title">
               Keep Claude Code and <span>Codex</span> in sync.
             </h1>
@@ -232,6 +240,34 @@ export default function Home() {
           </ol>
 
           <WorkflowBand />
+        </section>
+
+        <section className="demo-video-section" id="demo" aria-labelledby="demo-video-title">
+          <div className="container demo-video-layout">
+            <div className="demo-video-copy">
+              <p className="section-kicker">Walkthrough / Film 01</p>
+              <h2 id="demo-video-title">See the whole check in under two minutes.</h2>
+              <p>
+                A guided product tour is in production. This frame is reserved for the final demo
+                and sized for a 16:9 video.
+              </p>
+            </div>
+            <div className="demo-video-frame" data-demo-video-slot>
+              <div className="demo-video-chrome" aria-hidden="true">
+                <span>PLAYBOOKDIFF_DEMO_01</span>
+                <span>01:30</span>
+              </div>
+              <div className="demo-video-placeholder">
+                <span className="demo-video-play" aria-hidden="true">
+                  <i />
+                </span>
+                <div>
+                  <strong>Product walkthrough</strong>
+                  <span>Film in production</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section
@@ -314,7 +350,7 @@ export default function Home() {
       <footer className="site-footer">
         <div className="container footer-inner">
           <a className="brand-link" href="#top" aria-label="PlaybookDiff home">
-            <Logo compact />
+            <Logo compact inverse />
           </a>
           <nav aria-label="Footer navigation">
             <a href={repositoryUrl("docs/cli.md")}>CLI</a>

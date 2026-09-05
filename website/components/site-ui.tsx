@@ -2,14 +2,20 @@ import type { ReactNode } from "react";
 
 type Tone = "default" | "dark" | "warm" | "success" | "info";
 
-export function Logo({ compact = false }: { compact?: boolean }) {
+export function Logo({
+  compact = false,
+  inverse = false,
+}: {
+  compact?: boolean;
+  inverse?: boolean;
+}) {
   return (
     <span className="logo-lockup">
       {/* The mark is decorative; the word mark next to it carries the name. */}
       <img className="logo-mark" src="/brand/mascots-reading.png" alt="" width="364" height="297" />
       <img
         className="logo-word"
-        src="/brand/wordmark-on-dark.png"
+        src={inverse ? "/brand/wordmark-on-dark.png" : "/brand/wordmark.png"}
         alt="PlaybookDiff"
         width="661"
         height="138"
