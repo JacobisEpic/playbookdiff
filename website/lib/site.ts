@@ -5,7 +5,7 @@ export const site = {
   repository: "https://github.com/JacobisEpic/playbookdiff",
   baseline: "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
   actionRef: "JacobisEpic/playbookdiff@v0",
-  release: "v0.1.0",
+  release: "v0.2.0",
 };
 
 // The verified production origin, never a preview or deployment-specific URL.

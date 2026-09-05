@@ -133,7 +133,7 @@ jobs:
 ```
 
 `v0` tracks the latest compatible `0.x` Action release.
-Pin `JacobisEpic/playbookdiff@v0.1.0` or a commit SHA when you need immutable resolution.
+Pin `JacobisEpic/playbookdiff@v0.2.0` or a commit SHA when you need immutable resolution.
 The Action requires no token beyond `contents: read`, performs no API calls, and works for fork pull requests.
 See the [GitHub Action reference](docs/github-action.md) for inputs, outputs, coverage, and release details.
 
@@ -180,7 +180,7 @@ The [security model](docs/security.md), [comparison specification](docs/comparis
 
 ## Project status
 
-The current public release is `v0.1.0`.
+The current public release is `v0.2.0`.
 The deterministic engine, CLI, and GitHub Action are usable, while the CLI's first npm publication remains a manual release step.
 
 During `0.x`, command output, JSON contracts, and Action outputs may change between minor releases.

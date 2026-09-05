@@ -14,14 +14,14 @@ It calls the same `runDiff` orchestration the CLI uses, parses the same `--json`
 - uses: JacobisEpic/playbookdiff@v0
 
 # Exact release:
-- uses: JacobisEpic/playbookdiff@v0.1.0
+- uses: JacobisEpic/playbookdiff@v0.2.0
 
 # Exact commit, the strictest option for any third-party Action:
 - uses: JacobisEpic/playbookdiff@<commit-sha>
 ```
 
 `@v0` moves as `0.x` releases land, so a workflow using it picks up fixes without edits.
-While the tool is at `0.x`, the output set may still change between minor versions; pin `@v0.1.0` or a commit SHA if you would rather adopt those changes deliberately.
+While the tool is at `0.x`, the output set may still change between minor versions; pin `@v0.2.0` or a commit SHA if you would rather adopt those changes deliberately.
 
 ## Example workflow
 

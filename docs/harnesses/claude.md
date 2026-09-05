@@ -181,7 +181,7 @@ Project settings discovery is launch-directory-sensitive.
 Current documentation says project `.claude/settings.json` is loaded from `<cwd>/.claude/` without parent fallback, even though instruction and rules discovery scans ancestors.
 The future adapter must not search every ancestor for project settings merely because it does so for `CLAUDE.md`.
 
-General settings comparison remains outside v0.1.
+General settings comparison remains outside the current release.
 Parsing a discovery-affecting setting is allowed only because it changes the supported instruction, skill, or MCP result.
 
 ## Skills
@@ -235,7 +235,7 @@ Phase 2 must resolve this schema gap before claiming support for `skillOverrides
 
 Current Claude Code also treats `.claude/commands/*.md` as a legacy form of the skill mechanism, with skills taking precedence on name collision.
 The kickoff contract includes `.claude/skills` only.
-Custom commands are explicitly unsupported in v0.1 and must produce a scope diagnostic if detected rather than being mistaken for native skill parity.
+Custom commands are explicitly unsupported in the current release and must produce a scope diagnostic if detected rather than being mistaken for native skill parity.
 
 ## MCP configuration
 
@@ -289,7 +289,7 @@ Every effective or candidate item must retain:
 
 The adapter should use diagnostics rather than silent fallback for parse errors, unavailable local layers, external import approval, imports outside the repository, cycles, path-match uncertainty, unsupported nested rules mechanics, settings scope, skill advertisement risk, unsupported skill overrides, unsupported transports, and runtime MCP unknowns.
 
-## Unsupported in v0.1
+## Unsupported in the current release
 
 - managed enterprise configuration
 - synced skills

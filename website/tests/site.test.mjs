@@ -60,6 +60,7 @@ test("the homepage separates checked surfaces from run modes", () => {
 test("local and pull-request workflows are concise and honest", () => {
   assert.ok(html.includes("playbookdiff check ."), "local command");
   assert.ok(html.includes("uses: JacobisEpic/playbookdiff@v0"), "Action reference");
+  assert.match(html, /v0\.2\.0/);
   assert.match(html, /Existing debt stays green/);
   assert.doesNotMatch(html, /npm (?:i |install )(?:-g )?playbookdiff|npx playbookdiff/);
 });
