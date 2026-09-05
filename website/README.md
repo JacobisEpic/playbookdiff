@@ -76,7 +76,7 @@ Finding ID prefixes are explicitly shortened, not presented as executable comple
 ## Content boundaries
 
 The site describes the current deterministic engine, harness adapters, CLI, released GitHub Action, and Git regression analysis.
-The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, because `v0.1.0` and the movable `v0` tag are published and the Action was smoke-tested from an unrelated public repository.
+The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, because `v0.2.0` and the movable `v0` tag are published and the Action was smoke-tested from an unrelated public repository.
 It does not claim a published npm package, adoption metrics, semantic analysis, or behavioral equivalence.
 Repository links point at the public repository and are verified anonymously.
 The CI regression visual is based on the checked-in baseline-debt-plus-new-regression fixture.

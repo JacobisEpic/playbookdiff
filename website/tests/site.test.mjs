@@ -111,7 +111,7 @@ test("GitHub Action value is shown with verified regression behavior", () => {
   assert.match(html, /1 existing \+ 1 new/);
   assert.match(html, /1 new actionable compatibility regression/);
   assert.match(html, /Released as/);
-  assert.match(html, /v0\.1\.0/);
+  assert.match(html, /v0\.2\.0/);
   assert.match(html, /contents: read/);
   // The Action's documented behaviour, not a vague CI claim.
   for (const phrase of [

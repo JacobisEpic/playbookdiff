@@ -166,7 +166,7 @@ The documented overall precedence from highest to lowest is:
 Repo mode sees project layers and built-in defaults only.
 It must retain diagnostics for all unavailable higher or external layers that could materially affect a supported surface.
 
-Only configuration needed to resolve instructions, skills, or MCP belongs in the v0.1 adapter.
+Only configuration needed to resolve instructions, skills, or MCP belongs in the current adapter.
 The presence of `.codex/config.toml` does not authorize comparison of unrelated settings.
 
 ## Skills
@@ -256,7 +256,7 @@ Every effective or candidate item must retain:
 
 The adapter should use diagnostics rather than silent fallback for parse errors, unavailable local layers, trust assumptions, instruction budget risk, outside-repository symlinks, runtime MCP unknowns, and unresolved duplicate MCP tables.
 
-## Unsupported in v0.1
+## Unsupported in the current release
 
 - global `$CODEX_HOME` instructions in repo mode
 - CLI flags and one-off configuration overrides
