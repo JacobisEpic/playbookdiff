@@ -17,6 +17,7 @@ test("production homepage states the product job and primary actions immediately
     /PlaybookDiff checks what each agent actually receives and catches configuration gaps before they land/,
   );
   assert.match(html, /See an example/);
+  assert.ok(html.includes('href="#discovery"><span>See an example</span>'));
   assert.match(html, /View on GitHub/);
   assert.ok(html.includes("https://github.com/JacobisEpic/playbookdiff"));
 });

@@ -199,7 +199,7 @@ export default function Home() {
               before they land.
             </p>
             <div className="hero-actions">
-              <ButtonLink href="#simple-example">See an example</ButtonLink>
+              <ButtonLink href="#discovery">See an example</ButtonLink>
               <ButtonLink href={site.repository} variant="ghost" external>
                 View on GitHub
               </ButtonLink>
