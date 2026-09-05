@@ -10,7 +10,7 @@ function Receipts({ claude, codex }: { claude: Receipt; codex: Receipt }) {
     <div className="receipt-row" aria-label="What each agent ends up with">
       <article>
         <span className="agent-mark agent-mark-claude" aria-hidden="true">
-          C
+          <img src="/brand/claude_logo.png" alt="" width="1254" height="1254" />
         </span>
         <div>
           <h3>Claude Code</h3>
@@ -19,7 +19,7 @@ function Receipts({ claude, codex }: { claude: Receipt; codex: Receipt }) {
       </article>
       <article>
         <span className="agent-mark agent-mark-codex" aria-hidden="true">
-          X
+          <img src="/brand/codex_logo.png" alt="" width="1254" height="1254" />
         </span>
         <div>
           <h3>Codex</h3>

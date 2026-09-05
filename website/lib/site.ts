@@ -1,7 +1,7 @@
 export const site = {
   name: "PlaybookDiff",
   description:
-    "See what Claude Code and Codex actually receive from the same repository, then catch newly introduced configuration drift with deterministic evidence.",
+    "Check that Claude Code and Codex receive the same repository configuration, then catch new gaps in CI.",
   repository: "https://github.com/JacobisEpic/playbookdiff",
   baseline: "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
   actionRef: "JacobisEpic/playbookdiff@v0",
