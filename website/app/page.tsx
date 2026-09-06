@@ -1,149 +1,93 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- Narrow code surfaces must remain keyboard-scrollable. */
 import { ExampleReport } from "../components/example-report";
-import { Badge, ButtonLink, Logo, ProductFrame } from "../components/site-ui";
+import { Ledger, type LedgerRow } from "../components/ledger";
+import { ButtonLink, Command, Logo } from "../components/site-ui";
 import examples from "../lib/examples.json";
-import { evidenceUrl, repositoryUrl, site } from "../lib/site";
+import { evidenceUrl, repositoryUrl, site, walkthrough } from "../lib/site";
+
+// The hero ledger describes an illustrative repository rather than the
+// checked-in fixture, and the caption beneath it says so. The fixture-backed
+// example lower down carries the evidence.
+const heroRows: LedgerRow[] = [
+  { id: "instruction", group: "Instructions", left: "CLAUDE.md", right: "AGENTS.md" },
+  { id: "mcp", group: "MCP servers", left: ".mcp.json", right: ".codex/config.toml" },
+  {
+    id: "review",
+    group: "Skills",
+    left: ".claude/skills/review/",
+    right: ".agents/skills/review/",
+  },
+  { id: "deploy", group: "Skills", left: ".claude/skills/deploy/", right: null },
+];
 
 const surfaces = [
   {
-    index: "01",
-    title: "Instructions",
-    detail: "CLAUDE.md, AGENTS.md, nested rules, imports, and scope.",
+    term: "Instructions",
+    detail: (
+      <>
+        <code>CLAUDE.md</code>, <code>AGENTS.md</code>, nested instructions, imports, and effective
+        scope.
+      </>
+    ),
   },
   {
-    index: "02",
-    title: "Skills",
-    detail: ".claude/skills/ and .agents/skills/, including discovery and invocation policy.",
+    term: "Skills",
+    detail: (
+      <>
+        <code>.claude/skills/</code> and <code>.agents/skills/</code>, discovery state and
+        invocation policy.
+      </>
+    ),
   },
   {
-    index: "03",
-    title: "MCP servers",
-    detail: ".mcp.json and .codex/config.toml transport and command configuration.",
+    term: "MCP servers",
+    detail: (
+      <>
+        <code>.mcp.json</code> and <code>.codex/config.toml</code> transport, command, and
+        arguments.
+      </>
+    ),
   },
 ];
 
-const principles = [
+const guarantees = [
   ["Read-only", "Never edits the repository it checks."],
-  ["No project execution", "Never runs scripts, skills, binaries, hooks, or MCP servers."],
-  ["Secrets stay unresolved", "Values remain symbolic or redacted."],
-  ["Unknown beats guessed", "Different wording is not treated as a semantic conflict."],
+  ["No execution", "Never runs scripts, skills, binaries, hooks, or MCP servers."],
+  ["No model calls", "Deterministic comparison. No network, no API key."],
+  ["Unknown beats guessed", "Different wording is never reported as a conflict."],
 ];
 
-function HeroRegression() {
+function Walkthrough() {
   return (
-    <figure className="hero-regression">
-      <ProductFrame
-        className="regression-frame"
-        label={
-          <span className="frame-label">
-            <span className="pull-icon" aria-hidden="true">
-              ⑂
-            </span>
-            Pull request check
-          </span>
-        }
-        meta={<span className="ci-fail-label">CI fails</span>}
-      >
-        <div className="change-block">
-          <span>This pull request adds</span>
-          <code>
-            <b aria-hidden="true">+</b> .claude/skills/deploy/SKILL.md
-          </code>
+    <section className="section walkthrough" id="walkthrough" aria-labelledby="walkthrough-title">
+      <div className="container walkthrough-layout">
+        <div>
+          <h2 id="walkthrough-title">Watch a full check.</h2>
+          <p>A recorded end-to-end run, from a clean checkout to a failing pull request.</p>
         </div>
-
-        <div className="agent-comparison" aria-label="What each agent receives">
-          <span className="comparison-label">What each agent receives</span>
-          <div className="agent-result agent-result-claude">
-            <span className="agent-symbol" aria-hidden="true">
-              <img src="/brand/claude_logo.png" alt="" width="1254" height="1254" />
-            </span>
-            <strong>Claude Code</strong>
-            <span className="result-value result-present">
-              <i aria-hidden="true">✓</i> deploy skill
-            </span>
+        {walkthrough.src ? (
+          <video
+            className="walkthrough-frame"
+            controls
+            preload="metadata"
+            poster={walkthrough.poster ?? undefined}
+          >
+            <source src={walkthrough.src} type="video/mp4" />
+            <track
+              kind="captions"
+              srcLang="en"
+              label="English"
+              src={walkthrough.captions}
+              default
+            />
+          </video>
+        ) : (
+          <div className="walkthrough-frame walkthrough-pending">
+            <p>Recording in progress</p>
           </div>
-          <div className="agent-result agent-result-codex">
-            <span className="agent-symbol" aria-hidden="true">
-              <img src="/brand/codex_logo.png" alt="" width="1254" height="1254" />
-            </span>
-            <strong>Codex</strong>
-            <span className="result-value result-missing">
-              <i aria-hidden="true">×</i> no corresponding skill
-            </span>
-          </div>
-        </div>
-
-        <div className="regression-result">
-          <span>Result</span>
-          <div>
-            <Badge tone="warm">Medium</Badge>
-            <strong>Skill capability gap</strong>
-            <span className="ci-fail-label">CI fails</span>
-          </div>
-        </div>
-      </ProductFrame>
-      <figcaption>
-        The basic case: one agent gets a new capability and the other does not.
-      </figcaption>
-    </figure>
-  );
-}
-
-function WorkflowBand() {
-  return (
-    <div className="workflow-band" id="workflow">
-      <h3>
-        Catch <span>drift</span> while you work.
-      </h3>
-      <div className="workflow-paths">
-        <article>
-          <span className="workflow-heading">
-            <i aria-hidden="true">›_</i> Check locally
-          </span>
-          <pre tabIndex={0} aria-label="Run PlaybookDiff locally">
-            <code>
-              <span>$</span> playbookdiff check .
-            </code>
-          </pre>
-          <p>See every proven configuration gap and the files that caused it.</p>
-        </article>
-        <article>
-          <span className="workflow-heading">
-            <i aria-hidden="true">⑂</i> Protect pull requests
-          </span>
-          <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
-            <code>{`uses: ${site.actionRef}`}</code>
-          </pre>
-          <p>
-            Fail only when a change introduces a new actionable regression. Existing debt stays
-            green.
-          </p>
-        </article>
+        )}
       </div>
-    </div>
-  );
-}
-
-function EvidencePanel() {
-  return (
-    <ProductFrame className="evidence-panel" label="Example finding" meta="Evidence attached">
-      <div className="evidence-title">
-        <Badge tone="warm">Medium</Badge>
-        <strong>Skill capability gap</strong>
-      </div>
-      <div className="evidence-path evidence-path-present">
-        <span aria-hidden="true">✓</span>
-        <code>.claude/skills/deploy/SKILL.md</code>
-      </div>
-      <div className="evidence-path evidence-path-missing">
-        <span aria-hidden="true">×</span>
-        <code>.agents/skills/deploy/SKILL.md</code>
-        <em>not found</em>
-      </div>
-      <a className="evidence-link" href={repositoryUrl("docs/comparison.md")}>
-        How findings carry source evidence <span aria-hidden="true">↗</span>
-      </a>
-    </ProductFrame>
+    </section>
   );
 }
 
@@ -154,195 +98,150 @@ export default function Home() {
         Skip to content
       </a>
 
-      <div className="hero-surface" id="top">
-        <header className="site-header">
-          <div className="container header-inner">
-            <a className="brand-link" href="#top" aria-label="PlaybookDiff home">
-              <Logo />
+      <header className="site-header" id="top">
+        <div className="container header-inner">
+          <a className="brand-link" href="#top" aria-label="PlaybookDiff home">
+            <Logo />
+          </a>
+          <nav aria-label="Main navigation">
+            <a href={repositoryUrl("docs/cli.md")}>
+              Docs <span aria-hidden="true">↗</span>
             </a>
-            <nav aria-label="Main navigation">
-              <a className="nav-optional" href="#checks">
-                What it checks
-              </a>
-              <a className="nav-optional" href="#workflow">
-                CI
-              </a>
-              <a className="nav-optional" href="#demo">
-                Demo
-              </a>
-              <a className="nav-optional" href="#discovery">
-                Why it works
-              </a>
-              <a className="nav-optional" href={repositoryUrl("docs/cli.md")}>
-                Docs <span aria-hidden="true">↗</span>
-              </a>
-              <a className="nav-cta" href={site.repository}>
-                <span className="nav-cta-text">View on GitHub</span>
-                <span aria-hidden="true">↗</span>
-              </a>
-            </nav>
-          </div>
-        </header>
-
-        <section className="hero container" aria-labelledby="hero-title">
-          <div className="hero-copy">
-            <p className="hero-eyebrow">
-              <span>Open-source analyzer</span>
-              <span aria-hidden="true">/</span>
-              {site.release}
-            </p>
-            <h1 id="hero-title">
-              Keep Claude Code and <span>Codex</span> in sync.
-            </h1>
-            <p className="hero-lead">
-              PlaybookDiff checks what each agent actually receives and catches configuration gaps
-              before they land.
-            </p>
-            <div className="hero-actions">
-              <ButtonLink href="#discovery">See an example</ButtonLink>
-              <ButtonLink href={site.repository} variant="ghost" external>
-                View on GitHub
-              </ButtonLink>
-            </div>
-            <ul className="hero-trust" aria-label="Project principles">
-              <li>Read-only</li>
-              <li>Deterministic</li>
-              <li>No model calls</li>
-            </ul>
-          </div>
-          <div id="simple-example">
-            <HeroRegression />
-          </div>
-        </section>
-      </div>
+            <a href={site.repository}>
+              GitHub <span aria-hidden="true">↗</span>
+            </a>
+          </nav>
+        </div>
+      </header>
 
       <main id="main">
-        <section
-          className="section checks-section container"
-          id="checks"
-          aria-labelledby="checks-title"
-        >
-          <div className="section-intro">
-            <h2 id="checks-title">
-              More than a <code>CLAUDE.md</code> <span>↔</span> <code>AGENTS.md</code> diff.
-            </h2>
-            <p>Matching files do not guarantee matching effective configuration.</p>
-          </div>
-
-          <ol className="surface-rail" aria-label="Configuration surfaces PlaybookDiff checks">
-            {surfaces.map((surface) => (
-              <li key={surface.title}>
-                <span>{surface.index}</span>
-                <h3>{surface.title}</h3>
-                <p>{surface.detail}</p>
-              </li>
-            ))}
-          </ol>
-
-          <WorkflowBand />
-        </section>
-
-        <section className="demo-video-section" id="demo" aria-labelledby="demo-video-title">
-          <div className="container demo-video-layout">
-            <div className="demo-video-copy">
-              <p className="section-kicker">Walkthrough / Film 01</p>
-              <h2 id="demo-video-title">See the whole check in under two minutes.</h2>
-              <p>
-                A guided product tour is in production. This frame is reserved for the final demo
-                and sized for a 16:9 video.
-              </p>
-            </div>
-            <div className="demo-video-frame" data-demo-video-slot>
-              <div className="demo-video-chrome" aria-hidden="true">
-                <span>PLAYBOOKDIFF_DEMO_01</span>
-                <span>01:30</span>
-              </div>
-              <div className="demo-video-placeholder">
-                <span className="demo-video-play" aria-hidden="true">
-                  <i />
-                </span>
-                <div>
-                  <strong>Product walkthrough</strong>
-                  <span>Film in production</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section
-          className="section discovery-section"
-          id="discovery"
-          aria-labelledby="discovery-title"
-        >
-          <div className="container">
-            <div className="discovery-intro">
-              <h2 id="discovery-title">
-                Sometimes both files exist, and that is <span>still</span> not enough.
-              </h2>
-              <p>
-                Claude Code and Codex use different discovery rules. Where an agent starts can
-                change what it receives.
-              </p>
-            </div>
-
-            <ExampleReport />
-            <p className="demo-caption">
-              Every file exists. Codex never walks into <code>apps/api</code> from the repository
-              root. The example is pinned to assertions in a{" "}
-              <a href={evidenceUrl(examples.source)}>checked-in test</a>.
+        <section className="hero container" aria-labelledby="hero-title">
+          <div className="hero-copy">
+            <p className="hero-meta">
+              <span>Open source</span>
+              <span>{site.release}</span>
+              <span>CLI and GitHub Action</span>
             </p>
-          </div>
-        </section>
-
-        <section
-          className="section evidence-section container"
-          id="evidence"
-          aria-labelledby="evidence-title"
-        >
-          <div className="evidence-layout">
-            <div>
-              <div className="section-intro evidence-intro">
-                <h2 id="evidence-title">
-                  Evidence, <span>not</span> guesses.
-                </h2>
-                <p>
-                  PlaybookDiff is read-only and deterministic. When it can prove a configuration
-                  difference, it reports the source. When it cannot, it says unknown.
-                </p>
-              </div>
-
-              <ol className="principle-list">
-                {principles.map(([title, detail], index) => (
-                  <li key={title}>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <div>
-                      <h3>{title}</h3>
-                      <p>{detail}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <EvidencePanel />
-          </div>
-        </section>
-
-        <section className="closing-section" aria-labelledby="closing-title">
-          <div className="container closing-inner">
-            <div>
-              <h2 id="closing-title">Keep both agents on the same playbook.</h2>
-              <p>
-                Add the GitHub Action to protect pull requests, or inspect a repository locally.
-              </p>
-            </div>
-            <div className="closing-actions">
-              <ButtonLink href={repositoryUrl("docs/cli.md")}>Read the docs</ButtonLink>
+            <h1 id="hero-title">
+              Keep Claude Code and <span className="mark-codex">Codex</span> in sync.
+            </h1>
+            <p className="hero-lead">
+              PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent
+              actually receives, and catches differences before they land.
+            </p>
+            <Command label="Check a repository with PlaybookDiff">playbookdiff check .</Command>
+            <div className="hero-actions">
+              <ButtonLink href={repositoryUrl("docs/cli.md")}>Get started</ButtonLink>
               <ButtonLink href={site.repository} variant="ghost" external>
                 View on GitHub
               </ButtonLink>
-              <span>Open source · MIT</span>
             </div>
+          </div>
+
+          <figure className="hero-figure">
+            <Ledger
+              command="playbookdiff check ."
+              meta="what each agent receives"
+              rows={heroRows}
+              findings={[{ id: "gap", severity: "medium", title: "Skill capability gap" }]}
+              animate
+            />
+            <figcaption>
+              An illustrative repository. The example below is pinned to a checked-in fixture.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section className="section container" id="surfaces" aria-labelledby="surfaces-title">
+          <div className="prose">
+            <h2 id="surfaces-title">Matching files are not matching configuration.</h2>
+            <p>
+              Claude Code and Codex read <code>CLAUDE.md</code> and <code>AGENTS.md</code> under
+              different discovery rules, nested scopes, imports, and skill conventions. Two files
+              can look parallel and still produce different effective configuration. PlaybookDiff
+              compiles what each agent receives across three surfaces, then compares those.
+            </p>
+          </div>
+
+          <dl className="surfaces">
+            {surfaces.map((surface) => (
+              <div key={surface.term}>
+                <dt>{surface.term}</dt>
+                <dd>{surface.detail}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="section container" id="example" aria-labelledby="example-title">
+          <div className="prose">
+            <h2 id="example-title">Every file exists. One agent still never sees it.</h2>
+            <p>
+              This repository has matching root and <code>apps/api</code> instructions and skills
+              for both agents, and an agent working on <code>{examples.target}</code>. Only the
+              launch directory changes.
+            </p>
+          </div>
+
+          <ExampleReport />
+
+          <p className="footnote">
+            Reproduced from the{" "}
+            <a href={evidenceUrl(examples.fixture, "tree")}>checked-in fixture</a> by a{" "}
+            <a href={evidenceUrl(examples.source)}>test that asserts both results</a>.
+          </p>
+        </section>
+
+        <Walkthrough />
+
+        <section className="section container" id="run" aria-labelledby="run-title">
+          <div className="prose">
+            <h2 id="run-title">Run it locally, then keep it there.</h2>
+          </div>
+
+          <div className="run">
+            <article>
+              <h3>Locally</h3>
+              <Command label="Check a repository from the terminal">playbookdiff check .</Command>
+              <p>
+                Prints every proven configuration gap, with the source file behind each one. Exits
+                non-zero on actionable findings.
+              </p>
+            </article>
+            <article>
+              <h3>In CI</h3>
+              <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
+                <code>{`uses: ${site.actionRef}`}</code>
+              </pre>
+              <p>
+                Compares the pull request base against the head and fails only on newly introduced
+                findings. Existing debt stays green.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section className="section container closing" aria-labelledby="closing-title">
+          <div className="prose">
+            <h2 id="closing-title">It reports what it can prove.</h2>
+          </div>
+
+          <dl className="guarantees">
+            {guarantees.map(([term, detail]) => (
+              <div key={term}>
+                <dt>{term}</dt>
+                <dd>{detail}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="closing-actions">
+            <ButtonLink href={site.repository} external>
+              View on GitHub
+            </ButtonLink>
+            <ButtonLink href={repositoryUrl("docs/cli.md")} variant="ghost">
+              Read the docs
+            </ButtonLink>
           </div>
         </section>
       </main>
@@ -350,12 +249,13 @@ export default function Home() {
       <footer className="site-footer">
         <div className="container footer-inner">
           <a className="brand-link" href="#top" aria-label="PlaybookDiff home">
-            <Logo compact inverse />
+            <Logo />
           </a>
           <nav aria-label="Footer navigation">
             <a href={repositoryUrl("docs/cli.md")}>CLI</a>
             <a href={repositoryUrl("docs/github-action.md")}>Action</a>
             <a href={repositoryUrl("docs/security.md")}>Security</a>
+            <a href={repositoryUrl("docs/limitations.md")}>Limitations</a>
             <a href={repositoryUrl("CONTRIBUTING.md")}>Contribute</a>
             <a href={repositoryUrl("LICENSE")}>MIT</a>
           </nav>

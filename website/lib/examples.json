@@ -7,126 +7,79 @@
     "cwd": ".",
     "count": 2,
     "equivalent": 2,
-    "claude": {
-      "instructions": ["CLAUDE.md", "apps/api/CLAUDE.md"],
-      "skills": ["root-skill", "api-skill"],
-      "notReceived": []
-    },
-    "codex": {
-      "instructions": ["AGENTS.md"],
-      "skills": ["root-skill"],
-      "notReceived": ["apps/api/AGENTS.md", "api-skill"]
-    },
     "note": "Every file exists on both sides. Codex builds its chain from the launch directory, so from the repository root it never reaches the two nested files at all.",
+    "ledger": [
+      {
+        "id": "root-instruction",
+        "group": "Instructions",
+        "left": "CLAUDE.md",
+        "right": "AGENTS.md"
+      },
+      {
+        "id": "api-instruction",
+        "group": "Instructions",
+        "left": "apps/api/CLAUDE.md",
+        "right": null
+      },
+      {
+        "id": "root-skill",
+        "group": "Skills",
+        "left": ".claude/skills/root-skill/",
+        "right": ".agents/skills/root-skill/"
+      },
+      {
+        "id": "api-skill",
+        "group": "Skills",
+        "left": "apps/api/.claude/skills/api-skill/",
+        "right": null
+      }
+    ],
     "findings": [
       {
         "type": "missing",
-        "title": "API instruction missing in Codex",
-        "category": "instruction",
-        "idPrefix": "instruction:missing:right:",
-        "detail": "The API instruction is present for Claude, with no corresponding instruction in Codex's effective configuration.",
+        "title": "Instruction missing in Codex",
+        "detail": "Claude Code has an instruction for this effective scope. Codex has no deterministic corresponding instruction.",
         "evidence": ["apps/api/CLAUDE.md"]
       },
       {
         "type": "capability-gap",
-        "title": "API skill has no Codex counterpart in scope",
-        "category": "skill",
-        "idPrefix": "skill:capability-gap:right:api-skill:",
-        "detail": "The target makes the nested Claude skill conditionally discoverable. Codex has not discovered the nested skill from this cwd.",
+        "title": "Skill capability gap",
+        "detail": "The api-skill skill is repository-discovered for Claude Code only. Codex has not discovered it from this launch directory.",
         "evidence": ["apps/api/.claude/skills/api-skill/SKILL.md"]
       }
-    ],
-    "unreached": ["apps/api/AGENTS.md", "api-skill-codex"]
+    ]
   },
   "api": {
     "cwd": "apps/api",
     "count": 0,
     "equivalent": 4,
-    "claude": {
-      "instructions": ["CLAUDE.md", "apps/api/CLAUDE.md"],
-      "skills": ["root-skill", "api-skill"],
-      "notReceived": []
-    },
-    "codex": {
-      "instructions": ["AGENTS.md", "apps/api/AGENTS.md"],
-      "skills": ["root-skill", "api-skill"],
-      "notReceived": []
-    },
     "note": "Launching inside apps/api puts the nested files in Codex's chain too. Both agents now hold the same instructions and the same skills, so nothing is reported.",
-    "findings": [],
-    "unreached": []
-  },
-  "tree": {
-    "root": "your-repo",
-    "nodes": [
+    "ledger": [
       {
-        "id": "CLAUDE.md",
-        "indent": 0,
-        "name": "CLAUDE.md",
-        "harness": "claude",
-        "kind": "Instruction"
+        "id": "root-instruction",
+        "group": "Instructions",
+        "left": "CLAUDE.md",
+        "right": "AGENTS.md"
       },
       {
-        "id": "AGENTS.md",
-        "indent": 0,
-        "name": "AGENTS.md",
-        "harness": "codex",
-        "kind": "Instruction"
+        "id": "api-instruction",
+        "group": "Instructions",
+        "left": "apps/api/CLAUDE.md",
+        "right": "apps/api/AGENTS.md"
       },
       {
-        "id": "root-skill-claude",
-        "indent": 0,
-        "name": ".claude/skills/root-skill/",
-        "harness": "claude",
-        "kind": "Skill"
+        "id": "root-skill",
+        "group": "Skills",
+        "left": ".claude/skills/root-skill/",
+        "right": ".agents/skills/root-skill/"
       },
       {
-        "id": "root-skill-codex",
-        "indent": 0,
-        "name": ".agents/skills/root-skill/",
-        "harness": "codex",
-        "kind": "Skill"
-      },
-      {
-        "id": "apps-api",
-        "indent": 0,
-        "name": "apps/api/",
-        "kind": "dir"
-      },
-      {
-        "id": "apps/api/CLAUDE.md",
-        "indent": 1,
-        "name": "CLAUDE.md",
-        "harness": "claude",
-        "kind": "Instruction"
-      },
-      {
-        "id": "apps/api/AGENTS.md",
-        "indent": 1,
-        "name": "AGENTS.md",
-        "harness": "codex",
-        "kind": "Instruction"
-      },
-      {
-        "id": "api-skill-claude",
-        "indent": 1,
-        "name": ".claude/skills/api-skill/",
-        "harness": "claude",
-        "kind": "Skill"
-      },
-      {
-        "id": "api-skill-codex",
-        "indent": 1,
-        "name": ".agents/skills/api-skill/",
-        "harness": "codex",
-        "kind": "Skill"
-      },
-      {
-        "id": "target",
-        "indent": 1,
-        "name": "file.ts",
-        "kind": "target"
+        "id": "api-skill",
+        "group": "Skills",
+        "left": "apps/api/.claude/skills/api-skill/",
+        "right": "apps/api/.agents/skills/api-skill/"
       }
-    ]
+    ],
+    "findings": []
   }
 }
