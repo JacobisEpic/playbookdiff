@@ -36,6 +36,21 @@ const escapes: Record<string, string> = {
 
 const escapeHtml = (value: string) => value.replace(/[&<>"]/g, (character) => escapes[character]);
 
+/**
+ * The schemes a rendered link is allowed to navigate to.
+ *
+ * Escaping stops a link target from breaking out of its attribute, but it does
+ * not stop `javascript:`, `data:`, or `vbscript:` from being a working href.
+ * A target that is not a relative path, a fragment, or one of these schemes is
+ * refused and the link renders as plain text, so the renderer is safe on its
+ * own rather than relying on whatever `resolveLink` a caller passes in.
+ */
+const safeHref = (href: string) => {
+  const scheme = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(href.trim());
+  if (!scheme) return href; // relative path or fragment
+  return /^(https?|mailto)$/i.test(scheme[1]) ? href : null;
+};
+
 /** GitHub's heading slug rules, so existing `#anchor` links keep resolving. */
 export function slug(text: string) {
   return text
@@ -64,10 +79,15 @@ function inline(source: string, options: Options): string {
 
     const link = /^\[([^\]]*)\]\(([^)\s]+)\)/.exec(rest);
     if (link) {
-      const href = options.resolveLink?.(link[2]) ?? link[2];
-      const external = /^https?:\/\//.test(href);
-      const attributes = external ? ' rel="noreferrer"' : "";
-      html += `<a href="${escapeHtml(href)}"${attributes}>${inline(link[1], options)}</a>`;
+      const href = safeHref(options.resolveLink?.(link[2]) ?? link[2]);
+      const text = inline(link[1], options);
+      if (href === null) {
+        html += text;
+      } else {
+        const external = /^https?:\/\//i.test(href);
+        const attributes = external ? ' rel="noreferrer"' : "";
+        html += `<a href="${escapeHtml(href)}"${attributes}>${text}</a>`;
+      }
       index += link[0].length;
       continue;
     }
