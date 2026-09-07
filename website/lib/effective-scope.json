@@ -1,0 +1,141 @@
+{
+  "generatedBy": "scripts/generate-website-example.mjs",
+  "fixture": "packages/harness-codex/test/fixtures/cross-harness/cwd-target",
+  "test": "packages/harness-codex/src/cross-harness.test.ts",
+  "target": "apps/api/file.ts",
+  "rows": [
+    {
+      "path": "CLAUDE.md",
+      "directory": "",
+      "name": "CLAUDE.md",
+      "evidence": "CLAUDE.md",
+      "harness": "claude",
+      "kind": "instruction",
+      "states": {
+        "root": "startup",
+        "api": "startup"
+      }
+    },
+    {
+      "path": "AGENTS.md",
+      "directory": "",
+      "name": "AGENTS.md",
+      "evidence": "AGENTS.md",
+      "harness": "codex",
+      "kind": "instruction",
+      "states": {
+        "root": "startup",
+        "api": "startup"
+      }
+    },
+    {
+      "path": ".claude/skills/root-skill/",
+      "directory": "",
+      "name": ".claude/skills/root-skill/",
+      "evidence": ".claude/skills/root-skill/SKILL.md",
+      "harness": "claude",
+      "kind": "skill",
+      "states": {
+        "root": "startup",
+        "api": "startup"
+      }
+    },
+    {
+      "path": ".agents/skills/root-skill/",
+      "directory": "",
+      "name": ".agents/skills/root-skill/",
+      "evidence": ".agents/skills/root-skill/SKILL.md",
+      "harness": "codex",
+      "kind": "skill",
+      "states": {
+        "root": "startup",
+        "api": "startup"
+      }
+    },
+    {
+      "path": "apps/api/CLAUDE.md",
+      "directory": "apps/api",
+      "name": "CLAUDE.md",
+      "evidence": "apps/api/CLAUDE.md",
+      "harness": "claude",
+      "kind": "instruction",
+      "states": {
+        "root": "on-demand",
+        "api": "startup"
+      }
+    },
+    {
+      "path": "apps/api/AGENTS.md",
+      "directory": "apps/api",
+      "name": "AGENTS.md",
+      "evidence": "apps/api/AGENTS.md",
+      "harness": "codex",
+      "kind": "instruction",
+      "states": {
+        "root": "absent",
+        "api": "startup"
+      }
+    },
+    {
+      "path": "apps/api/.claude/skills/api-skill/",
+      "directory": "apps/api",
+      "name": ".claude/skills/api-skill/",
+      "evidence": "apps/api/.claude/skills/api-skill/SKILL.md",
+      "harness": "claude",
+      "kind": "skill",
+      "states": {
+        "root": "on-demand",
+        "api": "startup"
+      }
+    },
+    {
+      "path": "apps/api/.agents/skills/api-skill/",
+      "directory": "apps/api",
+      "name": ".agents/skills/api-skill/",
+      "evidence": "apps/api/.agents/skills/api-skill/SKILL.md",
+      "harness": "codex",
+      "kind": "skill",
+      "states": {
+        "root": "absent",
+        "api": "startup"
+      }
+    }
+  ],
+  "scenarios": {
+    "root": {
+      "cwd": ".",
+      "transcript": "PlaybookDiff\n\nClaude Code <-> Codex\n\nRepository: your-repo\nLaunch cwd: .\nTarget: apps/api/file.ts\n\nFindings: 2 medium, 0 low, 0 info\n\nMEDIUM  Instruction missing\n        Claude Code has an instruction for this effective scope, while Codex has no deterministic corresponding instruction.\n        Evidence:\n          - Claude Code instruction: apps/api/CLAUDE.md:1-2 (repository)\n            \"API shared playbook.\"\n        ID: instruction:missing:right:appliesto-apps-api-excludedfrom-loadphase-on-dem:a5921426b5e0\n\nMEDIUM  Skill capability gap\n        The api-skill skill is repository-discovered only for Claude Code, not Codex.\n        Evidence:\n          - Claude Code skill: apps/api/.claude/skills/api-skill/SKILL.md (repository)\n            \"api-skill: API shared skill.\"\n        ID: skill:capability-gap:right:api-skill:5059ed3d0455\n\nSummary\n  Instruction 1 equivalent, 1 divergent, 0 unknown\n  Skill       1 equivalent, 1 divergent, 0 unknown\n  MCP         0 equivalent, 0 divergent, 0 unknown\n\nResult: compatibility issues found",
+      "actionable": 2,
+      "equivalent": 2,
+      "findings": [
+        {
+          "id": "instruction:missing:right",
+          "severity": "medium",
+          "category": "instruction",
+          "type": "missing",
+          "explanation": "Claude Code has an instruction for this effective scope, while Codex has no deterministic corresponding instruction.",
+          "evidence": [
+            "apps/api/CLAUDE.md"
+          ]
+        },
+        {
+          "id": "skill:capability-gap:right",
+          "severity": "medium",
+          "category": "skill",
+          "type": "capability-gap",
+          "explanation": "The api-skill skill is repository-discovered only for Claude Code, not Codex.",
+          "evidence": [
+            "apps/api/.claude/skills/api-skill/SKILL.md"
+          ]
+        }
+      ]
+    },
+    "api": {
+      "cwd": "apps/api",
+      "transcript": "PlaybookDiff\n\nClaude Code <-> Codex\n\nRepository: your-repo\nLaunch cwd: apps/api\nTarget: apps/api/file.ts\n\nFindings: 0 medium, 0 low, 0 info\n\nNo compatibility findings.\nSummary\n  Instruction 2 equivalent, 0 divergent, 0 unknown\n  Skill       2 equivalent, 0 divergent, 0 unknown\n  MCP         0 equivalent, 0 divergent, 0 unknown\n\nResult: no compatibility divergence detected",
+      "actionable": 0,
+      "equivalent": 4,
+      "findings": []
+    }
+  }
+}
