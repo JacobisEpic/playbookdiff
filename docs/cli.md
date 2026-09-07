@@ -3,23 +3,38 @@
 `playbookdiff` is the terminal entry point for the deterministic comparator implemented in `packages/core`.
 It compiles a repository's effective Claude Code and Codex configuration, compares them, and prints the resulting `CompatibilityReport`.
 
-## Distribution status
+## Install
 
-The CLI is prepared for npm distribution but has not been published to the registry.
-The release artifact is built and installed in a clean temporary consumer environment by `pnpm cli:verify-package` in conventional CI.
-Until the first npm publication is complete, use the source installation below.
-
-## Development invocation
-
-The CLI package is `packages/cli` and builds to a real executable at `packages/cli/dist/bin.js`.
-From a clean checkout:
+The CLI is published to npm as [`playbookdiff`](https://www.npmjs.com/package/playbookdiff).
+It requires Node.js 24.11 or newer within the 24.x release line, and has no other runtime prerequisite.
 
 ```sh
-pnpm install
+npm install --global playbookdiff
+playbookdiff check .
+```
+
+To run it once without installing it:
+
+```sh
+npx playbookdiff check .
+```
+
+While the tool is at `0.x`, command output, the JSON contract, and exit-code detail may change between minor releases.
+Pin an exact version in automation that parses the output.
+
+## Running from a checkout
+
+Contributors, and anyone who would rather read the source before running it, can build the CLI from the repository.
+This needs Node.js 24.11 or newer within the 24.x release line and pnpm 11.24.0.
+
+```sh
+git clone https://github.com/JacobisEpic/playbookdiff.git
+cd playbookdiff
+pnpm install --frozen-lockfile
 pnpm --filter playbookdiff build
 ```
 
-Then run it directly:
+The package builds to a real executable at `packages/cli/dist/bin.js`:
 
 ```sh
 node packages/cli/dist/bin.js check .
@@ -31,15 +46,15 @@ or through the root convenience script, which forwards arguments:
 pnpm playbookdiff check .
 ```
 
-This workspace does not install `playbookdiff` onto `PATH` because it is not a dependency of another workspace package.
-After building, install the package globally from the checkout to get the plain command:
+This workspace does not install `playbookdiff` onto `PATH`, because it is not a dependency of another workspace package.
+To get the plain command from a checkout, install the built package globally from it:
 
 ```sh
 npm install --global ./packages/cli
 playbookdiff --help
 ```
 
-Do not present a registry installation as public until the first publication is verified.
+The release artifact is built and installed in a clean temporary consumer environment by `pnpm cli:verify-package` in conventional CI, so the published package is exercised the way a consumer installs it.
 The maintained publication procedure is in [the release guide](releasing.md).
 
 ## Commands

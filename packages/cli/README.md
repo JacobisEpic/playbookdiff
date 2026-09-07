@@ -5,15 +5,18 @@ Deterministic, read-only compatibility checker for repositories that configure b
 PlaybookDiff compiles the repository-defined instructions, skills, and MCP servers each harness effectively receives, compares them structurally, and explains proven differences with source evidence.
 It never modifies or executes the analyzed repository, connects to configured MCP servers, resolves secrets, or calls a model.
 
-## Distribution status
+## Install
 
-This package is prepared and tested as an npm artifact but has not been published yet.
-Until the first publication is verified, build or install it from the [source repository](https://github.com/JacobisEpic/playbookdiff#try-the-cli).
-
-After publication, the supported registry installation will be:
+Requires Node.js 24.11 or newer within the 24.x release line.
 
 ```sh
 npm install --global playbookdiff
+```
+
+Or run it once, without installing it:
+
+```sh
+npx playbookdiff check .
 ```
 
 ## Usage
@@ -30,6 +33,4 @@ playbookdiff diff origin/main..HEAD
 
 Exit codes are `0` for no actionable divergence, `1` for actionable findings, and `2` when analysis cannot run.
 
-Requires Node.js 24.11 or newer within the 24.x release line.
-
-See the [full documentation](https://github.com/JacobisEpic/playbookdiff#documentation) for options, supported semantics, limitations, and the security model.
+See the [full documentation](https://playbookdiff.dev/docs) for options, supported semantics, limitations, and the security model.

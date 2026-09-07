@@ -6,6 +6,8 @@
 
 > Make sure Claude Code and Codex are working from the same playbook.
 
+**[playbookdiff.dev](https://playbookdiff.dev)** - documentation, and an interactive example of what each agent effectively receives.
+
 PlaybookDiff is a deterministic, read-only compatibility checker for repositories that configure both Claude Code and Codex.
 It compiles the instructions, skills, and MCP servers each harness effectively receives, then reports proven differences with source evidence.
 
@@ -52,23 +54,20 @@ See the [complete supported-semantics matrix](docs/limitations.md) for the preci
 
 ## Try the CLI
 
-The CLI package is prepared and locally verified as an npm tarball, but it has not been published to npm.
-Until the first publication, build it from source with Node.js 24.11 or newer within the 24.x release line and pnpm 11.24.0:
+PlaybookDiff is on npm as [`playbookdiff`](https://www.npmjs.com/package/playbookdiff) and needs Node.js 24.11 or newer within the 24.x release line.
 
 ```sh
-git clone https://github.com/JacobisEpic/playbookdiff.git
-cd playbookdiff
-pnpm install --frozen-lockfile
-pnpm build
-node packages/cli/dist/bin.js check /path/to/your/repo
-```
-
-You can also install the built package globally from the checkout to get the plain command:
-
-```sh
-npm install --global ./packages/cli
+npm install --global playbookdiff
 playbookdiff check /path/to/your/repo
 ```
+
+Or run it once, without installing it:
+
+```sh
+npx playbookdiff check /path/to/your/repo
+```
+
+To build and run it from this repository instead, see [running from a checkout](docs/cli.md#running-from-a-checkout).
 
 The primary commands are:
 
@@ -82,7 +81,7 @@ playbookdiff diff <baseline>..<candidate> [repository]
 It does not fail on divergence that already existed, modify the working tree, move `HEAD`, run Git hooks, or fetch.
 
 Exit codes are `0` for no actionable divergence, `1` for actionable findings, and `2` when analysis cannot run.
-See the [CLI reference](docs/cli.md) for all options and the important distinction between `--cwd` and `--path`.
+See the [CLI reference](https://playbookdiff.dev/docs/cli) for all options and the important distinction between `--cwd` and `--path`.
 
 ## Representative output
 
@@ -169,6 +168,8 @@ The [security model](docs/security.md), [comparison specification](docs/comparis
 
 ## Documentation
 
+The readable version of everything below is at [playbookdiff.dev/docs](https://playbookdiff.dev/docs); these files are its source.
+
 - [CLI reference](docs/cli.md)
 - [GitHub Action](docs/github-action.md)
 - [Scope and limitations](docs/limitations.md)
@@ -183,7 +184,7 @@ The [security model](docs/security.md), [comparison specification](docs/comparis
 ## Project status
 
 The current public release is `v0.2.0`.
-The deterministic engine, CLI, and GitHub Action are usable, while the CLI's first npm publication remains a manual release step.
+The deterministic engine, the `playbookdiff` CLI on npm, and the GitHub Action are all usable.
 
 During `0.x`, command output, JSON contracts, and Action outputs may change between minor releases.
 The core policy will not: when compatibility cannot be established deterministically, the result stays `unknown`.
