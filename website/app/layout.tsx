@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(productionOrigin),
-  title: "PlaybookDiff",
+  title: { default: "PlaybookDiff", template: "%s - PlaybookDiff" },
   description: site.description,
   alternates: { canonical: "/" },
   openGraph: {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     url: productionOrigin,
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "PlaybookDiff",
     description: site.description,
   },
