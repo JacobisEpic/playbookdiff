@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { productionOrigin, site } from "../lib/site";
+import { openGraph, productionOrigin, site } from "../lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,13 +7,7 @@ export const metadata: Metadata = {
   title: { default: "PlaybookDiff", template: "%s - PlaybookDiff" },
   description: site.description,
   alternates: { canonical: "/" },
-  openGraph: {
-    title: "PlaybookDiff",
-    description: site.description,
-    siteName: site.name,
-    type: "website",
-    url: productionOrigin,
-  },
+  openGraph: openGraph(),
   twitter: {
     card: "summary_large_image",
     title: "PlaybookDiff",

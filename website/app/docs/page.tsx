@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { DocsNav } from "../../components/docs-nav";
 import { Command } from "../../components/site-ui";
 import { sections } from "../../lib/docs";
-import { productionOrigin, repositoryUrl, site } from "../../lib/site";
+import { openGraph, repositoryUrl, site } from "../../lib/site";
 
 export const metadata: Metadata = {
   title: "Documentation",
   description:
     "How to run PlaybookDiff locally and in CI, what it compares, what it refuses to claim, and how each guarantee is enforced.",
   alternates: { canonical: "/docs" },
-  openGraph: { url: `${productionOrigin}/docs` },
+  openGraph: openGraph("/docs", "PlaybookDiff documentation"),
 };
 
 export default function DocsIndex() {

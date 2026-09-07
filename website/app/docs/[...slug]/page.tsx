@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DocsNav } from "../../../components/docs-nav";
 import { findPage, pages, renderDoc } from "../../../lib/docs";
-import { productionOrigin, repositoryUrl } from "../../../lib/site";
+import { openGraph, repositoryUrl } from "../../../lib/site";
 
 type Props = { params: Promise<{ slug: string[] }> };
 
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: page.title,
     description: page.summary,
     alternates: { canonical: `/docs/${page.slug}` },
-    openGraph: { url: `${productionOrigin}/docs/${page.slug}` },
+    openGraph: openGraph(`/docs/${page.slug}`, `${page.title} - PlaybookDiff`),
   };
 }
 

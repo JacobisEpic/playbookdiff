@@ -26,6 +26,18 @@ export const evidenceUrl = (file: string, kind: "blob" | "tree" = "blob") =>
 
 export const npmUrl = `https://www.npmjs.com/package/${site.npmPackage}`;
 
+// Declaring `openGraph` on a page replaces the layout's object rather than
+// merging into it, so every route builds its card from this one shape and only
+// varies the URL.
+export const openGraph = (path = "", title = site.name) => ({
+  title,
+  description: site.description,
+  siteName: site.name,
+  type: "website" as const,
+  url: `${productionOrigin}${path}`,
+  images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: site.name }],
+});
+
 // Official harness documentation, cited where the site describes what a
 // harness does rather than what PlaybookDiff does.
 export const officialDocs = {
