@@ -2,12 +2,15 @@
 
 The mark is a pair: Claude Code as an orange pixel head, Codex as a violet cloud carrying a terminal prompt.
 
-| File                   | Used for                                                                           |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| `mascots-reading.png`  | The logo mark in the header and footer, the closing illustration, and the favicon. |
-| `mascots-running.png`  | Spare illustration. Not currently placed on the site.                              |
-| `wordmark.png`         | The word mark, in the site header and footer.                                      |
-| `wordmark-on-dark.png` | The same word mark with its ink recoloured to paper, for dark surfaces.            |
+| File                   | Used for                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `mascots-reading.png`  | The logo mark in the header and footer, the closing illustration, the favicon, and the repository README header. |
+| `mascots-running.png`  | Spare illustration. Not currently placed on the site.                                                            |
+| `wordmark.png`         | The word mark, in the site header and footer.                                                                    |
+| `wordmark-on-dark.png` | The same word mark with its ink recoloured to paper, for dark surfaces.                                          |
+
+The repository README references this file by its path in this directory rather than keeping a second copy, so the mark cannot drift between the site and GitHub.
+The source crop is 364x297, which is the practical ceiling: the closing illustration is placed at 300 CSS pixels so it stays under native width, and anything much larger softens the outlines on a high-density display.
 
 All four are cropped from the brand sticker sheet.
 They arrived as JPEG, so the white background was flood-filled to transparency from the border and the JPEG halo around the outlines was cleared, which is why the interior cream of the book survives: it is enclosed by the black outline and never touched by the fill.

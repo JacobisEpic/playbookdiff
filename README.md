@@ -1,3 +1,5 @@
+<img src="website/public/brand/mascots-reading.png" alt="Claude Code and Codex reading the same playbook" width="260">
+
 # PlaybookDiff
 
 [![CI](https://github.com/JacobisEpic/playbookdiff/actions/workflows/ci.yml/badge.svg)](https://github.com/JacobisEpic/playbookdiff/actions/workflows/ci.yml)

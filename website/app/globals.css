@@ -230,22 +230,22 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  height: 64px;
+  height: 70px;
 }
 
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
 }
 
 .logo-mark {
-  width: 30px;
+  width: 42px;
   height: auto;
 }
 
 .logo-word {
-  width: 106px;
+  width: 120px;
   height: auto;
 }
 
@@ -773,7 +773,7 @@ pre {
 .closing-mark {
   justify-self: center;
   width: 100%;
-  max-width: 232px;
+  max-width: 300px;
   height: auto;
 }
 
@@ -826,8 +826,8 @@ pre {
   }
 
   .closing-layout {
-    grid-template-columns: minmax(0, 1fr) 232px;
-    gap: 72px;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 64px;
   }
 }
 
@@ -873,6 +873,26 @@ pre {
   }
 }
 
+/* The word mark plus two links is the whole header, so it only needs to give
+   ground on the narrowest phones. */
+@media (max-width: 430px) {
+  .header-inner {
+    gap: 14px;
+  }
+
+  .logo-mark {
+    width: 32px;
+  }
+
+  .logo-word {
+    width: 96px;
+  }
+
+  .site-header nav {
+    gap: 16px;
+  }
+}
+
 @media (max-width: 760px) {
   body {
     font-size: 16px;
@@ -898,7 +918,7 @@ pre {
 
   .closing-mark {
     justify-self: start;
-    max-width: 176px;
+    max-width: 208px;
   }
 
   .ledger-head {
