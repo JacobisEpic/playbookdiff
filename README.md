@@ -1,4 +1,4 @@
-<img src="website/public/brand/mascots-reading.png" alt="Claude Code and Codex reading the same playbook" width="260">
+<p align="center"><img src="website/public/brand/mascots-reading.png" alt="Claude Code and Codex reading the same playbook" width="260"></p>
 
 # PlaybookDiff
 
