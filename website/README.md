@@ -72,7 +72,9 @@ The data behind the interactive example, written by [`scripts/generate-website-e
 It holds one row per configuration file with the state each launch directory produced, both runs' findings, and both runs' verbatim terminal transcripts.
 
 The website does not import, reimplement, or execute the comparator, and it states no harness behaviour of its own: every state shown comes from Claude Code's `loadPhase` and Codex's `discovery.state` in the analyzer's own output.
-Fixture and test evidence links are pinned to commit `2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f` so a concurrent change cannot silently alter the example's meaning.
+Fixture and test evidence links are pinned to a commit so a concurrent change cannot silently alter the example's meaning.
+The generator owns that pin and refuses to write the file unless every cited fixture and test file is byte-identical at it, so the example can never describe current behaviour while linking to evidence that no longer produces it.
+Verifying the pin needs the commit in the local clone, which is why the workspace CI job checks out full history.
 Finding ID prefixes are deliberately shortened, not presented as executable complete IDs.
 
 ## Vercel deployment

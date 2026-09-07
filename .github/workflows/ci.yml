@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          # `pnpm website:sync:check` verifies the website's pinned evidence
+          # links against the commit they point at, which a shallow clone omits.
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

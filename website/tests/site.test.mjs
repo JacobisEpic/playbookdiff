@@ -136,9 +136,11 @@ test("the cleared scenario ships in the client bundle", async () => {
 });
 
 test("the example points at the fixture, the test, and both harness specifications", () => {
-  const pinned = `/blob/${"2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f"}/`;
-  assert.ok(html.includes(`${pinned}${example.test}`), "the test, pinned to a commit");
-  assert.ok(html.includes(`/tree/2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f/${example.fixture}`));
+  // The commit comes from the generated file, which is only written after the
+  // generator proves every cited file is byte-identical at it.
+  assert.match(example.baseline, /^[0-9a-f]{40}$/);
+  assert.ok(html.includes(`/blob/${example.baseline}/${example.test}`), "the test, pinned");
+  assert.ok(html.includes(`/tree/${example.baseline}/${example.fixture}`), "the fixture, pinned");
   assert.ok(html.includes('href="/docs/harnesses/claude"'));
   assert.ok(html.includes('href="/docs/harnesses/codex"'));
 });
@@ -298,4 +300,57 @@ test("source has no host paths, external fonts, required environment, or model c
   for (const directory of ["app", "components", "lib"]) {
     await inspect(path.join(root, directory));
   }
+});
+
+test("every state label is the analyzer's own vocabulary, not a paraphrase of it", () => {
+  // "on demand" may only stand for a state that genuinely means "reached later,
+  // on the way to the work target": an `on-demand` instruction load phase, or
+  // Claude Code's `conditional` skill discovery. It must never stand for
+  // `unavailable` or `unknown`, which mean something else entirely.
+  const allowed = {
+    startup: ["startup", "available"],
+    "on-demand": ["on-demand", "conditional"],
+    absent: ["absent"],
+  };
+  const seen = new Set();
+  for (const row of example.rows) {
+    for (const scenario of Object.keys(example.scenarios)) {
+      const label = row.states[scenario];
+      const analyzer = row.analyzerStates[scenario];
+      assert.ok(allowed[label], `unknown label ${label} on ${row.path}`);
+      assert.ok(
+        allowed[label].includes(analyzer),
+        `${row.path} labels analyzer state ${analyzer} as ${label}`,
+      );
+      seen.add(analyzer);
+    }
+  }
+  // The example is expected to exercise `conditional`; if it stops doing so the
+  // label needs re-justifying rather than silently going unused.
+  assert.ok(seen.has("conditional"), "the example still demonstrates conditional discovery");
+  assert.ok(!seen.has("unavailable") && !seen.has("unknown"), "no unmapped analyzer state");
+});
+
+test("the GitHub Action snippet is valid, copy-pasteable YAML", () => {
+  // Two sequence items; `with` is a sibling of `uses`, indented two spaces from
+  // the dash. One space too many makes it a nested mapping and the workflow
+  // fails to parse, so the exact text is pinned here.
+  const expected = [
+    "- uses: actions/checkout@v4",
+    "  with:",
+    "    fetch-depth: 0",
+    "",
+    "- uses: JacobisEpic/playbookdiff@v0",
+  ].join("\n");
+  const block = /aria-label="Use PlaybookDiff in GitHub Actions"><code>([\s\S]*?)<\/code>/.exec(
+    html,
+  );
+  assert.ok(block, "the Action snippet is rendered");
+  const snippet = block[1]
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+  assert.equal(snippet, expected);
 });

@@ -3,7 +3,6 @@ export const site = {
   description:
     "Check that Claude Code and Codex receive the same repository configuration, then catch new gaps in CI.",
   repository: "https://github.com/JacobisEpic/playbookdiff",
-  baseline: "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
   actionRef: "JacobisEpic/playbookdiff@v0",
   release: "v0.2.0",
   npmPackage: "playbookdiff",
@@ -20,9 +19,11 @@ export const repositoryUrl = (file: string, kind: "blob" | "tree" = "blob") =>
   `${site.repository}/${kind}/main/${file}`;
 
 // Evidence links are pinned to a commit, so a fixture or test the site cites
-// cannot quietly change meaning under the claim it supports.
-export const evidenceUrl = (file: string, kind: "blob" | "tree" = "blob") =>
-  `${site.repository}/${kind}/${site.baseline}/${file}`;
+// cannot quietly change meaning under the claim it supports. The commit comes
+// from `lib/effective-scope.json`, which the generator only writes after
+// proving every cited file is byte-identical at it.
+export const evidenceUrl = (commit: string, file: string, kind: "blob" | "tree" = "blob") =>
+  `${site.repository}/${kind}/${commit}/${file}`;
 
 export const npmUrl = `https://www.npmjs.com/package/${site.npmPackage}`;
 

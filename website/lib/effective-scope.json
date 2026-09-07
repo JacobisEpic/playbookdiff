@@ -1,5 +1,6 @@
 {
   "generatedBy": "scripts/generate-website-example.mjs",
+  "baseline": "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f",
   "fixture": "packages/harness-codex/test/fixtures/cross-harness/cwd-target",
   "test": "packages/harness-codex/src/cross-harness.test.ts",
   "target": "apps/api/file.ts",
@@ -14,6 +15,10 @@
       "states": {
         "root": "startup",
         "api": "startup"
+      },
+      "analyzerStates": {
+        "root": "startup",
+        "api": "startup"
       }
     },
     {
@@ -24,6 +29,10 @@
       "harness": "codex",
       "kind": "instruction",
       "states": {
+        "root": "startup",
+        "api": "startup"
+      },
+      "analyzerStates": {
         "root": "startup",
         "api": "startup"
       }
@@ -38,6 +47,10 @@
       "states": {
         "root": "startup",
         "api": "startup"
+      },
+      "analyzerStates": {
+        "root": "available",
+        "api": "available"
       }
     },
     {
@@ -50,6 +63,10 @@
       "states": {
         "root": "startup",
         "api": "startup"
+      },
+      "analyzerStates": {
+        "root": "available",
+        "api": "available"
       }
     },
     {
@@ -60,6 +77,10 @@
       "harness": "claude",
       "kind": "instruction",
       "states": {
+        "root": "on-demand",
+        "api": "startup"
+      },
+      "analyzerStates": {
         "root": "on-demand",
         "api": "startup"
       }
@@ -74,6 +95,10 @@
       "states": {
         "root": "absent",
         "api": "startup"
+      },
+      "analyzerStates": {
+        "root": "absent",
+        "api": "startup"
       }
     },
     {
@@ -86,6 +111,10 @@
       "states": {
         "root": "on-demand",
         "api": "startup"
+      },
+      "analyzerStates": {
+        "root": "conditional",
+        "api": "available"
       }
     },
     {
@@ -98,6 +127,10 @@
       "states": {
         "root": "absent",
         "api": "startup"
+      },
+      "analyzerStates": {
+        "root": "absent",
+        "api": "available"
       }
     }
   ],

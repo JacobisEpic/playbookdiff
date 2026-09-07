@@ -98,10 +98,16 @@ export default function Home() {
           <EffectiveScope />
 
           <p className="footnote">
-            Generated from <a href={evidenceUrl(example.fixture, "tree")}>the checked-in fixture</a>{" "}
+            Generated from{" "}
+            <a href={evidenceUrl(example.baseline, example.fixture, "tree")}>
+              the checked-in fixture
+            </a>{" "}
             by running the real analyzer, and protected by{" "}
-            <a href={evidenceUrl(example.test)}>a test that asserts both results</a>. The discovery
-            rules behind it are specified for <a href="/docs/harnesses/claude">Claude Code</a> and{" "}
+            <a href={evidenceUrl(example.baseline, example.test)}>
+              a test that asserts both results
+            </a>
+            . The discovery rules behind it are specified for{" "}
+            <a href="/docs/harnesses/claude">Claude Code</a> and{" "}
             <a href="/docs/harnesses/codex">Codex</a>, each citing that harness&rsquo;s official
             documentation.
           </p>
@@ -173,7 +179,7 @@ export default function Home() {
             <article>
               <h3>In pull requests</h3>
               <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
-                <code>{`- uses: actions/checkout@v4\n    with:\n      fetch-depth: 0\n\n- uses: ${site.actionRef}`}</code>
+                <code>{`- uses: actions/checkout@v4\n  with:\n    fetch-depth: 0\n\n- uses: ${site.actionRef}`}</code>
               </pre>
               <p>
                 The Action compares the pull request base against the head and fails only on newly

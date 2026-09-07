@@ -25,12 +25,48 @@ const fixture = path.join(
 );
 const test = path.join("packages", "harness-codex", "src", "cross-harness.test.ts");
 const target = "apps/api/file.ts";
+
+// The commit the website's evidence links point at. It lives here, not in the
+// website, because this is the only place that can prove the pin is still
+// honest: `verifyPinnedEvidence` fails unless every cited file is
+// byte-identical at this commit and in the working tree the analyzer just read.
+// So the example can never describe current behaviour while sending a reader to
+// evidence that no longer produces it.
+const baseline = "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f";
 const output = path.join(repositoryRoot, "website", "lib", "effective-scope.json");
 
 const scenarios = [
   { key: "root", cwd: "." },
   { key: "api", cwd: "apps/api" },
 ];
+
+function git(args) {
+  return spawnSync("git", args, { cwd: repositoryRoot, encoding: "buffer" });
+}
+
+async function verifyPinnedEvidence(files) {
+  if (git(["cat-file", "-e", `${baseline}^{commit}`]).status !== 0) {
+    throw new Error(
+      `Pinned evidence commit ${baseline} is not in this clone, so the website's evidence links cannot be verified. ` +
+        "Fetch full history (`git fetch --unshallow`, or `fetch-depth: 0` in CI).",
+    );
+  }
+
+  for (const file of files) {
+    const pinned = git(["show", `${baseline}:${file}`]);
+    if (pinned.status !== 0) {
+      throw new Error(`${file} does not exist at pinned evidence commit ${baseline}.`);
+    }
+    const current = await readFile(path.join(repositoryRoot, file));
+    if (!pinned.stdout.equals(current)) {
+      throw new Error(
+        `${file} differs from pinned evidence commit ${baseline}. ` +
+          "The example would describe behaviour the linked evidence no longer produces. " +
+          "Move the pin in scripts/generate-website-example.mjs to a commit containing the current fixture and test.",
+      );
+    }
+  }
+}
 
 function playbookdiff(args) {
   const result = spawnSync(process.execPath, [cli, ...args], {
@@ -81,34 +117,60 @@ function displayPath(file) {
   return skillDirectory(file) ?? file;
 }
 
-// The four states the page distinguishes, each read straight out of the
-// compiled configuration:
+// The three states the page distinguishes:
 //
 //   startup    the harness holds it from the moment the session starts
 //   on-demand  the harness can reach it later, once it touches the work target
 //   absent     the file exists and the harness never receives it in this context
 //
-// Claude Code's `loadPhase` and Codex's `discovery.state` already carry this
-// distinction; nothing is inferred here.
+// The mapping from analyzer vocabulary onto those labels is explicit and total.
+// An analyzer state with no justified label is an error rather than a fallback,
+// because the alternative is quietly telling a reader that a skill arrives "on
+// demand" when the analyzer actually said `unavailable` or `unknown`.
+// `SkillDiscoveryState` carries both of those, and `loadPhase` is optional, so
+// all three have to be refused here.
+//
+// `conditional` is Claude Code's state for a skill nested below the launch
+// directory: "becomes available once Claude reads or edits a file in this
+// subtree", which is the same thing an `on-demand` instruction says. Codex
+// never emits `conditional` at all - its repository skills are `available`, or
+// `unknown` when their metadata cannot be parsed.
+const instructionLabels = { startup: "startup", "on-demand": "on-demand" };
+const skillLabels = { available: "startup", conditional: "on-demand" };
+
+function label(labels, state, kind, file) {
+  const mapped = labels[state];
+  if (!mapped) {
+    throw new Error(
+      `No justified website label for ${kind} state ${JSON.stringify(state)} on ${file}. ` +
+        "Add one deliberately in scripts/generate-website-example.mjs rather than relabelling it as something the analyzer did not say.",
+    );
+  }
+  return mapped;
+}
+
 function stateFor(config, file) {
   const directory = skillDirectory(file);
 
   for (const instruction of config.instructions) {
     if (instruction.source.path === file) {
-      return { state: instruction.loadPhase === "startup" ? "startup" : "on-demand" };
+      return {
+        state: label(instructionLabels, instruction.loadPhase, "instruction loadPhase", file),
+        analyzerState: instruction.loadPhase,
+      };
     }
   }
 
   for (const skill of config.skills) {
     if (skill.path === file || (directory && skill.path.startsWith(directory))) {
       return {
-        state: skill.discovery.state === "available" ? "startup" : "on-demand",
-        reason: skill.discovery.reason,
+        state: label(skillLabels, skill.discovery.state, "skill discovery", file),
+        analyzerState: skill.discovery.state,
       };
     }
   }
 
-  return { state: "absent" };
+  return { state: "absent", analyzerState: "absent" };
 }
 
 function shortId(id) {
@@ -118,6 +180,7 @@ function shortId(id) {
 
 async function build() {
   const files = await fixtureFiles();
+  await verifyPinnedEvidence([...files.map((file) => path.join(fixture, file)), test]);
   const runs = {};
 
   for (const scenario of scenarios) {
@@ -146,9 +209,12 @@ async function build() {
     if (!harness) continue;
 
     const states = {};
+    const analyzerStates = {};
     for (const scenario of scenarios) {
       const config = runs[scenario.key].report[harness === "claude" ? "left" : "right"];
-      states[scenario.key] = stateFor(config, file).state;
+      const resolved = stateFor(config, file);
+      states[scenario.key] = resolved.state;
+      analyzerStates[scenario.key] = resolved.analyzerState;
     }
 
     // `apps/api/.claude/skills/api-skill/` sits in the `apps/api` group and is
@@ -162,6 +228,7 @@ async function build() {
       harness,
       kind: skillDirectory(file) ? "skill" : "instruction",
       states,
+      analyzerStates,
     });
   }
 
@@ -179,6 +246,7 @@ async function build() {
   return {
     // Regenerate with `pnpm website:example`; `--check` gates drift in CI.
     generatedBy: "scripts/generate-website-example.mjs",
+    baseline,
     fixture,
     test,
     target,
