@@ -1,9 +1,15 @@
 import type { ReactNode } from "react";
+import { AgentMark } from "./site-ui";
 
 // The ledger is the site's one signature element: two agents reading down the
-// same repository, column by column, with a connector that either joins or
-// does not. Both the hero and the fixture-backed demo render it so the page
-// teaches a single way of looking at effective configuration.
+// same repository, line by line, with a leader between them that either
+// arrives or breaks. Both the hero and the fixture-backed example render it, so
+// the page teaches a single way of looking at effective configuration.
+//
+// It is also the only place on the page that carries colour. A broken leader,
+// "not received", and a severity label are amber; everything that matched stays
+// in plain panel ink. Nothing on this page is coloured for decoration, so the
+// coloured thing is always the finding.
 
 export type LedgerRow = {
   id: string;
@@ -19,20 +25,6 @@ export type LedgerFinding = {
   detail?: string;
   evidence?: string[];
 };
-
-function AgentHead({ agent, name }: { agent: "claude" | "codex"; name: string }) {
-  return (
-    <span className={`agent agent-${agent}`}>
-      <img
-        src={agent === "claude" ? "/brand/claude_logo.png" : "/brand/codex_logo.png"}
-        alt=""
-        width="1254"
-        height="1254"
-      />
-      {name}
-    </span>
-  );
-}
 
 export function Ledger({
   command,
@@ -63,9 +55,9 @@ export function Ledger({
       </div>
 
       <div className="ledger-head">
-        <AgentHead agent="claude" name="Claude Code" />
+        <AgentMark agent="claude" name="Claude Code" />
         <span className="ledger-head-spine" aria-hidden="true" />
-        <AgentHead agent="codex" name="Codex" />
+        <AgentMark agent="codex" name="Codex" />
       </div>
 
       <div className="ledger-body">

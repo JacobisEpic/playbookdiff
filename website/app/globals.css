@@ -36,35 +36,51 @@
   src: url("/fonts/plex-mono-500.woff2") format("woff2");
 }
 
+/* ---------------------------------------------------------------------------
+   Colour
+
+   The page is warm neutral throughout: paper, ink, and one dark surface for the
+   product's own output. Exactly one hue is defined, `--signal`, and it means
+   one thing: PlaybookDiff proved a difference here. It appears on a broken
+   leader, on "not received", and on a severity label, and nowhere else.
+
+   So nothing on the page is coloured for interest, and the coloured thing is
+   always the finding. Switch the fixture example to the aligned scenario and
+   the colour drains out of the panel, which is the product.
+
+   The two agents are told apart by their own icons and their names, never by
+   recolouring type around them: a purple "Codex" would claim a brand PlaybookDiff
+   does not own, and would compete with the finding for attention.
+
+   Links, buttons, and focus rings are ink. The logotype's violet and the
+   mascots' orange are artwork, not system colour, and never leak into the UI.
+   --------------------------------------------------------------------------- */
+
 :root {
   color-scheme: light;
 
-  /* Neutral paper and ink. */
-  --paper: #fcfcfb;
-  --paper-2: #f5f5f3;
-  --ink: #0b0c0e;
-  --ink-soft: #33363b;
-  --muted: #767a80;
-  --muted-strong: #4e5257;
-  --line: #e6e6e2;
-  --line-strong: #d2d2cd;
+  --paper: #fbfaf7;
+  --paper-sunk: #f2f1ec;
+  --ink: #12110f;
+  --ink-2: #35332e;
+  --muted-strong: #4f4c46;
+  --muted: #6f6b61;
+  --line: #e7e5dd;
+  --line-strong: #d3d0c5;
 
-  /* Dark product surfaces. */
-  --panel: #101215;
-  --panel-2: #171b21;
-  --panel-line: #262a30;
-  --panel-line-bright: #5c636d;
-  --panel-ink: #e9eaec;
-  --panel-muted: #8b9098;
-  --panel-dim: #61666e;
+  /* The product's own output, on a warm near-black rather than a blue one. */
+  --panel: #191713;
+  --panel-2: #211e19;
+  --panel-line: #302d26;
+  --panel-leader: #6a655a;
+  --panel-ink: #edebe4;
+  --panel-muted: #9c978b;
+  --panel-dim: #8d887c;
 
-  /* The only two hues on the page. They mean "Claude Code" and "Codex",
-     and are never used decoratively. */
-  --claude: #d24a20;
-  --claude-on-dark: #f0834f;
-  --codex: #4b3be0;
-  --codex-on-dark: #9284ff;
-  --severity: #d3a03f;
+  /* The only hue. Divergence, and nothing else. It lives on the dark panels,
+     because a finding is always something the tool printed. */
+  --signal-on-dark: #eea45a;
+  --signal-leader: #946527;
 
   --mono: "Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: "Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -79,8 +95,13 @@
 }
 
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: 32px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
@@ -95,7 +116,7 @@ body {
 }
 
 ::selection {
-  background: #e2e0d9;
+  background: #e4e0d3;
   color: var(--ink);
 }
 
@@ -136,31 +157,29 @@ ul {
 }
 
 h1,
-h2,
-h3 {
+h2 {
   font-weight: 600;
   text-wrap: balance;
 }
 
 h1 {
-  font-size: clamp(2.4rem, 1.75rem + 2.6vw, 3.5rem);
-  line-height: 1.02;
-  letter-spacing: -0.028em;
+  font-size: clamp(2.45rem, 1.7rem + 2.8vw, 3.4rem);
+  line-height: 1.03;
+  letter-spacing: -0.03em;
 }
 
 h2 {
-  font-size: clamp(1.7rem, 1.35rem + 1.3vw, 2.2rem);
-  line-height: 1.1;
+  font-size: clamp(1.7rem, 1.35rem + 1.3vw, 2.15rem);
+  line-height: 1.12;
   letter-spacing: -0.022em;
 }
 
+/* Section sub-labels are sentence case ink, not mono kickers. The page uses
+   monospace only where the content is literally code or a path. */
 h3 {
-  font-size: 0.75rem;
-  font-weight: 500;
-  font-family: var(--mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 code,
@@ -176,7 +195,7 @@ pre {
 
 .container {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1140px;
   margin-inline: auto;
   padding-inline: 32px;
 }
@@ -202,8 +221,7 @@ pre {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(8px);
+  background: var(--paper);
   border-bottom: 1px solid var(--line);
 }
 
@@ -212,7 +230,7 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  height: 62px;
+  height: 64px;
 }
 
 .logo {
@@ -227,7 +245,7 @@ pre {
 }
 
 .logo-word {
-  width: 108px;
+  width: 106px;
   height: auto;
 }
 
@@ -237,6 +255,15 @@ pre {
   gap: 26px;
   font-size: 0.9375rem;
   color: var(--muted-strong);
+}
+
+/* Standalone navigation links get a comfortable pointer target without
+   collapsing the space before their trailing arrow. */
+.site-header nav a,
+.site-footer a {
+  display: inline-block;
+  min-height: 26px;
+  padding-block: 2px;
 }
 
 .site-header nav a:hover {
@@ -251,46 +278,17 @@ pre {
 
 .hero {
   display: grid;
-  gap: 56px;
-  padding-block: 84px 104px;
-  align-items: center;
-}
-
-.hero-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.hero-meta span {
-  white-space: nowrap;
-}
-
-/* The separator trails its own item, so a wrapped line never begins with a
-   stray dot. */
-.hero-meta span:not(:last-child)::after {
-  content: " ·";
-}
-
-.hero h1 {
-  margin-top: 20px;
-}
-
-.mark-codex {
-  color: var(--codex);
+  gap: 52px;
+  padding-block: 84px 96px;
+  align-items: start;
 }
 
 .hero-lead {
   margin-top: 22px;
-  max-width: 50ch;
-  font-size: 1.125rem;
-  line-height: 1.55;
-  color: var(--muted-strong);
+  max-width: 46ch;
+  font-size: 1.1875rem;
+  line-height: 1.5;
+  color: var(--ink-2);
 }
 
 .command {
@@ -298,7 +296,7 @@ pre {
   padding: 13px 16px;
   border: 1px solid var(--line-strong);
   border-radius: 8px;
-  background: var(--paper-2);
+  background: var(--paper-sunk);
   font-size: 0.875rem;
   line-height: 1.4;
 }
@@ -319,6 +317,7 @@ pre {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
   padding: 11px 20px;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -335,7 +334,7 @@ pre {
 }
 
 .button-primary:hover {
-  background: #2b2e33;
+  background: #34312b;
 }
 
 .button-ghost {
@@ -356,7 +355,6 @@ pre {
 /* ---------- ledger ---------- */
 
 .ledger {
-  border: 1px solid var(--panel-line);
   border-radius: 12px;
   background: var(--panel);
   color: var(--panel-ink);
@@ -371,7 +369,7 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 18px;
+  padding: 13px 18px;
   border-bottom: 1px solid var(--panel-line);
   background: var(--panel-2);
 }
@@ -387,15 +385,12 @@ pre {
 
 .ledger-meta {
   flex: none;
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--panel-dim);
+  color: var(--panel-muted);
 }
 
 /* Rows are leaders: each configuration item on the left, the agent that also
    receives it on the right, and a rule between them that either arrives or
-   fades out. */
+   breaks. */
 .ledger-head,
 .ledger-row {
   display: flex;
@@ -404,18 +399,20 @@ pre {
 }
 
 .ledger-head {
-  padding: 18px 18px 14px;
+  padding: 16px 18px 14px;
   border-bottom: 1px solid var(--panel-line);
+  color: var(--panel-muted);
 }
 
 .agent {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.6875rem;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
   font-weight: 500;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  letter-spacing: -0.003em;
+  white-space: nowrap;
 }
 
 .agent img {
@@ -423,27 +420,18 @@ pre {
   height: 16px;
 }
 
-.agent-claude {
-  color: var(--claude-on-dark);
-}
-
-.agent-codex {
-  color: var(--codex-on-dark);
-}
-
 .ledger-head-spine {
   flex: 1;
 }
 
 .ledger-body {
-  padding-bottom: 16px;
+  padding-bottom: 18px;
 }
 
 .ledger-group {
-  padding: 18px 18px 6px;
-  font-size: 0.625rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  padding: 20px 18px 7px;
+  font-family: var(--sans);
+  font-size: 0.75rem;
   color: var(--panel-dim);
 }
 
@@ -463,21 +451,19 @@ pre {
 }
 
 .ledger-cell-absent {
-  color: var(--panel-dim);
+  color: var(--signal-on-dark);
 }
 
-/* A dotted leader, the way a table of contents joins an entry to its page.
-   On a broken row it is masked away before it arrives. */
-/* The rule between the two agents: it either arrives, or it fades out
-   before it gets there. */
 .ledger-link {
   flex: 1;
   height: 1px;
-  background: var(--panel-line-bright);
+  background: var(--panel-leader);
 }
 
+/* A broken leader stops short of the other agent and takes the signal colour,
+   so the gap is visible before any label is read. */
 .is-broken .ledger-link {
-  mask-image: linear-gradient(90deg, #000 0%, #000 34%, transparent 66%);
+  background: linear-gradient(90deg, var(--signal-leader), transparent 72%);
 }
 
 .ledger-foot {
@@ -498,11 +484,8 @@ pre {
 
 .severity {
   margin-right: 10px;
-  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--severity);
+  color: var(--signal-on-dark);
 }
 
 .ledger-detail {
@@ -524,21 +507,24 @@ pre {
   color: var(--panel-dim);
 }
 
-/* One purposeful animation: the hero ledger resolving row by row, with the
-   final rule fading out instead of arriving. */
+/* One purposeful animation, used in two places for the same reason: the ledger
+   resolving row by row, with a broken leader that never arrives. In the fixture
+   example it also runs on every toggle, so switching the launch directory shows
+   the configuration re-resolving. */
 @media (prefers-reduced-motion: no-preference) {
   .ledger[data-animate] .ledger-group,
   .ledger[data-animate] .ledger-row,
   .ledger[data-animate] .ledger-foot {
     opacity: 0;
-    animation: ledger-in 0.5s var(--ease) forwards;
-    animation-delay: calc(200ms + var(--i) * 150ms);
+    animation: ledger-in 0.42s var(--ease) forwards;
+    animation-delay: calc(140ms + var(--i) * 95ms);
   }
 
   .ledger[data-animate] .ledger-link {
-    clip-path: inset(0 100% 0 0);
-    animation: ledger-link 0.45s var(--ease) forwards;
-    animation-delay: calc(400ms + var(--i) * 150ms);
+    transform: scaleX(0);
+    transform-origin: left center;
+    animation: ledger-link 0.4s var(--ease) forwards;
+    animation-delay: calc(280ms + var(--i) * 95ms);
   }
 }
 
@@ -555,7 +541,7 @@ pre {
 
 @keyframes ledger-link {
   to {
-    clip-path: inset(0 0 0 0);
+    transform: scaleX(1);
   }
 }
 
@@ -567,18 +553,13 @@ pre {
 }
 
 .prose h2 {
-  max-width: 22ch;
-}
-
-.prose h2 code {
-  font-size: 0.82em;
-  font-weight: 400;
-  letter-spacing: 0;
+  max-width: 20ch;
 }
 
 .prose p {
   margin-top: 20px;
-  max-width: 64ch;
+  max-width: 58ch;
+  font-size: 1.0625rem;
   color: var(--muted-strong);
 }
 
@@ -587,46 +568,121 @@ pre {
   color: var(--ink);
 }
 
-.surfaces,
-.guarantees {
-  max-width: 880px;
-  margin-top: 44px;
+/* ---------- surfaces specification ---------- */
+
+.surfaces {
+  width: 100%;
+  margin-top: 52px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.surfaces th,
+.surfaces td {
+  padding: 20px 28px 20px 0;
   border-top: 1px solid var(--line);
+  vertical-align: baseline;
+  font-weight: 400;
 }
 
-.surfaces > div,
-.guarantees > div {
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  gap: 32px;
-  padding-block: 18px;
-  border-bottom: 1px solid var(--line);
+.surfaces thead th {
+  padding-block: 0 12px;
+  border-top: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
 }
 
-.surfaces dt,
-.guarantees dt {
-  font-weight: 500;
+.surfaces tbody th {
+  width: 28%;
+  padding-right: 40px;
+  font-weight: 600;
 }
 
-.surfaces dd,
-.guarantees dd {
-  max-width: 60ch;
+.surfaces tbody th span {
+  display: block;
+  margin-top: 5px;
+  max-width: 30ch;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.surfaces td {
+  width: 36%;
+}
+
+.surface-list {
+  font-size: 0.875rem;
+  line-height: 1.75;
   color: var(--muted-strong);
 }
 
-.surfaces dd code {
-  font-size: 0.9em;
+.surface-list code {
+  overflow-wrap: anywhere;
+}
+
+.surface-list li:first-child code {
   color: var(--ink);
+}
+
+/* ---------- run ---------- */
+
+.run {
+  display: grid;
+  gap: 44px;
+  margin-top: 48px;
+}
+
+/* Grid items default to min-width:auto, which would let a long command widen
+   the page instead of scrolling inside its own surface. */
+.hero > *,
+.run > *,
+.closing-layout > * {
+  min-width: 0;
+}
+
+.run pre:not(.command) {
+  margin-top: 14px;
+  padding: 13px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--paper-sunk);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.run .command {
+  margin-top: 14px;
+}
+
+.run p {
+  margin-top: 14px;
+  max-width: 48ch;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+}
+
+.run p a,
+.footnote a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+}
+
+.run p a:hover,
+.footnote a:hover {
+  text-decoration-color: var(--ink);
 }
 
 /* ---------- fixture example ---------- */
 
 .example {
-  margin-top: 40px;
+  margin-top: 44px;
 }
 
 .segmented {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   border: 0;
   padding: 0;
 }
@@ -634,11 +690,8 @@ pre {
 .segmented legend {
   padding: 0;
   margin-bottom: 10px;
-  font-family: var(--mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
 }
 
 .segmented-control {
@@ -646,10 +699,11 @@ pre {
   padding: 3px;
   border: 1px solid var(--line-strong);
   border-radius: 9px;
-  background: var(--paper-2);
+  background: var(--paper-sunk);
 }
 
 .segmented button {
+  min-height: 36px;
   padding: 7px 15px;
   border: 0;
   border-radius: 6px;
@@ -665,94 +719,47 @@ pre {
 }
 
 .example-note {
-  margin-top: 18px;
-  max-width: 70ch;
+  margin-top: 20px;
+  max-width: 68ch;
   font-size: 0.9375rem;
   color: var(--muted-strong);
 }
 
 .footnote {
-  margin-top: 22px;
+  margin-top: 20px;
   font-size: 0.875rem;
   color: var(--muted);
-}
-
-.footnote a {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--line-strong);
-}
-
-.footnote a:hover {
-  text-decoration-color: var(--ink);
-}
-
-/* ---------- walkthrough ---------- */
-
-.walkthrough-layout {
-  display: grid;
-  gap: 36px;
-  align-items: center;
-}
-
-.walkthrough-layout p {
-  margin-top: 18px;
-  max-width: 40ch;
-  color: var(--muted-strong);
-}
-
-.walkthrough-frame {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: 1px solid var(--line-strong);
-  border-radius: 12px;
-  background: var(--paper-2);
-}
-
-.walkthrough-pending {
-  border-style: dashed;
-}
-
-.walkthrough-pending p {
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-/* ---------- run ---------- */
-
-.run {
-  display: grid;
-  gap: 40px;
-  margin-top: 44px;
-}
-
-.run pre:not(.command) {
-  margin-top: 12px;
-  padding: 13px 16px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--paper-2);
-  font-size: 0.875rem;
-}
-
-.run .command {
-  margin-top: 12px;
-}
-
-.run p {
-  margin-top: 14px;
-  max-width: 46ch;
-  font-size: 0.9375rem;
-  color: var(--muted-strong);
 }
 
 /* ---------- closing ---------- */
+
+.closing-layout {
+  display: grid;
+  gap: 48px;
+  align-items: center;
+}
+
+.guarantees {
+  margin-top: 44px;
+  border-top: 1px solid var(--line);
+}
+
+.guarantees > div {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 32px;
+  padding-block: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.guarantees dt {
+  font-weight: 500;
+}
+
+.guarantees dd {
+  max-width: 56ch;
+  color: var(--muted-strong);
+}
 
 .closing-actions {
   display: flex;
@@ -761,10 +768,19 @@ pre {
   margin-top: 40px;
 }
 
+/* The mascots appear once on the page outside the word mark: two agents
+   reading one book, which is the whole product. */
+.closing-mark {
+  justify-self: center;
+  width: 100%;
+  max-width: 232px;
+  height: auto;
+}
+
 /* ---------- footer ---------- */
 
 .site-footer {
-  padding-block: 32px 48px;
+  padding-block: 34px 52px;
   border-top: 1px solid var(--line);
 }
 
@@ -772,38 +788,88 @@ pre {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 20px 56px;
 }
 
 .site-footer nav {
   display: flex;
   flex-wrap: wrap;
   gap: 22px;
+  margin-right: auto;
   font-size: 0.875rem;
   color: var(--muted);
 }
 
-.site-footer nav a:hover {
+.site-footer a:hover {
   color: var(--ink);
+}
+
+.footer-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.875rem;
+  color: var(--muted);
 }
 
 /* ---------- responsive ---------- */
 
 @media (min-width: 1000px) {
-  .walkthrough-layout {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
-    gap: 64px;
-  }
-
   .hero {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
     gap: 64px;
+    align-items: center;
   }
 
   .run {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 72px;
+  }
+
+  .closing-layout {
+    grid-template-columns: minmax(0, 1fr) 232px;
+    gap: 72px;
+  }
+}
+
+@media (max-width: 860px) {
+  .surfaces,
+  .surfaces thead,
+  .surfaces tbody,
+  .surfaces tr,
+  .surfaces th,
+  .surfaces td {
+    display: block;
+    width: auto;
+  }
+
+  .surfaces thead {
+    display: none;
+  }
+
+  .surfaces tr {
+    padding-block: 22px;
+    border-top: 1px solid var(--line);
+  }
+
+  .surfaces th,
+  .surfaces td {
+    padding: 0;
+    border-top: 0;
+  }
+
+  .surfaces tbody th {
+    width: auto;
+    padding-right: 0;
+  }
+
+  /* Each harness's paths need their own label once the columns collapse. */
+  .surfaces td::before {
+    display: block;
+    margin-top: 14px;
+    margin-bottom: 2px;
+    font-size: 0.8125rem;
+    color: var(--muted);
+    content: attr(data-agent);
   }
 }
 
@@ -817,22 +883,22 @@ pre {
   }
 
   .hero {
-    padding-block: 56px 72px;
+    padding-block: 60px 76px;
     gap: 44px;
   }
 
-  .hero-meta {
-    font-size: 0.6875rem;
-  }
-
   .section {
-    padding-block: 64px;
+    padding-block: 68px;
   }
 
-  .surfaces > div,
   .guarantees > div {
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
+  }
+
+  .closing-mark {
+    justify-self: start;
+    max-width: 176px;
   }
 
   .ledger-head {
@@ -840,12 +906,14 @@ pre {
   }
 
   .ledger-group {
-    padding: 16px 14px 5px;
+    padding: 18px 14px 6px;
   }
 
+  /* Stacked: the item as Claude Code receives it, then the Codex line beneath
+     it, indented under the same entry. */
   .ledger-row {
     display: block;
-    padding: 6px 14px;
+    padding: 5px 14px;
   }
 
   .ledger-link {
@@ -853,35 +921,26 @@ pre {
   }
 
   .ledger-cell {
-    display: flex;
-    align-items: baseline;
-    gap: 9px;
+    display: block;
     max-width: none;
     text-align: left;
   }
 
-  .ledger-cell::before {
-    content: "";
-    flex: none;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    translate: 0 -1px;
+  .ledger-cell-right,
+  .ledger-cell-absent {
+    margin-left: 14px;
+    padding-left: 12px;
+    border-left: 1px solid var(--panel-line);
+    color: var(--panel-muted);
   }
 
-  .ledger-cell-left::before {
-    background: var(--claude-on-dark);
+  .ledger-cell-absent {
+    border-left-color: var(--signal-leader);
+    color: var(--signal-on-dark);
   }
 
-  .ledger-cell-right::before {
-    background: var(--codex-on-dark);
-  }
-
-  .ledger-cell-absent::before {
-    box-shadow: inset 0 0 0 1px var(--panel-dim);
-  }
-
-  .ledger-meta {
-    display: none;
+  .ledger-bar {
+    flex-wrap: wrap;
+    gap: 6px 16px;
   }
 }

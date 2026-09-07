@@ -24,8 +24,13 @@ export function ExampleReport() {
 
       <Ledger
         key={launch}
+        animate
         command={`playbookdiff check . --cwd ${report.cwd} --path ${examples.target}`}
-        meta={`${report.equivalent} equivalent`}
+        meta={
+          report.count === 0
+            ? `no findings, ${report.equivalent} equivalent`
+            : `${report.count} findings, ${report.equivalent} equivalent`
+        }
         rows={report.ledger}
         findings={report.findings.map((finding) => ({
           id: finding.type,

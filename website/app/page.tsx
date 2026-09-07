@@ -1,9 +1,9 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- Narrow code surfaces must remain keyboard-scrollable. */
 import { ExampleReport } from "../components/example-report";
 import { Ledger, type LedgerRow } from "../components/ledger";
-import { ButtonLink, Command, Logo } from "../components/site-ui";
+import { AgentMark, ButtonLink, Command, Logo } from "../components/site-ui";
 import examples from "../lib/examples.json";
-import { evidenceUrl, repositoryUrl, site, walkthrough } from "../lib/site";
+import { evidenceUrl, repositoryUrl, site } from "../lib/site";
 
 // The hero ledger describes an illustrative repository rather than the
 // checked-in fixture, and the caption beneath it says so. The fixture-backed
@@ -20,33 +20,26 @@ const heroRows: LedgerRow[] = [
   { id: "deploy", group: "Skills", left: ".claude/skills/deploy/", right: null },
 ];
 
+// The three compared surfaces, as a specification rather than a feature grid:
+// what each harness actually reads, and what the comparator decides from it.
 const surfaces = [
   {
-    term: "Instructions",
-    detail: (
-      <>
-        <code>CLAUDE.md</code>, <code>AGENTS.md</code>, nested instructions, imports, and effective
-        scope.
-      </>
-    ),
+    surface: "Instructions",
+    compared: "Content, scope, and load phase.",
+    claude: ["CLAUDE.md", ".claude/CLAUDE.md", "imports", "nested instructions"],
+    codex: ["AGENTS.md", "AGENTS.override.md", "fallback names", "nested chain"],
   },
   {
-    term: "Skills",
-    detail: (
-      <>
-        <code>.claude/skills/</code> and <code>.agents/skills/</code>, discovery state and
-        invocation policy.
-      </>
-    ),
+    surface: "Skills",
+    compared: "Discovery, invocation policy, and description.",
+    claude: [".claude/skills/*/SKILL.md"],
+    codex: [".agents/skills/*/SKILL.md", "agents/openai.yaml"],
   },
   {
-    term: "MCP servers",
-    detail: (
-      <>
-        <code>.mcp.json</code> and <code>.codex/config.toml</code> transport, command, and
-        arguments.
-      </>
-    ),
+    surface: "MCP servers",
+    compared: "Transport, command, arguments, and environment.",
+    claude: [".mcp.json"],
+    codex: ["mcp_servers in .codex/config.toml"],
   },
 ];
 
@@ -57,37 +50,15 @@ const guarantees = [
   ["Unknown beats guessed", "Different wording is never reported as a conflict."],
 ];
 
-function Walkthrough() {
+function SurfaceCell({ items }: { items: string[] }) {
   return (
-    <section className="section walkthrough" id="walkthrough" aria-labelledby="walkthrough-title">
-      <div className="container walkthrough-layout">
-        <div>
-          <h2 id="walkthrough-title">Watch a full check.</h2>
-          <p>A recorded end-to-end run, from a clean checkout to a failing pull request.</p>
-        </div>
-        {walkthrough.src ? (
-          <video
-            className="walkthrough-frame"
-            controls
-            preload="metadata"
-            poster={walkthrough.poster ?? undefined}
-          >
-            <source src={walkthrough.src} type="video/mp4" />
-            <track
-              kind="captions"
-              srcLang="en"
-              label="English"
-              src={walkthrough.captions}
-              default
-            />
-          </video>
-        ) : (
-          <div className="walkthrough-frame walkthrough-pending">
-            <p>Recording in progress</p>
-          </div>
-        )}
-      </div>
-    </section>
+    <ul className="surface-list">
+      {items.map((item) => (
+        <li key={item}>
+          <code>{item}</code>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -117,21 +88,14 @@ export default function Home() {
       <main id="main">
         <section className="hero container" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <p className="hero-meta">
-              <span>Open source</span>
-              <span>{site.release}</span>
-              <span>CLI and GitHub Action</span>
-            </p>
-            <h1 id="hero-title">
-              Keep Claude Code and <span className="mark-codex">Codex</span> in sync.
-            </h1>
+            <h1 id="hero-title">Keep Claude Code and Codex in sync.</h1>
             <p className="hero-lead">
               PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent
               actually receives, and catches differences before they land.
             </p>
             <Command label="Check a repository with PlaybookDiff">playbookdiff check .</Command>
             <div className="hero-actions">
-              <ButtonLink href={repositoryUrl("docs/cli.md")}>Get started</ButtonLink>
+              <ButtonLink href={repositoryUrl("docs/cli.md")}>Get the CLI</ButtonLink>
               <ButtonLink href={site.repository} variant="ghost" external>
                 View on GitHub
               </ButtonLink>
@@ -141,7 +105,7 @@ export default function Home() {
           <figure className="hero-figure">
             <Ledger
               command="playbookdiff check ."
-              meta="what each agent receives"
+              meta="1 finding"
               rows={heroRows}
               findings={[{ id: "gap", severity: "medium", title: "Skill capability gap" }]}
               animate
@@ -156,21 +120,69 @@ export default function Home() {
           <div className="prose">
             <h2 id="surfaces-title">Matching files are not matching configuration.</h2>
             <p>
-              Claude Code and Codex read <code>CLAUDE.md</code> and <code>AGENTS.md</code> under
-              different discovery rules, nested scopes, imports, and skill conventions. Two files
-              can look parallel and still produce different effective configuration. PlaybookDiff
-              compiles what each agent receives across three surfaces, then compares those.
+              The two harnesses discover configuration under different rules, scopes, imports, and
+              conventions. PlaybookDiff compiles what each one effectively receives across three
+              surfaces, then compares those instead of the files.
             </p>
           </div>
 
-          <dl className="surfaces">
-            {surfaces.map((surface) => (
-              <div key={surface.term}>
-                <dt>{surface.term}</dt>
-                <dd>{surface.detail}</dd>
-              </div>
-            ))}
-          </dl>
+          <table className="surfaces">
+            <thead>
+              <tr>
+                <th scope="col">Surface</th>
+                <th scope="col">
+                  <AgentMark agent="claude" name="Claude Code" />
+                </th>
+                <th scope="col">
+                  <AgentMark agent="codex" name="Codex" />
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {surfaces.map((row) => (
+                <tr key={row.surface}>
+                  <th scope="row">
+                    {row.surface}
+                    <span>{row.compared}</span>
+                  </th>
+                  <td data-agent="Claude Code">
+                    <SurfaceCell items={row.claude} />
+                  </td>
+                  <td data-agent="Codex">
+                    <SurfaceCell items={row.codex} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="section container" id="run" aria-labelledby="run-title">
+          <div className="prose">
+            <h2 id="run-title">Run it locally, then keep it there.</h2>
+          </div>
+
+          <div className="run">
+            <article>
+              <h3>On your machine</h3>
+              <Command label="Check a repository from the terminal">playbookdiff check .</Command>
+              <p>
+                Prints every proven configuration gap, with the source file behind each one. Exits
+                non-zero on actionable findings. Not on npm yet, so{" "}
+                <a href={repositoryUrl("docs/cli.md")}>build the CLI from source</a>.
+              </p>
+            </article>
+            <article>
+              <h3>In pull requests</h3>
+              <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
+                <code>{`uses: ${site.actionRef}`}</code>
+              </pre>
+              <p>
+                The released GitHub Action compares the pull request base against the head and fails
+                only on newly introduced findings. Existing debt stays green.
+              </p>
+            </article>
+          </div>
         </section>
 
         <section className="section container" id="example" aria-labelledby="example-title">
@@ -192,56 +204,37 @@ export default function Home() {
           </p>
         </section>
 
-        <Walkthrough />
-
-        <section className="section container" id="run" aria-labelledby="run-title">
-          <div className="prose">
-            <h2 id="run-title">Run it locally, then keep it there.</h2>
-          </div>
-
-          <div className="run">
-            <article>
-              <h3>Locally</h3>
-              <Command label="Check a repository from the terminal">playbookdiff check .</Command>
-              <p>
-                Prints every proven configuration gap, with the source file behind each one. Exits
-                non-zero on actionable findings.
-              </p>
-            </article>
-            <article>
-              <h3>In CI</h3>
-              <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
-                <code>{`uses: ${site.actionRef}`}</code>
-              </pre>
-              <p>
-                Compares the pull request base against the head and fails only on newly introduced
-                findings. Existing debt stays green.
-              </p>
-            </article>
-          </div>
-        </section>
-
         <section className="section container closing" aria-labelledby="closing-title">
-          <div className="prose">
-            <h2 id="closing-title">It reports what it can prove.</h2>
-          </div>
+          <div className="closing-layout">
+            <div>
+              <h2 id="closing-title">It reports what it can prove.</h2>
 
-          <dl className="guarantees">
-            {guarantees.map(([term, detail]) => (
-              <div key={term}>
-                <dt>{term}</dt>
-                <dd>{detail}</dd>
+              <dl className="guarantees">
+                {guarantees.map(([term, detail]) => (
+                  <div key={term}>
+                    <dt>{term}</dt>
+                    <dd>{detail}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <div className="closing-actions">
+                <ButtonLink href={site.repository} external>
+                  View on GitHub
+                </ButtonLink>
+                <ButtonLink href={repositoryUrl("docs/limitations.md")} variant="ghost">
+                  Read the limitations
+                </ButtonLink>
               </div>
-            ))}
-          </dl>
+            </div>
 
-          <div className="closing-actions">
-            <ButtonLink href={site.repository} external>
-              View on GitHub
-            </ButtonLink>
-            <ButtonLink href={repositoryUrl("docs/cli.md")} variant="ghost">
-              Read the docs
-            </ButtonLink>
+            <img
+              className="closing-mark"
+              src="/brand/mascots-reading.png"
+              alt=""
+              width="364"
+              height="297"
+            />
           </div>
         </section>
       </main>
@@ -257,8 +250,11 @@ export default function Home() {
             <a href={repositoryUrl("docs/security.md")}>Security</a>
             <a href={repositoryUrl("docs/limitations.md")}>Limitations</a>
             <a href={repositoryUrl("CONTRIBUTING.md")}>Contribute</a>
-            <a href={repositoryUrl("LICENSE")}>MIT</a>
           </nav>
+          <p className="footer-meta">
+            <a href={`${site.repository}/releases/tag/${site.release}`}>{site.release}</a>
+            <a href={repositoryUrl("LICENSE")}>MIT</a>
+          </p>
         </div>
       </footer>
     </>

@@ -16,11 +16,9 @@ test("production homepage states the product job and primary actions immediately
     html,
     /PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent actually receives, and catches differences before they land/,
   );
-  assert.match(html, /Get started/);
+  assert.match(html, /Get the CLI/);
   assert.match(html, /View on GitHub/);
   assert.ok(html.includes("https://github.com/JacobisEpic/playbookdiff"));
-  // Both run modes are visible above the fixture example, not only the CLI.
-  assert.match(html, /CLI and GitHub Action/);
 });
 
 test("the illustrative ledger teaches the product before the discovery edge case", () => {
@@ -61,6 +59,14 @@ test("local and pull-request workflows are concise and honest", () => {
   assert.match(html, /v0\.2\.0/);
   assert.match(html, /Existing debt stays green/);
   assert.doesNotMatch(html, /npm (?:i |install )(?:-g )?playbookdiff|npx playbookdiff/);
+  // The CLI is not published yet, and the page says so where it shows the command.
+  assert.match(html, /Not on npm yet/);
+  // Both run modes are shown, and before the deeper fixture example.
+  const local = html.indexOf("On your machine");
+  const ci = html.indexOf("In pull requests");
+  const example = html.indexOf("Every file exists");
+  assert.ok(local >= 0 && ci >= 0, "both run modes");
+  assert.ok(local < example && ci < example, "run modes precede the fixture example");
 });
 
 test("example data preserves the checked-in A/B assertions", () => {
@@ -148,13 +154,24 @@ test("trust claims stay concrete, evidence-based, and stated once", () => {
   assert.doesNotMatch(markup.slice(0, markup.indexOf("Matching files")), /Read-only|Deterministic/);
 });
 
-test("the walkthrough slot is reserved without fabricated player chrome", () => {
-  assert.match(html, /Watch a full check/);
-  assert.match(html, /Recording in progress/);
+test("nothing unfinished is published", () => {
+  // An absent section beats a visible placeholder. There is no walkthrough
+  // recording, so the page does not reserve a frame for one.
+  assert.doesNotMatch(html, /Recording in progress|Coming soon|in progress|Watch a full check/i);
+  assert.doesNotMatch(html, /<video\b|walkthrough/i);
   // No invented running time, play control, or production credit.
   assert.doesNotMatch(html, /\d{1,2}:\d{2}/);
-  assert.doesNotMatch(html, /Film \d|in production|demo-video-play/);
-  assert.doesNotMatch(html, /<video\b/);
+});
+
+test("colour is reserved for findings, never for agent branding", async () => {
+  const css = await readFile(path.join(root, "app/globals.css"), "utf8");
+  // The agents are told apart by their own icons and names. No Claude or Codex
+  // brand colour is defined, and no page type is tinted to stand for an agent.
+  assert.doesNotMatch(css, /--claude\b|--codex\b|mark-codex/);
+  assert.doesNotMatch(html, /mark-codex/);
+  // Exactly one hue is declared, and it means divergence.
+  const hues = [...css.matchAll(/^\s*(--signal[\w-]*):/gm)].map((match) => match[1]).sort();
+  assert.deepEqual(hues, ["--signal-leader", "--signal-on-dark"]);
 });
 
 test("provenance contains only repository-relative evidence paths", () => {

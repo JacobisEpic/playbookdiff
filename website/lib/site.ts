@@ -14,14 +14,6 @@ export const site = {
 // cannot silently regress to a preview URL or to `undefined`.
 export const productionOrigin = "https://playbookdiff.vercel.app";
 
-// The product walkthrough is recorded but not yet cut. Until `src` is set the
-// section renders a plain reserved frame, with no invented chrome, timecode, or
-// play control. The type keeps captions and the film together, so the video can
-// never ship without them.
-export type Walkthrough = { src: null } | { src: string; captions: string; poster: string | null };
-
-export const walkthrough: Walkthrough = { src: null };
-
 export const repositoryUrl = (file: string, kind: "blob" | "tree" = "blob") =>
   `${site.repository}/${kind}/main/${file}`;
 

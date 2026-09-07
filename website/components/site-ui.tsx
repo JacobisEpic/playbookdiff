@@ -17,6 +17,22 @@ export function Logo() {
   );
 }
 
+// The two agents are told apart by their own icons and their names, never by
+// recolouring the surrounding type. See the colour note in app/globals.css.
+export function AgentMark({ agent, name }: { agent: "claude" | "codex"; name: string }) {
+  return (
+    <span className="agent">
+      <img
+        src={agent === "claude" ? "/brand/claude_logo.png" : "/brand/codex_logo.png"}
+        alt=""
+        width="1254"
+        height="1254"
+      />
+      {name}
+    </span>
+  );
+}
+
 export function ButtonLink({
   children,
   href,

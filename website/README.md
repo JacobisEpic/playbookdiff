@@ -78,5 +78,18 @@ Finding ID prefixes are explicitly shortened, not presented as executable comple
 The site describes the current deterministic engine, harness adapters, CLI, released GitHub Action, and Git regression analysis.
 The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, because `v0.2.0` and the movable `v0` tag are published and the Action was smoke-tested from an unrelated public repository.
 It does not claim a published npm package, adoption metrics, semantic analysis, or behavioral equivalence.
+The CLI section says plainly that the package is not on npm yet and links to the source install.
 Repository links point at the public repository and are verified anonymously.
-The CI regression visual is based on the checked-in baseline-debt-plus-new-regression fixture.
+Nothing unfinished is published: there is no recorded walkthrough, so the page has no section reserved for one, and `tests/site.test.mjs` fails if a placeholder returns.
+
+## Design system
+
+The page is warm neutral throughout, and exactly one hue is declared.
+`--signal-on-dark` and its dimmer companion `--signal-leader` mean one thing, that PlaybookDiff proved a difference, and they appear only on a broken ledger leader, on `not received`, and on a severity label.
+Everything else, including both agents, every matched row, every link, button, and focus ring, is paper and ink.
+Switching the fixture example to the aligned launch directory drains the colour out of the panel, which is the product.
+
+There is deliberately no agent brand colour.
+The two agents are told apart by their own icons and their names, never by recolouring type, and `tests/site.test.mjs` asserts that no `--claude` or `--codex` token comes back.
+Monospace is used only where the content is literally a command, a path, or tool output.
+See [`public/brand/README.md`](public/brand/README.md) for the artwork rules.
