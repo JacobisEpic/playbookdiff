@@ -10,16 +10,18 @@
     "action:test": "pnpm --filter @playbookdiff/action test",
     "action:verify-bundle": "pnpm action:build && git diff --exit-code -- packages/action/dist",
     "build": "turbo run build",
+    "clean": "turbo run clean",
     "cli:third-party-notices": "node scripts/generate-cli-third-party-notices.mjs",
     "cli:verify-package": "node scripts/verify-cli-package.mjs",
-    "clean": "turbo run clean",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
     "lint": "oxlint --deny-warnings .",
     "lint:fix": "oxlint --fix .",
     "playbookdiff": "node packages/cli/dist/bin.js",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "website:sync": "node scripts/sync-website-docs.mjs && node scripts/generate-website-example.mjs",
+    "website:sync:check": "node scripts/sync-website-docs.mjs --check && node scripts/generate-website-example.mjs --check"
   },
   "devDependencies": {
     "@types/node": "24.13.3",

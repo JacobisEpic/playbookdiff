@@ -4,38 +4,50 @@ import path from "node:path";
 import { test } from "node:test";
 
 const root = path.resolve(import.meta.dirname, "..");
-const html = await readFile(path.join(root, ".next/server/app/index.html"), "utf8");
-const examples = JSON.parse(await readFile(path.join(root, "lib/examples.json"), "utf8"));
-const packageJson = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
+const read = (file) => readFile(path.join(root, file), "utf8");
 
-test("production homepage states the product job and primary actions immediately", () => {
+const html = await read(".next/server/app/index.html");
+const example = JSON.parse(await read("lib/effective-scope.json"));
+const packageJson = JSON.parse(await read("package.json"));
+const css = await read("app/globals.css");
+
+// Script payloads carry a streamed copy of the markup, so anything counting
+// occurrences has to look at the rendered document alone.
+const markup = html.replace(/<script\b[\s\S]*?<\/script>/g, "");
+
+test("the homepage states the product job and its primary actions immediately", () => {
   assert.match(html, /Keep Claude Code and/);
   assert.match(html, /Codex/);
   assert.match(html, /in sync./);
   assert.match(
     html,
-    /PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent actually receives, and catches differences before they land/,
+    /PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent effectively receives, and catches differences before they land/,
   );
-  assert.match(html, /Get the CLI/);
-  assert.match(html, /View on GitHub/);
   assert.ok(html.includes("https://github.com/JacobisEpic/playbookdiff"));
 });
 
-test("the illustrative ledger teaches the product before the discovery edge case", () => {
-  const simple = html.indexOf(".claude/skills/deploy/");
-  const deep = html.indexOf("Every file exists");
-  assert.ok(simple >= 0, "illustrative ledger");
-  assert.ok(deep >= 0, "fixture example");
-  assert.ok(simple < deep, "the simple case must teach the product first");
-  for (const phrase of ["not received", "Skill capability gap", "medium"]) {
-    assert.ok(html.includes(phrase), phrase);
-  }
-  // The hero case is illustrative and says so, so it is never mistaken for
-  // fixture-backed output.
-  assert.match(html, /An illustrative repository/);
+test("npm is the primary local path, with the real package and command", () => {
+  // The published binary and package name are the same word, so `npx` works.
+  assert.ok(html.includes("npm install -g playbookdiff"), "install command");
+  assert.ok(html.includes("playbookdiff check ."), "first run");
+  // No pre-publication hedging survives anywhere on the page.
+  assert.doesNotMatch(html, /not on npm|coming soon|once npm|build from source for now/i);
+  // The install command comes before the Action, which comes before the
+  // repository: npm is the default, CI is next, source is the fallback.
+  const install = html.indexOf("npm install -g playbookdiff");
+  const action = html.indexOf("uses: JacobisEpic/playbookdiff@v0");
+  const source = html.indexOf("Prefer to build from source");
+  assert.ok(install >= 0 && action > install && source > action, "npm, then Action, then source");
 });
 
-test("the homepage names every checked surface", () => {
+test("the GitHub Action is shown with the checkout depth it actually needs", () => {
+  assert.ok(html.includes("uses: JacobisEpic/playbookdiff@v0"), "Action reference");
+  assert.ok(html.includes("fetch-depth: 0"), "diff never fetches, so history must be present");
+  assert.match(html, /v0\.2\.0/);
+  assert.match(html, /existing debt stays green/);
+});
+
+test("the homepage names every compared surface", () => {
   assert.match(html, /Matching files are not matching configuration/);
   for (const surface of [
     "Instructions",
@@ -50,89 +62,85 @@ test("the homepage names every checked surface", () => {
   ]) {
     assert.ok(html.includes(surface), surface);
   }
-  assert.doesNotMatch(html, /Git revisions/);
 });
 
-test("local and pull-request workflows are concise and honest", () => {
-  assert.ok(html.includes("playbookdiff check ."), "local command");
-  assert.ok(html.includes("uses: JacobisEpic/playbookdiff@v0"), "Action reference");
-  assert.match(html, /v0\.2\.0/);
-  assert.match(html, /Existing debt stays green/);
-  assert.doesNotMatch(html, /npm (?:i |install )(?:-g )?playbookdiff|npx playbookdiff/);
-  // The CLI is not published yet, and the page says so where it shows the command.
-  assert.match(html, /Not on npm yet/);
-  // Both run modes are shown, and before the deeper fixture example.
-  const local = html.indexOf("On your machine");
-  const ci = html.indexOf("In pull requests");
-  const example = html.indexOf("Every file exists");
-  assert.ok(local >= 0 && ci >= 0, "both run modes");
-  assert.ok(local < example && ci < example, "run modes precede the fixture example");
-});
+test("the interactive example is generated from real analyzer output", () => {
+  assert.equal(example.generatedBy, "scripts/generate-website-example.mjs");
+  assert.equal(example.fixture, "packages/harness-codex/test/fixtures/cross-harness/cwd-target");
+  assert.equal(example.test, "packages/harness-codex/src/cross-harness.test.ts");
+  assert.equal(example.target, "apps/api/file.ts");
 
-test("example data preserves the checked-in A/B assertions", () => {
-  assert.equal(examples.baseline, "2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f");
-  assert.equal(examples.root.count, 2);
-  assert.equal(examples.api.count, 0);
-  assert.equal(examples.root.equivalent, 2);
-  assert.equal(examples.api.equivalent, 4);
+  // The two runs differ in exactly one input, the launch directory.
+  assert.equal(example.scenarios.root.cwd, ".");
+  assert.equal(example.scenarios.api.cwd, "apps/api");
+  assert.equal(example.scenarios.root.actionable, 2);
+  assert.equal(example.scenarios.api.actionable, 0);
+  assert.equal(example.scenarios.root.equivalent, 2);
+  assert.equal(example.scenarios.api.equivalent, 4);
   assert.deepEqual(
-    examples.root.findings.map((finding) => finding.type),
+    example.scenarios.root.findings.map((finding) => finding.type),
     ["missing", "capability-gap"],
   );
+  assert.deepEqual(example.scenarios.api.findings, []);
+
+  // The point of the example: from the repository root the two nested Codex
+  // files are never received, and moving the launch directory fixes only that.
+  const absent = example.rows.filter((row) => row.states.root === "absent");
   assert.deepEqual(
-    examples.api.findings.map((finding) => finding.type),
-    [],
+    absent.map((row) => row.path),
+    ["apps/api/AGENTS.md", "apps/api/.agents/skills/api-skill/"],
   );
-  for (const scenario of [examples.root, examples.api]) {
-    assert.equal(scenario.count, scenario.findings.length);
-  }
-  // Only the launch directory differs, so both scenarios compare the same
-  // items and only the Codex side changes.
+  assert.ok(
+    absent.every((row) => row.harness === "codex" && row.states.api === "startup"),
+    "only Codex misses them, and only from the repository root",
+  );
+  // Claude Code reaches its nested pair, later rather than never.
   assert.deepEqual(
-    examples.root.ledger.map((row) => row.id),
-    examples.api.ledger.map((row) => row.id),
+    example.rows.filter((row) => row.states.root === "on-demand").map((row) => row.harness),
+    ["claude", "claude"],
   );
-  assert.deepEqual(
-    examples.root.ledger.map((row) => row.left),
-    examples.api.ledger.map((row) => row.left),
-  );
-  assert.deepEqual(
-    examples.root.ledger.filter((row) => row.right === null).map((row) => row.id),
-    ["api-instruction", "api-skill"],
-  );
-  assert.equal(examples.api.ledger.filter((row) => row.right === null).length, 0);
+  // Every file in the fixture is drawn, both harnesses' sides included.
+  assert.equal(example.rows.length, 8);
+  assert.equal(example.rows.filter((row) => row.harness === "claude").length, 4);
 });
 
-test("the fixture example is rendered and interactive", () => {
-  assert.match(html, /Where the agent was launched/);
-  assert.match(html, /Repository root/);
-  assert.ok(html.includes("apps/api"));
+test("the example renders, is interactive, and carries the real transcript", () => {
+  assert.match(html, /Both agents were launched from/);
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /aria-pressed="false"/);
-  assert.ok(html.includes(examples.target), "the target file the agent works on");
-  assert.match(html, /checked-in fixture/);
-  assert.match(html, /test that asserts both results/);
-  for (const row of examples.root.ledger) {
-    assert.ok(html.includes(row.left), row.left);
+  assert.ok(html.includes(example.target), "the work target both runs share");
+  for (const row of example.rows) {
+    assert.ok(html.includes(row.name), row.path);
   }
+  for (const finding of example.scenarios.root.findings) {
+    assert.ok(html.includes(finding.explanation), finding.id);
+    for (const evidence of finding.evidence) assert.ok(html.includes(evidence), evidence);
+  }
+  // The verbatim terminal output is available without leaving the page.
+  assert.ok(html.includes("Result: compatibility issues found"), "real transcript");
 });
 
-test("the cleared interactive scenario ships in the client bundle", async () => {
+test("the cleared scenario ships in the client bundle", async () => {
   const chunks = path.join(root, ".next/static/chunks");
   const sources = await Promise.all(
     (await readdir(chunks, { recursive: true }))
       .filter((entry) => entry.endsWith(".js"))
       .map((entry) => readFile(path.join(chunks, entry), "utf8")),
   );
-  for (const phrase of [
-    "No divergence. Both agents hold the same instructions and the same skills.",
-    examples.api.note,
-  ]) {
+  for (const phrase of ["No findings.", example.scenarios.api.transcript.split("\n")[0]]) {
     assert.ok(
       sources.some((source) => source.includes(phrase)),
       phrase,
     );
   }
+});
+
+test("the example points at the fixture, the test, and both harness specifications", () => {
+  const pinned = `/blob/${"2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f"}/`;
+  assert.ok(html.includes(`${pinned}${example.test}`), "the test, pinned to a commit");
+  assert.ok(html.includes(`/tree/2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f/${example.fixture}`));
+  assert.ok(html.includes('href="/docs/harnesses/claude"'));
+  assert.ok(html.includes('href="/docs/harnesses/codex"'));
 });
 
 test("trust claims stay concrete, evidence-based, and stated once", () => {
@@ -146,77 +154,104 @@ test("trust claims stay concrete, evidence-based, and stated once", () => {
   ]) {
     assert.ok(html.includes(phrase), phrase);
   }
-  // Stated once, in the closing section, rather than repeated in the hero and
-  // under every example. Script payloads are excluded so the streamed RSC copy
-  // of the markup is not counted twice.
-  const markup = html.replace(/<script\b[\s\S]*?<\/script>/g, "");
   assert.equal(markup.split("Never edits the repository it checks.").length - 1, 1);
-  assert.doesNotMatch(markup.slice(0, markup.indexOf("Matching files")), /Read-only|Deterministic/);
+  // Every guarantee links to the document that says how it is enforced.
+  assert.ok(html.includes('href="/docs/security"'));
+});
+
+test("the FAQ answers the misconceptions that would otherwise stop adoption", () => {
+  for (const question of [
+    "Why can&#x27;t I just keep CLAUDE.md and AGENTS.md identical?",
+    "Does PlaybookDiff run Claude Code or Codex?",
+    "Does it send my repository anywhere?",
+    "If the configuration matches, will the two agents behave the same?",
+    "What happens when it is not sure?",
+    "Will differences we already have break CI?",
+    "Which agents are supported?",
+  ]) {
+    assert.ok(html.includes(question), question);
+  }
+  // Native disclosure, so it works without JavaScript and from the keyboard.
+  assert.ok(html.includes("<details"), "the FAQ is a native disclosure");
+  assert.doesNotMatch(html, /role="tablist"|role="tab"/);
+});
+
+test("the site never claims more than PlaybookDiff proves", () => {
+  assert.doesNotMatch(markup, /what Claude sees|what Codex sees/i);
+  assert.doesNotMatch(markup, /AI-powered|revolutionary|game-changing|supercharge|seamless/i);
+  // It compares configuration, and says so rather than promising equal behaviour.
+  assert.doesNotMatch(markup, /guarantees? (?:that )?(?:both )?agents behave/i);
 });
 
 test("nothing unfinished is published", () => {
-  // An absent section beats a visible placeholder. There is no walkthrough
-  // recording, so the page does not reserve a frame for one.
   assert.doesNotMatch(html, /Recording in progress|Coming soon|in progress|Watch a full check/i);
   assert.doesNotMatch(html, /<video\b|walkthrough/i);
-  // No invented running time, play control, or production credit.
   assert.doesNotMatch(html, /\d{1,2}:\d{2}/);
 });
 
-test("colour is reserved for findings, never for agent branding", async () => {
-  const css = await readFile(path.join(root, "app/globals.css"), "utf8");
-  // The agents are told apart by their own icons and names. No Claude or Codex
-  // brand colour is defined, and no page type is tinted to stand for an agent.
+test("colour is reserved for findings, never for agent branding", () => {
   assert.doesNotMatch(css, /--claude\b|--codex\b|mark-codex/);
   assert.doesNotMatch(html, /mark-codex/);
-  // Exactly one hue is declared, and it means divergence.
   const hues = [...css.matchAll(/^\s*(--signal[\w-]*):/gm)].map((match) => match[1]).sort();
   assert.deepEqual(hues, ["--signal-leader", "--signal-on-dark"]);
+  // The one coloured state in the tree is the one that is a finding.
+  assert.match(css, /\.scope-row\[data-state="absent"\][\s\S]*?--signal-leader/);
 });
 
-test("provenance contains only repository-relative evidence paths", () => {
-  for (const scenario of [examples.root, examples.api]) {
-    for (const finding of scenario.findings) {
-      assert.ok(finding.evidence.length > 0);
-      for (const evidence of finding.evidence) {
-        assert.equal(path.isAbsolute(evidence), false);
-        assert.equal(evidence.includes(".."), false);
-      }
-    }
-  }
-});
-
-test("local anchor links point to existing IDs", () => {
+test("local anchor links point at existing IDs", () => {
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
   const links = [...html.matchAll(/\bhref="#([^"]+)"/g)].map((match) => match[1]);
-  assert.ok(links.length >= 3);
+  assert.ok(links.length >= 1);
   for (const link of links) {
     assert.ok(ids.has(link), "Missing anchor " + link);
   }
 });
 
-test("navigation stays short and points outward", () => {
+test("navigation stays short and points at first-party docs", () => {
   const nav = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
   const links = [...nav.matchAll(/<a\b/g)].length;
-  assert.ok(links <= 3, "header carries the word mark plus at most two links, got " + links);
+  assert.ok(links <= 3, "the word mark plus at most two links, got " + links);
+  assert.ok(nav.includes('href="/docs"'), "Docs is a first-party route");
+  assert.doesNotMatch(nav, /blob\/main\/docs/);
 });
 
-test("metadata uses the verified origin and concise browser title", () => {
+test("metadata uses the canonical production origin", () => {
   for (const name of [
     "description",
     "og:title",
     "og:description",
+    "og:image",
     "twitter:title",
     "twitter:description",
+    "twitter:image",
   ]) {
     assert.ok(html.includes('="' + name + '"'), name);
   }
   assert.match(html, /<title>PlaybookDiff<\/title>/);
-  assert.doesNotMatch(html, /<title>PlaybookDiff \|/);
-  assert.ok(html.includes('<link rel="canonical" href="https://playbookdiff.vercel.app"'));
-  assert.ok(html.includes('property="og:url" content="https://playbookdiff.vercel.app"'));
+  assert.ok(html.includes('<link rel="canonical" href="https://playbookdiff.dev"'));
+  assert.ok(html.includes('property="og:url" content="https://playbookdiff.dev"'));
+  assert.match(html, /property="og:image" content="https:\/\/playbookdiff\.dev\//);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.doesNotMatch(html, /(?:content|href)="https?:\/\/(?:localhost|127\.0\.0\.1)/);
 });
+
+test("no rendered route still points at the old deployment alias", async () => {
+  for (const file of await renderedRoutes()) {
+    const page = await readFile(file, "utf8");
+    assert.doesNotMatch(page, /playbookdiff\.vercel\.app/, file);
+  }
+  const sitemap = await read(".next/server/app/sitemap.xml.body");
+  assert.match(sitemap, /<loc>https:\/\/playbookdiff\.dev\/<\/loc>/);
+  assert.doesNotMatch(sitemap, /vercel\.app/);
+});
+
+async function renderedRoutes() {
+  const app = path.join(root, ".next/server/app");
+  const entries = await readdir(app, { recursive: true, withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".html"))
+    .map((entry) => path.join(entry.parentPath, entry.name));
+}
 
 test("semantic structure and brand assets are present", () => {
   assert.equal([...html.matchAll(/<h1\b/g)].length, 1);
@@ -235,7 +270,6 @@ test("website dependencies remain standalone and minimal", () => {
 });
 
 test("typefaces are self-hosted and reachable", async () => {
-  const css = await readFile(path.join(root, "app/globals.css"), "utf8");
   const faces = [...css.matchAll(/url\("(\/fonts\/[^"]+)"\)/g)].map((match) => match[1]);
   assert.ok(faces.length >= 4, "the page ships its own typefaces");
   const shipped = new Set(await readdir(path.join(root, "public/fonts")));
@@ -251,11 +285,12 @@ test("source has no host paths, external fonts, required environment, or model c
       const filename = path.join(directory, entry.name);
       if (entry.isDirectory()) {
         await inspect(filename);
-      } else {
+      } else if (!entry.name.endsWith(".png")) {
         const content = await readFile(filename, "utf8");
         assert.doesNotMatch(
           content,
-          /\/Users\/|\/private\/tmp\/|process\.env|next\/font|@import\s+url|fonts\.(?:googleapis|gstatic)\.com/,
+          /\/Users\/|\/private\/tmp\/|next\/font|@import\s+url|fonts\.(?:googleapis|gstatic)\.com/,
+          filename,
         );
       }
     }

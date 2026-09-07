@@ -1,5 +1,6 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- Narrow code surfaces must remain keyboard-scrollable. */
 import type { ReactNode } from "react";
+import { npmUrl, repositoryUrl, site } from "../lib/site";
 
 export function Logo() {
   return (
@@ -52,12 +53,62 @@ export function ButtonLink({
   );
 }
 
+// A shell block. Each line gets its own prompt, and the prompt is decorative so
+// a copied selection is the command rather than the transcript.
 export function Command({ children, label }: { children: string; label?: string }) {
   return (
     <pre className="command" tabIndex={0} aria-label={label}>
       <code>
-        <span aria-hidden="true">$</span> {children}
+        {children.split("\n").map((line, index) => (
+          <span className="command-line" key={line}>
+            {index > 0 ? "\n" : null}
+            <span aria-hidden="true">$ </span>
+            {line}
+          </span>
+        ))}
       </code>
     </pre>
+  );
+}
+
+export function SiteHeader({ home = false }: { home?: boolean }) {
+  return (
+    <header className="site-header" id="top">
+      <div className="container header-inner">
+        <a className="brand-link" href={home ? "#top" : "/"} aria-label="PlaybookDiff home">
+          <Logo />
+        </a>
+        <nav aria-label="Main navigation">
+          <a href="/docs">Docs</a>
+          <a href={site.repository}>
+            GitHub <span aria-hidden="true">↗</span>
+          </a>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="container footer-inner">
+        <a className="brand-link" href="/" aria-label="PlaybookDiff home">
+          <Logo />
+        </a>
+        <nav aria-label="Footer navigation">
+          <a href="/docs/cli">CLI</a>
+          <a href="/docs/action">Action</a>
+          <a href="/docs/security">Security</a>
+          <a href="/docs/limitations">Limitations</a>
+          <a href={repositoryUrl("CONTRIBUTING.md")}>Contribute</a>
+        </nav>
+        <p className="footer-meta">
+          <a href={`${site.repository}/releases/tag/${site.release}`}>{site.release}</a>
+          <a href={npmUrl}>npm</a>
+          <a href={repositoryUrl("LICENSE")}>MIT</a>
+        </p>
+      </div>
+    </footer>
   );
 }

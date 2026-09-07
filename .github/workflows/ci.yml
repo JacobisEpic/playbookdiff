@@ -66,6 +66,9 @@ jobs:
       - name: Verify npm package artifact
         run: pnpm cli:verify-package
 
+      - name: Verify generated website inputs
+        run: pnpm website:sync:check
+
   website:
     name: Website
     runs-on: ubuntu-latest

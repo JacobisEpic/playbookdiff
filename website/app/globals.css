@@ -139,6 +139,14 @@ pre:focus-visible,
   outline-offset: 3px;
 }
 
+/* Ink is invisible against the panel, so a focus ring on the tool's own output
+   is drawn in the panel's own light. */
+.scope-panel :focus-visible,
+.scope-transcript pre:focus-visible,
+.doc-body pre:focus-visible {
+  outline-color: var(--panel-ink);
+}
+
 p,
 h1,
 h2,
@@ -283,6 +291,12 @@ pre {
   align-items: start;
 }
 
+/* One measure for the whole hero, so the command block and the buttons line up
+   with the sentence above them at every width. */
+.hero-copy {
+  max-width: 620px;
+}
+
 .hero-lead {
   margin-top: 22px;
   max-width: 46ch;
@@ -301,9 +315,15 @@ pre {
   line-height: 1.4;
 }
 
-.command span {
+/* The prompt is decorative, so selecting a command block copies commands
+   rather than a transcript. */
+.command span[aria-hidden] {
   color: var(--muted);
   user-select: none;
+}
+
+.command-line {
+  white-space: pre;
 }
 
 .hero-actions {
@@ -346,203 +366,14 @@ pre {
   border-color: var(--ink);
 }
 
-.hero-figure figcaption {
-  margin-top: 14px;
-  font-size: 0.8125rem;
-  color: var(--muted);
-}
-
-/* ---------- ledger ---------- */
-
-.ledger {
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--panel-ink);
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-  overflow: hidden;
-}
-
-.ledger-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px 18px;
-  border-bottom: 1px solid var(--panel-line);
-  background: var(--panel-2);
-}
-
-.ledger-bar code {
-  color: var(--panel-ink);
-  overflow-wrap: anywhere;
-}
-
-.ledger-bar code span {
-  color: var(--panel-dim);
-}
-
-.ledger-meta {
-  flex: none;
-  color: var(--panel-muted);
-}
-
-/* Rows are leaders: each configuration item on the left, the agent that also
-   receives it on the right, and a rule between them that either arrives or
-   breaks. */
-.ledger-head,
-.ledger-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.ledger-head {
-  padding: 16px 18px 14px;
-  border-bottom: 1px solid var(--panel-line);
-  color: var(--panel-muted);
-}
-
-.agent {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--sans);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: -0.003em;
-  white-space: nowrap;
-}
-
-.agent img {
-  width: 16px;
-  height: 16px;
-}
-
-.ledger-head-spine {
-  flex: 1;
-}
-
-.ledger-body {
-  padding-bottom: 18px;
-}
-
-.ledger-group {
-  padding: 20px 18px 7px;
-  font-family: var(--sans);
-  font-size: 0.75rem;
-  color: var(--panel-dim);
-}
-
-.ledger-row {
-  padding: 4px 18px;
-}
-
-.ledger-cell {
-  flex: none;
-  max-width: 46%;
-  overflow-wrap: anywhere;
-}
-
-.ledger-cell-right,
-.ledger-cell-absent {
-  text-align: right;
-}
-
-.ledger-cell-absent {
-  color: var(--signal-on-dark);
-}
-
-.ledger-link {
-  flex: 1;
-  height: 1px;
-  background: var(--panel-leader);
-}
-
-/* A broken leader stops short of the other agent and takes the signal colour,
-   so the gap is visible before any label is read. */
-.is-broken .ledger-link {
-  background: linear-gradient(90deg, var(--signal-leader), transparent 72%);
-}
-
-.ledger-foot {
-  padding: 16px 18px;
-  border-top: 1px solid var(--panel-line);
-  background: var(--panel-2);
-}
-
-.ledger-foot li + li {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--panel-line);
-}
-
-.ledger-finding {
-  color: var(--panel-ink);
-}
-
-.severity {
-  margin-right: 10px;
-  font-weight: 500;
-  color: var(--signal-on-dark);
-}
-
-.ledger-detail {
-  margin-top: 5px;
-  max-width: 74ch;
-  color: var(--panel-muted);
-  line-height: 1.55;
-}
-
-.ledger-clear {
-  max-width: 74ch;
-  color: var(--panel-ink);
-  line-height: 1.55;
-}
-
-.ledger-evidence {
-  display: block;
-  margin-top: 6px;
-  color: var(--panel-dim);
-}
-
-/* One purposeful animation, used in two places for the same reason: the ledger
-   resolving row by row, with a broken leader that never arrives. In the fixture
-   example it also runs on every toggle, so switching the launch directory shows
-   the configuration re-resolving. */
-@media (prefers-reduced-motion: no-preference) {
-  .ledger[data-animate] .ledger-group,
-  .ledger[data-animate] .ledger-row,
-  .ledger[data-animate] .ledger-foot {
-    opacity: 0;
-    animation: ledger-in 0.42s var(--ease) forwards;
-    animation-delay: calc(140ms + var(--i) * 95ms);
-  }
-
-  .ledger[data-animate] .ledger-link {
-    transform: scaleX(0);
-    transform-origin: left center;
-    animation: ledger-link 0.4s var(--ease) forwards;
-    animation-delay: calc(280ms + var(--i) * 95ms);
-  }
-}
-
-@keyframes ledger-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes ledger-link {
-  to {
-    transform: scaleX(1);
-  }
+/* The mascots appear once on the page outside the word mark: two agents
+   reading one book, which is the whole product. The source crop is 364px wide,
+   so it is never placed larger than that. */
+.hero-mark {
+  justify-self: start;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
 }
 
 /* ---------- sections ---------- */
@@ -636,8 +467,7 @@ pre {
 /* Grid items default to min-width:auto, which would let a long command widen
    the page instead of scrolling inside its own surface. */
 .hero > *,
-.run > *,
-.closing-layout > * {
+.run > * {
   min-width: 0;
 }
 
@@ -675,72 +505,10 @@ pre {
   text-decoration-color: var(--ink);
 }
 
-/* ---------- fixture example ---------- */
-
-.example {
-  margin-top: 44px;
-}
-
-.segmented {
-  margin-bottom: 22px;
-  border: 0;
-  padding: 0;
-}
-
-.segmented legend {
-  padding: 0;
-  margin-bottom: 10px;
-  font-size: 0.9375rem;
-  color: var(--muted-strong);
-}
-
-.segmented-control {
-  display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--line-strong);
-  border-radius: 9px;
-  background: var(--paper-sunk);
-}
-
-.segmented button {
-  min-height: 36px;
-  padding: 7px 15px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  color: var(--muted-strong);
-}
-
-.segmented button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.example-note {
-  margin-top: 20px;
-  max-width: 68ch;
-  font-size: 0.9375rem;
-  color: var(--muted-strong);
-}
-
-.footnote {
-  margin-top: 20px;
-  font-size: 0.875rem;
-  color: var(--muted);
-}
-
-/* ---------- closing ---------- */
-
-.closing-layout {
-  display: grid;
-  gap: 48px;
-  align-items: center;
-}
+/* ---------- guarantees ---------- */
 
 .guarantees {
-  margin-top: 44px;
+  margin-top: 40px;
   border-top: 1px solid var(--line);
 }
 
@@ -759,22 +527,6 @@ pre {
 .guarantees dd {
   max-width: 56ch;
   color: var(--muted-strong);
-}
-
-.closing-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 40px;
-}
-
-/* The mascots appear once on the page outside the word mark: two agents
-   reading one book, which is the whole product. */
-.closing-mark {
-  justify-self: center;
-  width: 100%;
-  max-width: 300px;
-  height: auto;
 }
 
 /* ---------- footer ---------- */
@@ -811,23 +563,746 @@ pre {
   color: var(--muted);
 }
 
+/* ---------- agents ---------- */
+
+/* The two agents are told apart by their own icons and their names, never by
+   recolouring the type around them. */
+.agent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.003em;
+  white-space: nowrap;
+}
+
+.agent img {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------- effective-configuration example ---------- */
+
+/* The signature element: one real repository, with what each harness receives
+   from it in the selected context. It sits on the product's dark surface
+   because it is the tool's own view, not a diagram of one.
+
+   Only "not received" takes the signal colour, so the coloured thing is always
+   the finding. Switching the launch directory drains the colour out of the
+   panel, which is the product. */
+
+.scope {
+  margin-top: 44px;
+}
+
+.scope-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+
+.scope-controls legend {
+  float: left;
+  padding: 0;
+  margin-right: 16px;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+}
+
+.segmented-control {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--paper-sunk);
+}
+
+.segmented-control button {
+  min-height: 34px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.875rem;
+  color: var(--muted-strong);
+  transition:
+    background 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+
+.segmented-control button:hover {
+  color: var(--ink);
+}
+
+.segmented-control button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.scope-panel {
+  max-width: 940px;
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--panel-ink);
+  overflow: hidden;
+}
+
+.scope-bar {
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--panel-line);
+  background: var(--panel-2);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+
+.scope-bar span {
+  color: var(--panel-dim);
+}
+
+.scope-tree {
+  padding: 22px 20px 26px;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.scope-root,
+.scope-directory {
+  color: var(--panel-muted);
+}
+
+.scope-directory {
+  margin-top: 6px;
+  padding-left: 12px;
+}
+
+/* Two levels, and no more: the nested group is indented once behind a guide
+   rule, which is all the structure this repository has. */
+.scope-group {
+  padding-left: 18px;
+}
+
+.scope-group:not(:first-child) .scope-directory + ul {
+  padding-left: 18px;
+  border-left: 1px solid var(--panel-line);
+}
+
+.scope-row {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  padding: 5px 10px 5px 12px;
+  border-left: 2px solid transparent;
+  border-radius: 4px;
+  transition:
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+
+.scope-path {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.scope-verdict {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 14px;
+  color: var(--panel-muted);
+}
+
+.scope-verdict .agent {
+  width: 108px;
+  color: var(--panel-dim);
+}
+
+.scope-state {
+  width: 96px;
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  text-align: right;
+}
+
+/* The one coloured state. A file that exists in the repository and never
+   reaches the agent is the entire argument, so it is marked on the row as well
+   as named at the end of it. */
+.scope-row[data-state="absent"] {
+  border-left-color: var(--signal-leader);
+  background: #1f1a12;
+}
+
+.scope-row[data-state="absent"] .scope-state {
+  color: var(--signal-on-dark);
+}
+
+.scope-result {
+  padding: 18px 20px;
+  border-top: 1px solid var(--panel-line);
+  background: var(--panel-2);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.scope-count {
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--panel-muted);
+}
+
+.scope-clear {
+  max-width: 74ch;
+  color: var(--panel-muted);
+}
+
+.scope-clear strong {
+  font-weight: 500;
+  color: var(--panel-ink);
+}
+
+.scope-clear code {
+  color: var(--panel-ink);
+}
+
+.scope-result li {
+  margin-top: 14px;
+}
+
+.scope-finding {
+  display: flex;
+  gap: 12px;
+  max-width: 82ch;
+  color: var(--panel-ink);
+}
+
+.severity {
+  flex: none;
+  width: 56px;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  color: var(--signal-on-dark);
+}
+
+.scope-evidence {
+  display: block;
+  margin-top: 5px;
+  margin-left: 68px;
+  font-size: 0.8125rem;
+  color: var(--panel-dim);
+}
+
+.scope-transcript {
+  margin-top: 18px;
+}
+
+.scope-transcript pre {
+  margin-top: 12px;
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--panel-ink);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.scope-note {
+  margin-top: 18px;
+  max-width: 68ch;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+}
+
+.scope-note code,
+.scope-controls code {
+  color: var(--ink);
+}
+
+/* ---------- FAQ ---------- */
+
+.faq {
+  margin-top: 40px;
+  max-width: 78ch;
+  border-top: 1px solid var(--line);
+}
+
+.faq details {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 19px;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq summary::-webkit-details-marker,
+.scope-transcript summary::-webkit-details-marker,
+.docs-nav-mobile summary::-webkit-details-marker {
+  display: none;
+}
+
+.scope-transcript summary,
+.docs-nav-mobile summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq summary:hover,
+.scope-transcript summary:hover,
+.docs-nav-mobile summary:hover {
+  color: var(--ink);
+}
+
+/* A chevron drawn from two borders, so the disclosure needs no icon set. */
+.faq-marker {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 3px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.18s var(--ease);
+}
+
+details[open] > summary .faq-marker {
+  transform: rotate(-135deg);
+}
+
+.faq-answer {
+  padding-bottom: 22px;
+}
+
+.faq-answer p {
+  max-width: 72ch;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+}
+
+.faq-answer p + p {
+  margin-top: 14px;
+}
+
+.faq-answer a,
+.scope-note a,
+.footnote a,
+.run p a,
+.doc-body a:not(.doc-anchor),
+.doc-lead a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+}
+
+.faq-answer a:hover,
+.scope-note a:hover,
+.footnote a:hover,
+.run p a:hover,
+.doc-body a:not(.doc-anchor):hover,
+.doc-lead a:hover {
+  text-decoration-color: var(--ink);
+}
+
+.footnote {
+  margin-top: 26px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* ---------- documentation ---------- */
+
+.docs-shell {
+  display: grid;
+  gap: 40px;
+  padding-block: 44px 96px;
+  align-items: start;
+}
+
+.docs-shell > * {
+  min-width: 0;
+}
+
+.docs-nav-wide {
+  display: none;
+}
+
+.docs-nav-mobile summary {
+  justify-content: space-between;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.docs-nav-current {
+  margin-left: auto;
+  margin-right: 10px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.docs-nav-mobile[open] .docs-nav-list {
+  padding-block: 18px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.docs-nav-list > div {
+  margin-top: 22px;
+}
+
+.docs-nav-title {
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.docs-nav a {
+  display: block;
+  padding-block: 5px;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+}
+
+.docs-nav a:hover {
+  color: var(--ink);
+}
+
+.docs-nav a[aria-current="page"] {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.docs-nav-home {
+  font-weight: 500;
+}
+
+.doc-head {
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--line);
+}
+
+.doc h1 {
+  font-size: clamp(2rem, 1.6rem + 1.6vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+}
+
+.doc-lead {
+  margin-top: 14px;
+  max-width: 62ch;
+  font-size: 1.0625rem;
+  color: var(--muted-strong);
+}
+
+.doc-source-link {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.doc-source-link:hover {
+  color: var(--ink);
+}
+
+.doc-contents {
+  margin-top: 30px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper-sunk);
+}
+
+.doc-contents p {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.doc-contents ul {
+  margin-top: 10px;
+  columns: 2;
+  column-gap: 32px;
+}
+
+.doc-contents li {
+  break-inside: avoid;
+}
+
+.doc-contents a {
+  display: block;
+  padding-block: 3px;
+  font-size: 0.9375rem;
+  color: var(--muted-strong);
+}
+
+.doc-contents a:hover {
+  color: var(--ink);
+}
+
+/* The docs are prose: one measure for everything you read line by line. Wide
+   reference tables and code blocks are the exception, because breaking a path
+   in half costs more than a slightly longer line. */
+.doc-body {
+  margin-top: 34px;
+}
+
+.doc-body > p,
+.doc-body > ul,
+.doc-body > ol,
+.doc-body > blockquote,
+.doc-body > h2,
+.doc-body > h3,
+.doc-body > h4,
+.doc-body > section {
+  max-width: 74ch;
+}
+
+.doc-body h2 {
+  margin-top: 48px;
+  font-size: 1.4375rem;
+  line-height: 1.2;
+}
+
+.doc-body h3 {
+  margin-top: 34px;
+  font-size: 1.0625rem;
+}
+
+.doc-body h4 {
+  margin-top: 26px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.doc-anchor {
+  color: inherit;
+}
+
+.doc-anchor:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--line-strong);
+}
+
+.doc-body p,
+.doc-body li {
+  margin-top: 16px;
+  color: var(--ink-2);
+}
+
+.doc-body li {
+  margin-top: 8px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.doc-body li::before {
+  position: absolute;
+  left: 2px;
+  color: var(--muted);
+  content: "\2013";
+}
+
+.doc-body ol {
+  counter-reset: doc-step;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-body ol li::before {
+  counter-increment: doc-step;
+  content: counter(doc-step) ".";
+}
+
+.doc-body ul,
+.doc-body ol {
+  margin-top: 16px;
+}
+
+/* Monospace already separates a path from the prose around it, so inline code
+   needs no chip. It also keeps a code span from looking spaced away from the
+   punctuation that follows it. */
+.doc-body code {
+  font-size: 0.9em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.doc-body pre {
+  margin-top: 20px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--panel-ink);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.doc-body pre code {
+  color: inherit;
+  font-size: inherit;
+}
+
+.doc-body blockquote {
+  margin: 22px 0 0;
+  padding-left: 20px;
+  border-left: 2px solid var(--line-strong);
+  color: var(--muted-strong);
+}
+
+.doc-body blockquote p {
+  margin-top: 0;
+}
+
+/* Reference tables are wide by nature. They scroll inside their own surface so
+   the page never does, and stay keyboard-reachable while they scroll. */
+.doc-table {
+  margin-top: 22px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.doc-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.doc-table th,
+.doc-table td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-2);
+}
+
+.doc-table th {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.doc-table thead th {
+  background: var(--paper-sunk);
+}
+
+.doc-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.doc-index {
+  margin-top: 14px;
+}
+
+.doc-index li {
+  margin-top: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.doc-index li::before {
+  content: none;
+}
+
+.doc-index li:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.doc-index a {
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+}
+
+.doc-index span {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.doc-source {
+  margin-top: 44px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ---------- responsive ---------- */
+
+@media (min-width: 1080px) {
+  .docs-shell {
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: 72px;
+  }
+
+  .docs-nav {
+    position: sticky;
+    top: 94px;
+  }
+
+  .docs-nav-mobile {
+    display: none;
+  }
+
+  .docs-nav-wide {
+    display: block;
+  }
+}
 
 @media (min-width: 1000px) {
   .hero {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(0, 1fr) 320px;
     gap: 64px;
     align-items: center;
+  }
+
+  .hero-mark {
+    justify-self: center;
+    max-width: 320px;
   }
 
   .run {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 72px;
-  }
-
-  .closing-layout {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 64px;
   }
 }
 
@@ -903,8 +1378,8 @@ pre {
   }
 
   .hero {
-    padding-block: 60px 76px;
-    gap: 44px;
+    padding-block: 52px 68px;
+    gap: 36px;
   }
 
   .section {
@@ -916,51 +1391,64 @@ pre {
     gap: 6px;
   }
 
-  .closing-mark {
-    justify-self: start;
+  .hero-mark {
     max-width: 208px;
   }
 
-  .ledger-head {
-    padding: 14px 14px 12px;
+  .doc-contents ul {
+    columns: 1;
   }
 
-  .ledger-group {
-    padding: 18px 14px 6px;
+  /* Stacked: the path, then what each harness does with it underneath, so a
+     phone never has to scroll a row sideways to reach the verdict. */
+  .scope-tree {
+    padding: 18px 14px 22px;
   }
 
-  /* Stacked: the item as Claude Code receives it, then the Codex line beneath
-     it, indented under the same entry. */
-  .ledger-row {
+  .scope-group {
+    padding-left: 10px;
+  }
+
+  .scope-group:not(:first-child) .scope-directory + ul {
+    padding-left: 12px;
+  }
+
+  .scope-row {
     display: block;
-    padding: 5px 14px;
+    padding: 7px 8px 8px 10px;
   }
 
-  .ledger-link {
-    display: none;
+  .scope-verdict {
+    margin-top: 3px;
+    gap: 10px;
   }
 
-  .ledger-cell {
-    display: block;
-    max-width: none;
+  .scope-verdict .agent,
+  .scope-state {
+    width: auto;
     text-align: left;
   }
 
-  .ledger-cell-right,
-  .ledger-cell-absent {
-    margin-left: 14px;
-    padding-left: 12px;
-    border-left: 1px solid var(--panel-line);
-    color: var(--panel-muted);
+  .scope-state::before {
+    color: var(--panel-line);
+    content: "/ ";
   }
 
-  .ledger-cell-absent {
-    border-left-color: var(--signal-leader);
-    color: var(--signal-on-dark);
+  .scope-controls legend {
+    float: none;
+    margin-bottom: 10px;
   }
 
-  .ledger-bar {
-    flex-wrap: wrap;
-    gap: 6px 16px;
+  .scope-finding {
+    display: block;
+  }
+
+  .severity {
+    width: auto;
+    margin-right: 10px;
+  }
+
+  .scope-evidence {
+    margin-left: 0;
   }
 }

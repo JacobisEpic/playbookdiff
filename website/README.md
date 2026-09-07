@@ -15,7 +15,7 @@ npm run dev
 ```
 
 Open the local URL printed by Next.js.
-The root repository's pnpm scripts are not involved.
+The root repository's pnpm scripts are not involved in building or serving the site; they are involved in regenerating the two inputs described under [Generated inputs](#generated-inputs).
 
 ## Validation
 
@@ -29,14 +29,56 @@ npm start
 ```
 
 Tests read the production-rendered HTML, so build before running them.
-They verify content, commands, metadata, anchor links, fixture data, source-path safety, and dependency isolation.
+They verify homepage content and ordering, the install and Action commands, metadata and the canonical origin, anchor links, the generated example's agreement with the analyzer, every documentation route, link rewriting, and dependency isolation.
 Lint includes React and accessibility rules.
-The example buttons require a browser interaction check in addition to these lightweight tests.
+
+## Routes
+
+| Route          | What it is                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| `/`            | The homepage: hero, the interactive effective-configuration example, surfaces, usage, guarantees, FAQ. |
+| `/docs`        | Documentation index and install instructions.                                                          |
+| `/docs/<slug>` | One repository document, rendered. `lib/docs.ts` maps slugs to source files.                           |
+| `/sitemap.xml` | Every published route, on the canonical origin.                                                        |
+| `/robots.txt`  | Allow all, with the sitemap.                                                                           |
+
+The homepage and every documentation route are prerendered at build time.
+`components/effective-scope.tsx` is the only client component.
+
+## Generated inputs
+
+Two files in this directory are generated from the repository, never hand-edited.
+Both are regenerated together from the repository root:
+
+```sh
+pnpm website:sync         # rewrite both
+pnpm website:sync:check   # fail if either is stale
+```
+
+### `content/docs/`
+
+A byte-for-byte mirror of the repository's `docs/` directory, written by [`scripts/sync-website-docs.mjs`](../scripts/sync-website-docs.mjs).
+`docs/` stays the single source of truth; the mirror exists because the site builds from this directory with its own lockfile, so the deployment cannot rely on reaching outside it.
+`tests/docs.test.mjs` compares the mirror against `docs/` and fails if they diverge, so documentation cannot drift between GitHub and the website.
+
+`lib/markdown.ts` renders that Markdown at build time.
+It is a small renderer covering the constructs these documents actually use, so first-party docs need no documentation framework and no runtime Markdown dependency.
+`lib/docs.ts` maps repository paths to website slugs and rewrites links: a document with a first-party route becomes an internal link, anchors included, and everything else keeps pointing at GitHub.
+Every documentation page carries a "View source on GitHub" link to its own Markdown file.
+
+### `lib/effective-scope.json`
+
+The data behind the interactive example, written by [`scripts/generate-website-example.mjs`](../scripts/generate-website-example.mjs) from real `playbookdiff check --json` output against the checked-in [`cwd-target` fixture](../packages/harness-codex/test/fixtures/cross-harness/cwd-target).
+It holds one row per configuration file with the state each launch directory produced, both runs' findings, and both runs' verbatim terminal transcripts.
+
+The website does not import, reimplement, or execute the comparator, and it states no harness behaviour of its own: every state shown comes from Claude Code's `loadPhase` and Codex's `discovery.state` in the analyzer's own output.
+Fixture and test evidence links are pinned to commit `2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f` so a concurrent change cannot silently alter the example's meaning.
+Finding ID prefixes are deliberately shortened, not presented as executable complete IDs.
 
 ## Vercel deployment
 
 The site is deployed as the `playbookdiff` Vercel project, Git-connected to `JacobisEpic/playbookdiff`.
-A push to `main` produces the production deployment at <https://playbookdiff.vercel.app>; a branch or pull request produces a preview.
+A push to `main` produces the production deployment; a branch or pull request produces a preview.
 The Vercel CLI is for setup, inspection, and troubleshooting only - running `vercel deploy --prod` alongside the Git integration just duplicates a build for the same commit.
 
 The production project uses these settings:
@@ -52,42 +94,33 @@ The production project uses these settings:
 | Environment      | No variables    |
 
 The local npm lockfile pins dependencies independently from the monorepo.
-`turbopack.root` and `outputFileTracingRoot` are explicitly scoped to this directory.
-The homepage is prerendered at build time; the fixture selector is the only client component.
+`turbopack.root` and `outputFileTracingRoot` are explicitly scoped to this directory, and the build reads nothing above it.
 `.vercel/` and `.env*` are ignored, so the CLI's project link metadata and the `VERCEL_OIDC_TOKEN` it writes stay local.
 
 ## Canonical URL and social previews
 
-Title, description, Open Graph text, Twitter text, and a small SVG favicon are implemented.
-`productionOrigin` in `lib/site.ts` is the verified stable production origin, <https://playbookdiff.vercel.app>, and drives `metadataBase`, the canonical link, and `og:url`.
-Never set it to a localhost address or to a deployment-specific preview URL; `tests/site.test.mjs` asserts the rendered canonical and `og:url` and rejects any other `*.vercel.app` host, so a regression fails the build gate rather than shipping quietly.
-Social image metadata is deliberately omitted; a future simple branded image can be added without changing the page architecture.
+The canonical public origin is <https://playbookdiff.dev>.
+`productionOrigin` in `lib/site.ts` holds it and drives `metadataBase`, every canonical link, `og:url`, and the sitemap.
+Vercel's own deployment alias still serves the project behind that domain, but it is not the site's identity and must not appear in rendered output; `tests/site.test.mjs` asserts the canonical and `og:url`, and fails if any rendered route or the sitemap mentions a `vercel.app` host.
+Never set `productionOrigin` to a localhost address or a deployment-specific preview URL.
 
-## Fixture data, not browser analysis
-
-`lib/examples.json` is a hand-curated presentation of the assertions in `packages/harness-codex/src/cross-harness.test.ts` at commit `2cdda6b15f30b12d26d6dee0fa5462aa88a60b6f`.
-Fixture evidence links are pinned to that baseline so concurrent changes cannot silently alter the example's meaning.
-Documentation and project links follow the current `main` branch.
-Scenario A has two medium findings, while Scenario B has zero findings and four equivalent entities.
-Changing only `cwd` from `.` to `apps/api` brings the nested instruction and skill into Codex's discovery chain.
-The website does not import, reimplement, or execute the comparator.
-Finding ID prefixes are explicitly shortened, not presented as executable complete IDs.
+`app/opengraph-image.png` is the social preview card, regenerated by [`scripts/generate-og-image.py`](scripts/generate-og-image.py) from this project's own typefaces and brand artwork.
+Next's file convention turns it into `og:image` and `twitter:image` with absolute URLs; do not declare those in `app/layout.tsx` as well.
 
 ## Content boundaries
 
-The site describes the current deterministic engine, harness adapters, CLI, released GitHub Action, and Git regression analysis.
-The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, because `v0.2.0` and the movable `v0` tag are published and the Action was smoke-tested from an unrelated public repository.
-It does not claim a published npm package, adoption metrics, semantic analysis, or behavioral equivalence.
-The CLI section says plainly that the package is not on npm yet and links to the source install.
-Repository links point at the public repository and are verified anonymously.
+The site describes the current deterministic engine, harness adapters, the `playbookdiff` CLI on npm, the released GitHub Action, and Git regression analysis.
+The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, alongside the `fetch-depth: 0` its `diff` engine genuinely requires.
+It does not claim adoption metrics, semantic analysis, behavioral equivalence, or any harness support beyond Claude Code and Codex.
+Repository links point at the public repository.
 Nothing unfinished is published: there is no recorded walkthrough, so the page has no section reserved for one, and `tests/site.test.mjs` fails if a placeholder returns.
 
 ## Design system
 
 The page is warm neutral throughout, and exactly one hue is declared.
-`--signal-on-dark` and its dimmer companion `--signal-leader` mean one thing, that PlaybookDiff proved a difference, and they appear only on a broken ledger leader, on `not received`, and on a severity label.
-Everything else, including both agents, every matched row, every link, button, and focus ring, is paper and ink.
-Switching the fixture example to the aligned launch directory drains the colour out of the panel, which is the product.
+`--signal-on-dark` and its dimmer companion `--signal-leader` mean one thing, that PlaybookDiff proved a difference, and they appear only on a `not received` row in the example and on a severity label.
+Everything else, including both agents, every received row, every link, button, and focus ring, is paper and ink.
+Switching the example to the aligned launch directory drains the colour out of the panel, which is the product.
 
 There is deliberately no agent brand colour.
 The two agents are told apart by their own icons and their names, never by recolouring type, and `tests/site.test.mjs` asserts that no `--claude` or `--codex` token comes back.
