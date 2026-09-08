@@ -6,6 +6,13 @@ export const site = {
   actionRef: "JacobisEpic/playbookdiff@v0",
   release: "v0.2.0",
   npmPackage: "playbookdiff",
+
+  // The Buttondown newsletter the update signup posts to. Replace this one
+  // value with the account's Buttondown username after creating the account;
+  // until then `buttondownConfigured` is false and the signup is not rendered,
+  // so the site never ships a form that posts to a subscribe endpoint that
+  // does not exist. It is a public form target, not a secret.
+  buttondownUsername: "REPLACE_WITH_BUTTONDOWN_USERNAME",
 };
 
 // The canonical public origin. Vercel still serves the project alias behind
@@ -26,6 +33,12 @@ export const evidenceUrl = (commit: string, file: string, kind: "blob" | "tree" 
   `${site.repository}/${kind}/${commit}/${file}`;
 
 export const npmUrl = `https://www.npmjs.com/package/${site.npmPackage}`;
+
+// Buttondown's embed endpoint takes an ordinary form POST from the browser, so
+// the site keeps no subscriber storage, no API route, and no API key.
+export const buttondownSubscribeUrl = `https://buttondown.com/api/emails/embed-subscribe/${site.buttondownUsername}`;
+
+export const buttondownConfigured = site.buttondownUsername !== "REPLACE_WITH_BUTTONDOWN_USERNAME";
 
 // Declaring `openGraph` on a page replaces the layout's object rather than
 // merging into it, so every route builds its card from this one shape and only

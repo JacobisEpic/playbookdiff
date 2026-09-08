@@ -98,7 +98,7 @@ test("heading anchors keep GitHub's slugs, so existing links still resolve", asy
 });
 
 test("every internal link on a documentation page resolves to a built route", async () => {
-  const built = new Set(["/", "/docs"]);
+  const built = new Set(["/", "/docs", "/privacy"]);
   for (const [route] of routes) built.add(`/${route}`);
 
   for (const [route] of [...routes, ["docs"]]) {

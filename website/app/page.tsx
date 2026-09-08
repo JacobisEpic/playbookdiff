@@ -1,6 +1,7 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- Narrow code surfaces must remain keyboard-scrollable. */
 import { EffectiveScope } from "../components/effective-scope";
 import { Faq } from "../components/faq";
+import { Signup } from "../components/signup";
 import { AgentMark, ButtonLink, Command, SiteFooter, SiteHeader } from "../components/site-ui";
 import example from "../lib/effective-scope.json";
 import { evidenceUrl, site } from "../lib/site";
@@ -218,6 +219,8 @@ export default function Home() {
             </a>
           </p>
         </section>
+
+        <Signup />
 
         <section className="section container" id="faq" aria-labelledby="faq-title">
           <div className="prose">

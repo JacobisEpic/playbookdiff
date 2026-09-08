@@ -7,9 +7,12 @@ const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => readFile(path.join(root, file), "utf8");
 
 const html = await read(".next/server/app/index.html");
+const privacyHtml = await read(".next/server/app/privacy.html");
 const example = JSON.parse(await read("lib/effective-scope.json"));
 const packageJson = JSON.parse(await read("package.json"));
 const css = await read("app/globals.css");
+const signupSource = await read("components/signup.tsx");
+const { buttondownConfigured, buttondownSubscribeUrl, site } = await import("../lib/site.ts");
 
 // Script payloads carry a streamed copy of the markup, so anything counting
 // occurrences has to look at the rendered document alone.
@@ -405,3 +408,104 @@ test("the drawn branches are decorative, and the tree reads without them", () =>
     assert.ok(html.includes(label), label);
   }
 });
+
+// ---------------------------------------------------------------------------
+// The update signup: an ordinary form POST to Buttondown, and nothing else.
+
+test("the signup is a plain HTML POST to Buttondown's embed endpoint", () => {
+  assert.equal(
+    buttondownSubscribeUrl,
+    `https://buttondown.com/api/emails/embed-subscribe/${site.buttondownUsername}`,
+  );
+  // The endpoint is derived from the one configured value, never written out.
+  assert.match(signupSource, /action=\{buttondownSubscribeUrl\}/);
+  assert.match(signupSource, /method="post"/);
+  assert.doesNotMatch(signupSource, /buttondown\.com/i);
+
+  // The field Buttondown reads, and the flag that marks the form as embedded.
+  assert.match(signupSource, /name="email"/);
+  assert.match(signupSource, /type="email"/);
+  assert.match(signupSource, /autoComplete="email"/);
+  assert.match(signupSource, /\brequired\b/);
+  assert.match(signupSource, /type="hidden" name="embed" value="1"/);
+
+  // A real label, and a focusable submit: it works from the keyboard.
+  assert.match(signupSource, /<label[^>]*htmlFor="signup-email"/);
+  assert.match(signupSource, /id="signup-email"/);
+  assert.match(signupSource, /<button className="button button-primary" type="submit">/);
+});
+
+test("the signup needs no JavaScript, no backend, and no key", async () => {
+  // Nothing intercepts the submission, so it survives a script failure.
+  assert.doesNotMatch(signupSource, /"use client"|onSubmit|useState|fetch\(/);
+
+  await assert.rejects(readdir(path.join(root, "app/api")), "no API route was introduced");
+
+  for (const directory of ["app", "components", "lib"]) {
+    for (const file of await sourceFiles(directory)) {
+      const content = await readFile(file, "utf8");
+      assert.doesNotMatch(content, /"use server"/, file);
+      assert.doesNotMatch(content, /process\.env|BUTTONDOWN[_A-Z]*KEY|api[_-]?key/i, file);
+    }
+  }
+});
+
+test("the Buttondown username is a single obvious placeholder in one file", async () => {
+  const found = [];
+  for (const directory of ["app", "components", "lib"]) {
+    for (const file of await sourceFiles(directory)) {
+      const content = await readFile(file, "utf8");
+      const hits = content.split("REPLACE_WITH_BUTTONDOWN_USERNAME").length - 1;
+      if (hits > 0) found.push([path.relative(root, file), hits]);
+    }
+  }
+  if (buttondownConfigured) {
+    assert.deepEqual(found, [], "the placeholder is gone once a username is configured");
+  } else {
+    // One value to replace, in the module that already holds the site's constants.
+    assert.deepEqual(found, [["lib/site.ts", 2]], "one config value, one guard, one file");
+  }
+});
+
+test("the signup ships only once Buttondown is configured", () => {
+  if (!buttondownConfigured) {
+    // Better no signup than one that looks live and posts to a dead endpoint.
+    assert.doesNotMatch(markup, /<form\b|buttondown|Get updates/i);
+    return;
+  }
+
+  assert.ok(html.includes(`action="${buttondownSubscribeUrl}"`), "posts to Buttondown");
+  assert.ok(html.includes('name="email"'), "the field Buttondown reads");
+  assert.ok(html.includes('name="embed" value="1"'), "the embed flag");
+  assert.match(html, /Keep up with PlaybookDiff/);
+  assert.match(html, /Unsubscribe anytime/);
+
+  // It sits between the guarantees and the FAQ, and the hero keeps its own
+  // actions: installing, the docs, and the repository.
+  const updates = html.indexOf('id="updates"');
+  assert.ok(updates > html.indexOf('id="trust"'), "after the guarantees");
+  assert.ok(updates < html.indexOf('id="faq"'), "before the FAQ");
+  assert.ok(updates > html.indexOf("hero-actions"), "no email CTA in the hero");
+  assert.equal([...markup.matchAll(/<form\b/g)].length, 1, "one signup on the page");
+});
+
+test("collecting an address is disclosed, narrowly, and linked from the footer", () => {
+  assert.equal([...privacyHtml.matchAll(/<h1\b/g)].length, 1);
+  assert.match(privacyHtml, /Buttondown/);
+  assert.match(privacyHtml, /unsubscribe/i);
+  assert.match(privacyHtml, /project and\s+product updates/);
+  assert.ok(html.includes('href="/privacy"'), "reachable from every page's footer");
+  // A factual note, not a boilerplate policy with promises behind it.
+  assert.ok(privacyHtml.length < 24_000, "the disclosure stays short");
+  assert.doesNotMatch(privacyHtml, /GDPR|CCPA|data controller|legitimate interest/i);
+});
+
+async function sourceFiles(directory) {
+  const entries = await readdir(path.join(root, directory), {
+    recursive: true,
+    withFileTypes: true,
+  });
+  return entries
+    .filter((entry) => entry.isFile() && /\.(tsx?|css)$/.test(entry.name))
+    .map((entry) => path.join(entry.parentPath, entry.name));
+}

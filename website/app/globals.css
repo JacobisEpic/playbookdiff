@@ -132,6 +132,7 @@ button {
 
 a:focus-visible,
 button:focus-visible,
+input:focus-visible,
 pre:focus-visible,
 [tabindex]:focus-visible {
   border-radius: 6px;
@@ -527,6 +528,46 @@ pre {
 .guarantees dd {
   max-width: 56ch;
   color: var(--muted-strong);
+}
+
+/* ---------- update signup ---------- */
+
+/* An ordinary form posted straight to Buttondown, dressed as the rest of the
+   page: the field borrows the command block's border and sunk paper, and the
+   submit is the same ink button as the hero's. No colour is spent here; the
+   signal hue stays reserved for findings. */
+
+.signup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.signup input[type="email"] {
+  flex: 1 1 260px;
+  max-width: 360px;
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--paper-sunk);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s var(--ease);
+}
+
+.signup input[type="email"]::placeholder {
+  color: var(--muted);
+}
+
+.signup input[type="email"]:hover {
+  border-color: var(--ink);
+}
+
+.signup button {
+  flex: none;
 }
 
 /* ---------- footer ---------- */
@@ -1099,7 +1140,13 @@ details[open] > summary .faq-marker {
   color: var(--muted);
 }
 
-/* ---------- documentation ---------- */
+/* ---------- standalone pages and documentation ---------- */
+
+/* A page that is only prose takes the documentation's measure and type without
+   its navigation column. */
+.page-shell {
+  padding-block: 44px 96px;
+}
 
 .docs-shell {
   display: grid;
@@ -1566,6 +1613,12 @@ details[open] > summary .faq-marker {
 
   .doc-contents ul {
     columns: 1;
+  }
+
+  /* At the body's own mobile size, so focusing the field does not make iOS
+     zoom the page in. */
+  .signup input[type="email"] {
+    font-size: 1rem;
   }
 
   /* The tree keeps its geometry and scrolls inside its own surface, the way the

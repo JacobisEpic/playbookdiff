@@ -110,6 +110,7 @@ export function SiteFooter() {
           <a href="/docs/security">Security</a>
           <a href="/docs/limitations">Limitations</a>
           <a href={repositoryUrl("CONTRIBUTING.md")}>Contribute</a>
+          <a href="/privacy">Privacy</a>
         </nav>
         <p className="footer-meta">
           <a href={`${site.repository}/releases/tag/${site.release}`}>{site.release}</a>
