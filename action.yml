@@ -1,8 +1,5 @@
 name: PlaybookDiff
-description: >-
-  Fail a pull request only when it introduces a new deterministic Claude Code
-  <-> Codex repository-configuration regression. Pre-existing compatibility
-  debt never blocks CI.
+description: Detect Claude Code and Codex configuration regressions and fail PRs only when new actionable differences are introduced.
 author: JacobisEpic
 
 inputs:
