@@ -15,7 +15,10 @@ Use the Node.js and pnpm versions declared by `.nvmrc` and `package.json`.
 The npm account must have publish access to the unscoped `playbookdiff` package and satisfy npm's current two-factor authentication requirements.
 
 Choose a version that has never been published or tagged.
-Because `v0.1.0` already exists as the first GitHub Action release, the first npm publication after these instructions should use the next release version rather than reusing `0.1.0` from a different commit.
+`v0.1.0` is a GitHub Action release with no npm counterpart, and `v0.2.0` is the first npm publication; never reuse either number from a different commit.
+
+npm freezes a version's README and manifest at publish time, and they cannot be edited afterwards.
+So `packages/cli/README.md` and `packages/cli/package.json` must already say what the release should say - in particular its installation instructions and `homepage` - at the commit being tagged, not on `main` afterwards.
 
 Update the version in these manifests together:
 
@@ -121,20 +124,20 @@ npm exec --yes --package=playbookdiff@X.Y.Z -- playbookdiff --version
 npm exec --yes --package=playbookdiff@X.Y.Z -- playbookdiff --help
 ```
 
-Only after those commands succeed should README and website copy change from the current unpublished status to public npm installation instructions.
+If any of those commands fail, treat the release as unverified and fix it before announcing the version anywhere.
 
-## First npm publication checklist
+## Release checklist
 
-The exact remaining manual steps are:
+The exact manual steps, in order:
 
 1. Choose the next unused release version and update the version files listed above.
-2. Regenerate both lockfiles and the committed Action bundle.
-3. Run the complete root, website, Action, and npm-tarball validation suites.
-4. Commit and push the release candidate to `main`.
-5. Wait for both GitHub workflows to pass.
-6. Create and push the exact `vX.Y.Z` tag and create its GitHub release.
-7. Move the `v0` tag to that exact release commit.
-8. Run `npm whoami` and confirm package-name access.
-9. Run `npm publish --access public` from `packages/cli`.
-10. Verify the published version and installed CLI directly from npm.
-11. Update the README and website to show public npm installation only after verification.
+2. Confirm `packages/cli/README.md` and `packages/cli/package.json` already carry the final published copy, because npm freezes both at publish time.
+3. Regenerate both lockfiles and the committed Action bundle.
+4. Run the complete root, website, Action, and npm-tarball validation suites.
+5. Commit and push the release candidate to `main`.
+6. Wait for both GitHub workflows to pass.
+7. Create and push the exact `vX.Y.Z` tag and create its GitHub release.
+8. Move the `v0` tag to that exact release commit.
+9. Run `npm whoami` and confirm package-name access.
+10. Run `npm publish --access public` from `packages/cli`.
+11. Verify the published version and installed CLI directly from npm.
