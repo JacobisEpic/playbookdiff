@@ -194,3 +194,23 @@ test("every GitHub link points at a path that exists in the repository", async (
     await access(path.join(repository, target));
   }
 });
+
+test("every mirrored document is tracked by git, not just present on disk", async () => {
+  // A file that exists locally but is ignored builds fine on the machine that
+  // wrote it and 404s everywhere else. `website/.gitignore` carries two
+  // generated agent files, and an unanchored `CLAUDE.md` pattern matches at any
+  // depth - on a case-insensitive filesystem it also swallows
+  // `content/docs/harnesses/claude.md`. This is the check that catches it
+  // before CI or a deployment does.
+  const { execFileSync } = await import("node:child_process");
+  const tracked = new Set(
+    execFileSync("git", ["ls-files", "content/docs"], { cwd: root, encoding: "utf8" })
+      .split("\n")
+      .filter(Boolean),
+  );
+
+  for (const [, source] of routes) {
+    const mirrored = source.replace(/^docs\//, "content/docs/");
+    assert.ok(tracked.has(mirrored), `${mirrored} is not tracked; check website/.gitignore`);
+  }
+});

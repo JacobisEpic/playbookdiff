@@ -10,5 +10,11 @@ next-env.d.ts
 # Written by `next dev` (node_modules/next/dist/server/lib/generate-agent-files.js),
 # not authored project configuration. The repository's own agent instructions
 # live in the root AGENTS.md/CLAUDE.md.
-AGENTS.md
-CLAUDE.md
+#
+# Anchored with a leading slash so these only ever match the two generated files
+# in this directory. Unanchored, they match at any depth, and on a
+# case-insensitive filesystem `CLAUDE.md` also swallows
+# `content/docs/harnesses/claude.md` - which stays on disk, silently never gets
+# committed, and breaks the build everywhere but the machine that wrote it.
+/AGENTS.md
+/CLAUDE.md
