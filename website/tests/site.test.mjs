@@ -354,3 +354,54 @@ test("the GitHub Action snippet is valid, copy-pasteable YAML", () => {
     .replace(/&amp;/g, "&");
   assert.equal(snippet, expected);
 });
+
+test("the tree is drawn from the generated data, structure and all", () => {
+  // One row per configuration item, plus the repository root and the one
+  // directory the example nests under.
+  const treeRows = [...html.matchAll(/<li class="scope-(?:row|branch)"[^>]*>/g)];
+  assert.equal(treeRows.length, example.rows.length + 2, "root + directory + every row");
+  assert.ok(html.includes("your-repo/"), "the repository root node");
+  assert.ok(html.includes(`data-kind="directory"`), "the nested directory node");
+
+  // The branch drawn into a node is what carries its state, so every state in
+  // the data has to reach the markup.
+  for (const row of example.rows) {
+    assert.ok(html.includes(row.name), row.path);
+  }
+  for (const state of new Set(example.rows.map((row) => row.states.root))) {
+    assert.ok(html.includes(`data-state="${state}"`), state);
+  }
+
+  // Colour is applied to exactly the files the analyzer says are not received.
+  const findings = [...html.matchAll(/data-emphasis="finding"/g)].length;
+  const absent = example.rows.filter((row) => row.states.root === "absent").length;
+  assert.equal(findings, absent, "only a not-received file is coloured");
+  assert.equal(absent, 2);
+});
+
+test("either agent's path can be traced, by pointer, keyboard, or tap", () => {
+  // Buttons rather than hover-only affordances, so a touch device can select an
+  // agent and a keyboard can reach one.
+  const controls = [...html.matchAll(/<button[^>]*class="scope-agent"[^>]*>/g)];
+  assert.equal(controls.length, 2, "one control per agent");
+  for (const control of controls) {
+    assert.match(control[0], /aria-pressed="(true|false)"/, "pressed state is exposed");
+    assert.match(control[0], /aria-controls="/, "the control names what it changes");
+  }
+  assert.match(html, /Trace what one agent receives/);
+  // Each control says what it does, beyond the agent's name alone.
+  assert.match(html, /highlight the configuration Claude Code receives/);
+  assert.match(html, /highlight the configuration Codex receives/);
+});
+
+test("the drawn branches are decorative, and the tree reads without them", () => {
+  const gutters = [...html.matchAll(/<svg class="scope-gutter"[^>]*>/g)];
+  assert.ok(gutters.length >= example.rows.length, "every node is connected");
+  for (const gutter of gutters) {
+    assert.match(gutter[0], /aria-hidden="true"/, "branch art is not announced");
+  }
+  // Every state still has a text label, so nothing is carried by line style alone.
+  for (const label of ["at startup", "on demand", "not received"]) {
+    assert.ok(html.includes(label), label);
+  }
+});

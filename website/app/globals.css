@@ -584,6 +584,12 @@ pre {
   height: 16px;
 }
 
+.agent-compact {
+  gap: 0;
+  opacity: 0.85;
+  transition: opacity 0.28s var(--ease);
+}
+
 /* ---------- effective-configuration example ---------- */
 
 /* The signature element: one real repository, with what each harness receives
@@ -667,82 +673,245 @@ pre {
   color: var(--panel-dim);
 }
 
+/* ---- the tree ----
+
+   Drawn connectors rather than indentation: each row carries one small SVG per
+   ancestor level, so the trunk runs continuously down the gutter and every
+   branch ends in a gentle corner. It stays a filesystem tree at any width
+   because the geometry is per-row and the labels are ordinary text.
+
+   Choosing an agent traces its path: everything that agent does not receive
+   recedes, the branches that carry its configuration stay lit, and a file it
+   never receives keeps the signal colour, because that is a finding. Neither
+   agent is ever given a colour of its own. */
+
 .scope-tree {
-  padding: 22px 20px 26px;
+  padding: 14px 20px 26px;
+  overflow-x: auto;
   font-family: var(--mono);
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  font-size: 0.875rem;
 }
 
-.scope-root,
-.scope-directory {
-  color: var(--panel-muted);
-}
-
-.scope-directory {
-  margin-top: 6px;
-  padding-left: 12px;
-}
-
-/* Two levels, and no more: the nested group is indented once behind a guide
-   rule, which is all the structure this repository has. */
-.scope-group {
-  padding-left: 18px;
-}
-
-.scope-group:not(:first-child) .scope-directory + ul {
-  padding-left: 18px;
-  border-left: 1px solid var(--panel-line);
-}
-
+.scope-branch,
 .scope-row {
   display: flex;
-  align-items: baseline;
-  gap: 20px;
-  padding: 5px 10px 5px 12px;
-  border-left: 2px solid transparent;
-  border-radius: 4px;
+  align-items: center;
+  gap: 0;
+  height: 38px;
+  white-space: nowrap;
+}
+
+.scope-gutter {
+  flex: none;
+  width: 30px;
+  height: 38px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--panel-leader);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.scope-gutter path {
   transition:
-    background 0.2s var(--ease),
-    border-color 0.2s var(--ease);
+    stroke 0.28s var(--ease),
+    stroke-width 0.28s var(--ease),
+    opacity 0.28s var(--ease);
 }
 
 .scope-path {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
+  flex: none;
+  padding-right: 16px;
+  color: var(--panel-ink);
+  transition:
+    color 0.28s var(--ease),
+    opacity 0.28s var(--ease);
+}
+
+[data-kind="root"] .scope-path,
+[data-kind="directory"] .scope-path {
+  color: var(--panel-muted);
 }
 
 .scope-verdict {
   display: flex;
   align-items: center;
   flex: none;
-  gap: 14px;
+  gap: 8px;
   color: var(--panel-muted);
+  transition: opacity 0.28s var(--ease);
 }
 
 .scope-verdict .agent {
-  width: 108px;
   color: var(--panel-dim);
+  transition: color 0.28s var(--ease);
 }
 
 .scope-state {
-  width: 96px;
   font-family: var(--sans);
   font-size: 0.8125rem;
-  text-align: right;
+  letter-spacing: 0.005em;
+  transition: color 0.28s var(--ease);
 }
 
-/* The one coloured state. A file that exists in the repository and never
-   reaches the agent is the entire argument, so it is marked on the row as well
-   as named at the end of it. */
-.scope-row[data-state="absent"] {
-  border-left-color: var(--signal-leader);
-  background: #1f1a12;
+/* A file that exists in the repository and never reaches the agent is the
+   entire argument, so it is marked on the branch as well as named. */
+.scope-row[data-state="absent"] .scope-gutter:last-of-type .scope-stub {
+  stroke: var(--signal-leader);
+  stroke-dasharray: 0.14 0.14;
 }
 
 .scope-row[data-state="absent"] .scope-state {
   color: var(--signal-on-dark);
+}
+
+/* Configuration reached on the way to the work target, rather than held from
+   the first moment: a dashed branch, the same distinction the label makes. */
+.scope-row[data-state="on-demand"] .scope-gutter:last-of-type .scope-stub {
+  stroke-dasharray: 0.18 0.14;
+}
+
+/* ---- tracing one agent ---- */
+
+/* The trunk is the repository's own shape, so it never dims or brightens: what
+   changes per agent is the branch that delivers a file and the label on it.
+   Dimming the trunk instead would leave the spine looking broken between two
+   lit rows. */
+[data-emphasis="off"] .scope-path,
+[data-emphasis="off"] .scope-verdict,
+[data-emphasis="off"] .scope-stub {
+  opacity: 0.28;
+}
+
+.scope-row[data-emphasis="on"] .scope-stub {
+  stroke: var(--panel-ink);
+  stroke-width: 1.4;
+}
+
+.scope-row[data-emphasis="on"] .scope-path {
+  color: #fff;
+}
+
+.scope-row[data-emphasis="on"] .scope-state,
+.scope-row[data-emphasis="on"] .scope-verdict .agent {
+  color: var(--panel-ink);
+}
+
+.scope-row[data-emphasis="on"] .agent-compact {
+  opacity: 1;
+}
+
+.scope-row[data-emphasis="finding"] .scope-path,
+.scope-row[data-emphasis="finding"] .scope-state {
+  color: var(--signal-on-dark);
+}
+
+.scope-row[data-emphasis="finding"] .scope-gutter:last-of-type .scope-stub {
+  stroke: var(--signal-on-dark);
+  stroke-width: 1.4;
+}
+
+/* ---- the agent controls ---- */
+
+.scope-trace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 0;
+  padding: 14px 20px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--panel-line);
+}
+
+.scope-trace legend {
+  float: left;
+  margin-right: 16px;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--panel-dim);
+}
+
+.scope-agents {
+  display: flex;
+  gap: 8px;
+}
+
+.scope-agent {
+  padding: 6px 12px;
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--panel-muted);
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+
+.scope-agent:hover,
+.scope-agent:focus-visible {
+  border-color: var(--panel-leader);
+  color: var(--panel-ink);
+}
+
+.scope-agent[aria-pressed="true"] {
+  border-color: var(--panel-ink);
+  background: var(--panel-ink);
+  color: var(--panel);
+}
+
+.scope-agent[aria-pressed="true"] .agent {
+  color: var(--panel);
+}
+
+/* ---- drawing the tree ----
+
+   Switching the launch directory redraws the branches outward from the root
+   rather than swapping rows, so the configuration visibly travels through the
+   repository. */
+@media (prefers-reduced-motion: no-preference) {
+  /* The entrance fade lives on the row and the draw lives on its paths, so
+     neither competes with the per-element dimming that tracing an agent
+     applies. An animation with `forwards` outranks a plain declaration on the
+     same element, which is why they are kept apart. */
+  .scope-tree > li {
+    opacity: 0;
+    animation: scope-fade 0.3s var(--ease) forwards;
+    animation-delay: calc(90ms + var(--i) * 45ms);
+  }
+
+  .scope-tree .scope-gutter path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: scope-draw 0.34s var(--ease) forwards;
+    animation-delay: calc(90ms + var(--i) * 45ms);
+  }
+
+  /* A dashed branch already owns its dash pattern, so it cannot be drawn by
+     dashoffset; it arrives with the row instead. */
+  .scope-row[data-state="absent"] .scope-stub,
+  .scope-row[data-state="on-demand"] .scope-stub {
+    stroke-dasharray: 0.18 0.14;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .scope-row[data-state="absent"] .scope-stub {
+    stroke-dasharray: 0.14 0.14;
+  }
+}
+
+@keyframes scope-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes scope-fade {
+  to {
+    opacity: 1;
+  }
 }
 
 .scope-result {
@@ -1399,39 +1568,31 @@ details[open] > summary .faq-marker {
     columns: 1;
   }
 
-  /* Stacked: the path, then what each harness does with it underneath, so a
-     phone never has to scroll a row sideways to reach the verdict. */
+  /* The tree keeps its geometry and scrolls inside its own surface, the way the
+     transcript below it does, rather than collapsing into stacked rows. */
   .scope-tree {
-    padding: 18px 14px 22px;
+    padding: 6px 14px 20px;
+    font-size: 0.75rem;
   }
 
-  .scope-group {
-    padding-left: 10px;
+  .scope-gutter {
+    width: 22px;
   }
 
-  .scope-group:not(:first-child) .scope-directory + ul {
-    padding-left: 12px;
-  }
-
-  .scope-row {
-    display: block;
-    padding: 7px 8px 8px 10px;
+  .scope-path {
+    padding-right: 14px;
   }
 
   .scope-verdict {
-    margin-top: 3px;
-    gap: 10px;
+    gap: 7px;
   }
 
-  .scope-verdict .agent,
   .scope-state {
-    width: auto;
-    text-align: left;
+    font-size: 0.6875rem;
   }
 
-  .scope-state::before {
-    color: var(--panel-line);
-    content: "/ ";
+  .scope-trace {
+    padding: 12px 14px 10px;
   }
 
   .scope-controls legend {
