@@ -1,4 +1,5 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- Narrow code surfaces must remain keyboard-scrollable. */
+import { DemoVideo } from "../components/demo-video";
 import { EffectiveScope } from "../components/effective-scope";
 import { Faq } from "../components/faq";
 import { Signup } from "../components/signup";
@@ -65,13 +66,24 @@ export default function Home() {
               PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent
               effectively receives, and catches differences before they land.
             </p>
-            <Command label="Install PlaybookDiff and check a repository">
-              {`npm install -g ${site.npmPackage}\nplaybookdiff check .`}
+            {/* One command, nothing installed, nothing to undo. The persistent
+                global install is still the documented way to keep it around,
+                and it is two sections down under "On your machine". */}
+            <Command copy label="Run PlaybookDiff against a repository without installing it">
+              {`npx ${site.npmPackage} check .`}
             </Command>
+            {/* Ordered as a cold visitor moves, not as the project ranks its own
+                surfaces: understand it, then go look at it, then read how it
+                works. The recording is a screen and a half down on a phone,
+                behind the mark, so the fastest explanation on the page is the
+                one nobody reaches unless the hero points at it. */}
             <div className="hero-actions">
-              <ButtonLink href="/docs/cli">Read the docs</ButtonLink>
+              <ButtonLink href="#demo">Watch the demo</ButtonLink>
               <ButtonLink href={site.repository} variant="ghost" external>
                 View on GitHub
+              </ButtonLink>
+              <ButtonLink href="/docs/cli" variant="ghost">
+                Read the docs
               </ButtonLink>
             </div>
           </div>
@@ -83,6 +95,25 @@ export default function Home() {
             width="364"
             height="297"
           />
+        </section>
+
+        <section className="section container demo" id="demo" aria-labelledby="demo-title">
+          <div className="prose">
+            <h2 id="demo-title">Watch it catch a real mismatch.</h2>
+            <p>
+              Two instruction files whose contents match, one launch directory apart. PlaybookDiff
+              proves the difference on the command line, and the Action catches the next one on a
+              pull request.
+            </p>
+          </div>
+
+          <DemoVideo />
+
+          <p className="footnote">
+            Forty seconds, recorded against a real repository. The commands are in the{" "}
+            <a href="/docs/cli">CLI reference</a> and the workflow is in the{" "}
+            <a href="/docs/action">Action reference</a>.
+          </p>
         </section>
 
         <section className="section container" id="example" aria-labelledby="example-title">

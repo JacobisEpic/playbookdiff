@@ -1,6 +1,7 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- Narrow code surfaces must remain keyboard-scrollable. */
 import type { ReactNode } from "react";
 import { npmUrl, repositoryUrl, site } from "../lib/site";
+import { CopyCommand } from "./copy-command";
 
 export function Logo() {
   return (
@@ -63,8 +64,20 @@ export function ButtonLink({
 
 // A shell block. Each line gets its own prompt, and the prompt is decorative so
 // a copied selection is the command rather than the transcript.
-export function Command({ children, label }: { children: string; label?: string }) {
-  return (
+//
+// `copy` adds the one-click version of that same selection. It is opt-in rather
+// than automatic, because the block is also used to show what a command looks
+// like rather than to hand one over.
+export function Command({
+  children,
+  label,
+  copy = false,
+}: {
+  children: string;
+  label?: string;
+  copy?: boolean;
+}) {
+  const block = (
     <pre className="command" tabIndex={0} aria-label={label}>
       <code>
         {children.split("\n").map((line, index) => (
@@ -76,6 +89,17 @@ export function Command({ children, label }: { children: string; label?: string 
         ))}
       </code>
     </pre>
+  );
+
+  if (!copy) return block;
+
+  // The control is a sibling of the block rather than a child of it, so it
+  // stays where it is when a long command scrolls inside its own surface.
+  return (
+    <div className="command-copyable">
+      {block}
+      <CopyCommand text={children} />
+    </div>
   );
 }
 

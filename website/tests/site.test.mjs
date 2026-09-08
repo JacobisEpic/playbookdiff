@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 
@@ -12,6 +12,7 @@ const example = JSON.parse(await read("lib/effective-scope.json"));
 const packageJson = JSON.parse(await read("package.json"));
 const css = await read("app/globals.css");
 const signupSource = await read("components/signup.tsx");
+const copySource = await read("components/copy-command.tsx");
 const { buttondownConfigured, buttondownSubscribeUrl, site } = await import("../lib/site.ts");
 
 // Script payloads carry a streamed copy of the markup, so anything counting
@@ -41,6 +42,22 @@ test("npm is the primary local path, with the real package and command", () => {
   const action = html.indexOf("uses: JacobisEpic/playbookdiff@v0");
   const source = html.indexOf("Prefer to build from source");
   assert.ok(install >= 0 && action > install && source > action, "npm, then Action, then source");
+});
+
+test("the hero asks for one command, and the install is still documented", () => {
+  // Nothing to install and nothing to undo is the cheapest thing a stranger can
+  // be asked to do, so that is what the hero asks for.
+  assert.ok(html.includes("npx playbookdiff check ."), "the hero one-liner");
+  const npx = html.indexOf("npx playbookdiff check .");
+  assert.ok(npx < html.indexOf('id="demo"'), "in the hero, above everything else");
+  // The persistent install did not disappear with it, it moved down the page.
+  assert.ok(html.indexOf("npm install -g playbookdiff") > npx, "still documented, further down");
+
+  // The copy control hands over the command, never the transcript, and it is
+  // not in the markup at all until a clipboard has been found for it.
+  assert.match(copySource, /navigator\.clipboard\.writeText\(text\)/);
+  assert.match(copySource, /if \(!available\) return null;/);
+  assert.doesNotMatch(html, /class="command-copy"/, "no dead button before hydration");
 });
 
 test("the GitHub Action is shown with the checkout depth it actually needs", () => {
@@ -190,8 +207,31 @@ test("the site never claims more than PlaybookDiff proves", () => {
 
 test("nothing unfinished is published", () => {
   assert.doesNotMatch(html, /Recording in progress|Coming soon|in progress|Watch a full check/i);
-  assert.doesNotMatch(html, /<video\b|walkthrough/i);
   assert.doesNotMatch(html, /\d{1,2}:\d{2}/);
+});
+
+test("the demo plays the visitor's way, and costs nothing until it does", async () => {
+  // Directly after the hero, so the recording is the first thing that explains
+  // the product, and still ahead of the interactive example that details it.
+  const demo = html.indexOf('id="demo"');
+  assert.ok(demo > html.indexOf("hero-actions"), "after the hero");
+  assert.ok(demo < html.indexOf('id="example"'), "before the worked example");
+
+  // It is narrated, so it never starts on its own, and no byte of it is
+  // fetched before someone asks for it.
+  assert.match(html, /<video\b[^>]*preload="none"/);
+  assert.doesNotMatch(html, /<video\b[^>]*autoplay/i);
+  assert.match(html, /<video\b[^>]*poster="\/video\/PlaybookdiffDemo-poster\.jpg"/);
+  // Reserved space, so the poster arriving never moves the page.
+  assert.match(css, /\.demo-video[\s\S]*?aspect-ratio: 1662 \/ 1080/);
+
+  // The shipped file is the one every browser can decode, not the camera or
+  // capture original, and it stays small enough to be worth downloading.
+  const shipped = new Set(await readdir(path.join(root, "public/video")));
+  assert.ok(shipped.has("PlaybookdiffDemo.mp4"), "the recording is shipped");
+  assert.ok(shipped.has("PlaybookdiffDemo-poster.jpg"), "the poster is shipped");
+  const recording = await stat(path.join(root, "public/video/PlaybookdiffDemo.mp4"));
+  assert.ok(recording.size < 8_000_000, `recording is ${recording.size} bytes`);
 });
 
 test("colour is reserved for findings, never for agent branding", () => {

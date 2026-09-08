@@ -94,8 +94,11 @@
   box-sizing: border-box;
 }
 
+/* The header is sticky and 70px tall, so an anchor has to clear it or it lands
+   its target underneath the navigation. Same offset the documentation column
+   sticks at. */
 html {
-  scroll-padding-top: 32px;
+  scroll-padding-top: 94px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -327,6 +330,70 @@ pre {
   white-space: pre;
 }
 
+/* ---- copy control ----
+
+   Quiet until it is wanted: ink type on the paper the rest of the page is made
+   of, never the signal hue, which stays reserved for findings.
+
+   The surface moves out to the wrapper so the command and the control share one
+   box rather than the control floating over the command. The command scrolls
+   inside its own half and the control keeps its width, so neither can crowd the
+   other at any width, and a manual selection still works the way it did. */
+
+.command-copyable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 30px;
+  padding-right: 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--paper-sunk);
+}
+
+/* `pre` is not in the margin reset above, so the block still carries the user
+   agent's 1em bottom margin. Outside a wrapper that margin collapses away
+   against whatever follows; inside one it would pad the surface instead. */
+.command-copyable .command {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.command-copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  user-select: none;
+  transition:
+    background 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+
+.command-copy:hover {
+  border-color: var(--line-strong);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.command-copy[data-copied="true"] {
+  color: var(--ink);
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -398,6 +465,81 @@ pre {
 .prose code {
   font-size: 0.9em;
   color: var(--ink);
+}
+
+/* ---------- demo ---------- */
+
+/* The recording is the product speaking for itself, so it is given the same
+   dark rounded surface the tool's own output gets everywhere else on the page,
+   and nothing else: no shadow, no browser chrome, no gradient. The frame
+   carries the recording's real aspect ratio rather than a nominal 16:9, so the
+   picture is never letterboxed and the space is reserved before the poster
+   arrives. */
+
+.demo-frame {
+  position: relative;
+  max-width: 940px;
+  margin-top: 44px;
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.demo-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1662 / 1080;
+}
+
+/* The first play. The whole poster is the target, and it is gone for good once
+   the video is running.
+
+   It carries no caption. The heading above the frame already says what pressing
+   it does, and a label here would land on top of whatever the poster frame
+   happens to say. The wash is what makes the mark the one lit thing in a
+   still that is otherwise a screen full of small type. */
+.demo-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: rgba(12, 11, 9, 0.34);
+  transition: background 0.15s var(--ease);
+}
+
+.demo-play:hover {
+  background: rgba(12, 11, 9, 0.2);
+}
+
+.demo-play-mark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding-left: 4px;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  transition: transform 0.15s var(--ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .demo-play:hover .demo-play-mark {
+    transform: scale(1.04);
+  }
+}
+
+/* Ink would disappear into the poster, and the frame clips anything drawn
+   outside itself, so the ring is drawn in the panel's own light and inside the
+   button's edge. */
+.demo-play:focus-visible {
+  border-radius: 12px;
+  outline: 2px solid var(--panel-ink);
+  outline-offset: -4px;
 }
 
 /* ---------- surfaces specification ---------- */
@@ -1619,6 +1761,14 @@ details[open] > summary .faq-marker {
      zoom the page in. */
   .signup input[type="email"] {
     font-size: 1rem;
+  }
+
+  /* A frame a third of the width does not want a mark of the same size: at
+     desktop scale it is a badge on a screen, at phone scale it would be the
+     screen. */
+  .demo-play-mark {
+    width: 54px;
+    height: 54px;
   }
 
   /* The tree keeps its geometry and scrolls inside its own surface, the way the
