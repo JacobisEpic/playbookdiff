@@ -62,10 +62,14 @@ export default function Home() {
         <section className="hero container" aria-labelledby="hero-title">
           <div className="hero-copy">
             <p className="eyebrow">Open source. Deterministic. Read-only.</p>
-            <h1 id="hero-title">Keep Claude Code and Codex in sync.</h1>
+            <h1 id="hero-title">
+              Same code.
+              <br />
+              Different playbook.
+            </h1>
             <p className="hero-lead">
-              PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent
-              effectively receives, and catches differences before they land.
+              Claude Code and Codex can read the same files and receive different instructions.
+              PlaybookDiff proves exactly where.
             </p>
             <Command copy label="Run PlaybookDiff against a repository without installing it">
               {`npx ${site.npmPackage} check .`}
@@ -100,10 +104,7 @@ export default function Home() {
             <p>CLI + GitHub Action · 40 seconds</p>
           </div>
           <DemoVideo />
-          <p className="footnote">
-            Recorded against a real repository. <a href="/docs/cli">CLI reference</a> ·{" "}
-            <a href="/docs/action">Action reference</a>
-          </p>
+          <p className="footnote">Recorded against a real repository.</p>
         </section>
 
         <section
@@ -112,15 +113,8 @@ export default function Home() {
           aria-labelledby="example-title"
         >
           <div className="example-heading">
-            <h2 id="example-title">
-              Same code.
-              <br />
-              Different playbook.
-            </h2>
-            <p>
-              Matching files are not matching configuration. Follow the paths to see why the launch
-              location matters.
-            </p>
+            <h2 id="example-title">One launch directory apart.</h2>
+            <p>Matching files are not matching configuration. Follow the paths to see why.</p>
           </div>
 
           <EffectiveScope />
@@ -159,9 +153,10 @@ export default function Home() {
                 <code>{`- uses: actions/checkout@v4\n  with:\n    fetch-depth: 0\n\n- uses: ${site.actionRef}`}</code>
               </pre>
               <p>
-                The Action compares the pull request base against the head and fails only on newly
-                introduced findings, so existing debt stays green. It needs{" "}
-                <code>contents: read</code> and no token.{" "}
+                The Action compares the pull request base against the head and fails only on a
+                finding the change introduced. Divergence common to both revisions is counted and
+                reported, never failed on, so adopting it does not mean fixing your history first.
+                It needs <code>contents: read</code> and no token.{" "}
                 <a href="/docs/action">Action reference</a>.
               </p>
             </article>
@@ -180,7 +175,7 @@ export default function Home() {
             <h2 id="surfaces-title">What it compares.</h2>
             <p>
               PlaybookDiff compiles what each harness effectively receives across three surfaces,
-              then compares those instead of the files.
+              then compares the two compilations.
             </p>
           </div>
 

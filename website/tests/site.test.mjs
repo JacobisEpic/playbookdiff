@@ -21,12 +21,11 @@ const { buttondownConfigured, buttondownSubscribeUrl, site } = await import("../
 const markup = html.replace(/<script\b[\s\S]*?<\/script>/g, "");
 
 test("the homepage states the product job and its primary actions immediately", () => {
-  assert.match(html, /Keep Claude Code and/);
-  assert.match(html, /Codex/);
-  assert.match(html, /in sync./);
+  assert.match(html, /Same code./);
+  assert.match(html, /Different playbook./);
   assert.match(
     html,
-    /PlaybookDiff checks the instructions, skills, and MCP configuration each coding agent effectively receives, and catches differences before they land/,
+    /Claude Code and Codex can read the same files and receive different instructions/,
   );
   assert.ok(html.includes("https://github.com/JacobisEpic/playbookdiff"));
 });
@@ -65,7 +64,7 @@ test("the GitHub Action is shown with the checkout depth it actually needs", () 
   assert.ok(html.includes("uses: JacobisEpic/playbookdiff@v0"), "Action reference");
   assert.ok(html.includes("fetch-depth: 0"), "diff never fetches, so history must be present");
   assert.match(html, /v0\.2\.0/);
-  assert.match(html, /existing debt stays green/);
+  assert.match(html, /counted and reported, never failed on/);
 });
 
 test("the homepage names every compared surface", () => {
@@ -189,7 +188,6 @@ test("the FAQ answers the misconceptions that would otherwise stop adoption", ()
     "Does it send my repository anywhere?",
     "If the configuration matches, will the two agents behave the same?",
     "What happens when it is not sure?",
-    "Will differences we already have break CI?",
     "Which agents are supported?",
   ]) {
     assert.ok(html.includes(question), question);

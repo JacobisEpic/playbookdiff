@@ -35,8 +35,8 @@ mascots = Image.open("public/brand/mascots-reading.png").convert("RGBA")
 mascots = mascots.resize((364, 297), Image.LANCZOS)
 card.paste(mascots, (WIDTH - margin - 364, 196), mascots)
 
-draw.text((margin, 214), "Keep Claude Code", font=sans_600, fill=INK)
-draw.text((margin, 286), "and Codex in sync.", font=sans_600, fill=INK)
+draw.text((margin, 214), "Same code.", font=sans_600, fill=INK)
+draw.text((margin, 286), "Different playbook.", font=sans_600, fill=INK)
 draw.text(
     (margin, 386),
     "The instructions, skills, and MCP servers\neach coding agent effectively receives.",

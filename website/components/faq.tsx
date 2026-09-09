@@ -35,9 +35,8 @@ const questions: { question: string; answer: ReactNode }[] = [
       <p>
         No. It models the documented, fixture-tested discovery rules of each harness and compiles
         the repository configuration each one would receive for a given launch directory and work
-        target. No agent, model, or MCP server is involved in a comparison. The rules it models, and
-        the official documentation behind them, are written down in the{" "}
-        <a href="/docs/harnesses/claude">Claude Code</a> and{" "}
+        target. The rules it models, and the official documentation behind them, are written down in
+        the <a href="/docs/harnesses/claude">Claude Code</a> and{" "}
         <a href="/docs/harnesses/codex">Codex</a> harness specifications.
       </p>
     ),
@@ -47,9 +46,9 @@ const questions: { question: string; answer: ReactNode }[] = [
     answer: (
       <>
         <p>
-          No. Analysis is local and makes no network requests: no model call, no API key, no MCP
-          connection, no GitHub API, and no Git fetch. Nothing from the repository is uploaded, and
-          there is no PlaybookDiff service to upload it to.
+          No. There is no PlaybookDiff service to upload anything to, and the analysis never opens a
+          connection at all: no GitHub API, no Git fetch, no MCP connection. Nothing from the
+          repository leaves the machine.
         </p>
         <p>
           Secrets are never resolved. <code>${"{VAR}"}</code> stays symbolic, a configured literal
@@ -82,18 +81,6 @@ const questions: { question: string; answer: ReactNode }[] = [
         worded prose is the common unknown: PlaybookDiff can prove two instruction bodies differ,
         not that they conflict. Unknowns are informational and never fail CI.{" "}
         <a href="/docs/comparison">The comparison specification</a> has the rules.
-      </p>
-    ),
-  },
-  {
-    question: "Will differences we already have break CI?",
-    answer: (
-      <p>
-        No. The GitHub Action compares the pull request base against the head and fails only on an
-        actionable finding the candidate <em>introduced</em>. Pre-existing divergence common to both
-        revisions is counted and reported, never failed on, so adopting PlaybookDiff does not
-        require fixing your history first. <a href="/docs/action">Pass/fail behaviour</a> covers
-        every outcome.
       </p>
     ),
   },
