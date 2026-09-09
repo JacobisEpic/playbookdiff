@@ -43,7 +43,7 @@ Lint includes React and accessibility rules.
 | `/robots.txt`  | Allow all, with the sitemap.                                                                           |
 
 The homepage and every documentation route are prerendered at build time.
-The effective-scope story, video playback, command copying, and FAQ behavior are small client components.
+The effective-scope map, video playback, command copying, and FAQ behavior are small client components.
 The homepage itself remains a server component.
 
 ## Generated inputs
@@ -116,7 +116,7 @@ The site describes the current deterministic engine, harness adapters, the `play
 The Action is shown with its real usage, `uses: JacobisEpic/playbookdiff@v0`, alongside the `fetch-depth: 0` its `diff` engine genuinely requires.
 It does not claim adoption metrics, semantic analysis, behavioral equivalence, or any harness support beyond Claude Code and Codex.
 Repository links point at the public repository.
-The homepage explains the effective-scope example before presenting the recorded walkthrough as proof.
+The homepage presents the recorded walkthrough directly after the hero, before the optional effective-scope explanation.
 The recording only loads when requested, and `tests/site.test.mjs` rejects unfinished placeholders.
 
 ## Design system
@@ -132,17 +132,17 @@ The two agents are told apart by their own icons and their names, never by recol
 Monospace is used only where the content is literally a command, a path, or tool output.
 See [`public/brand/README.md`](public/brand/README.md) for the artwork rules.
 
-### Effective-scope choreography
+### Effective-scope interaction
 
-The four chapters establish the shared repository and target, trace Claude Code, trace Codex, and reveal the finding.
-On windows at least 900 pixels wide and 780 pixels tall, native sticky positioning keeps the visualization in view while scrolling advances the chapters.
-The scroll listener is passive and batches updates through `requestAnimationFrame`; it never intercepts wheel or touch input.
-Chapter buttons and the explore control allow immediate navigation.
-Phones, short windows, and reduced-motion sessions use a compact, manually advanced story without a pinned scroll region.
-Reduced motion also disables route and copy transitions.
+The map has no scroll listeners, sticky scene, numbered phases, or timeline.
+Both agents and both launch scenarios are immediately selectable.
+Hovering, focusing, or tapping an agent selects it until another selection is made.
+The START marker moves between the repository root and the nested directory when the launch location changes.
+The instruction routes still include any parent configuration the generated data says is received.
 
 Every configuration node, directory, route stopping point, and result comes from the generated example.
 Skills use their directory basename on the map; complete paths, state labels, findings, and transcripts remain available in the evidence disclosures.
 The target remains the generated target, including when instruction discovery stops earlier.
-Hovering, focusing, or tapping an agent selects it until another selection is made.
-Exploration exposes both generated launch scenarios without changing the underlying repository or work target.
+Hovering, focusing, or tapping a node updates one contextual annotation and highlights the inspected node.
+The annotation sits beside the map on desktop and underneath it on phones, so it never covers a route.
+Reduced motion disables the route, marker, and annotation transitions.

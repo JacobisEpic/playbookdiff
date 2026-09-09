@@ -290,7 +290,7 @@ pre {
 .hero {
   display: grid;
   gap: 52px;
-  padding-block: 100px 100px;
+  padding-block: 64px 52px;
   align-items: start;
 }
 
@@ -771,37 +771,7 @@ pre {
   transition: opacity 0.28s var(--ease);
 }
 
-/* ---------- effective-configuration story ---------- */
-
-.scope-story {
-  position: relative;
-}
-
-.scope-stage {
-  padding-top: 28px;
-}
-
-.scope-story[data-scroll="true"] {
-  height: calc(100svh + 1500px);
-}
-
-.scope-story[data-scroll="true"] .scope-stage {
-  position: sticky;
-  top: 94px;
-  height: min(740px, calc(100svh - 118px));
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.scope-story-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--line);
-}
+/* ---------- effective-configuration map ---------- */
 
 .eyebrow {
   font-size: 0.75rem;
@@ -811,135 +781,114 @@ pre {
   color: var(--muted);
 }
 
-.text-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 0.8125rem;
-  text-decoration: underline;
-  text-decoration-color: var(--line-strong);
-  text-underline-offset: 5px;
+.scope {
+  margin-top: 36px;
 }
-
-.text-button:hover {
-  text-decoration-color: var(--ink);
-}
-
-.scope-composition {
+.scope-layout {
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr);
-  align-items: center;
-  gap: 56px;
-  flex: 1;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  grid-template-areas: "controls map" "context map";
+  grid-template-rows: auto 1fr;
+  gap: 44px 72px;
+  align-items: start;
 }
-
-.scope-narrative {
-  padding-block: 16px;
+.scope-controls {
+  grid-area: controls;
+  padding-top: 12px;
 }
-
-.scope-chapters {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 22px;
-}
-
-.scope-chapters button {
-  width: 44px;
-  height: 44px;
-  padding: 0;
+.scope-controls,
+.scope-trace {
+  min-width: 0;
+  margin: 0;
+  padding-inline: 0;
+  padding-bottom: 0;
   border: 0;
-  border-bottom: 2px solid var(--line);
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  transition:
-    border-color 0.25s,
-    color 0.25s;
 }
-
-.scope-chapters button[aria-current="step"],
-.scope-chapters button:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-.scope-copy {
-  min-height: 210px;
-}
-
-.scope-copy h3 {
-  max-width: 14ch;
-  font-size: clamp(2rem, 3.1vw, 2.8rem);
-  line-height: 1.09;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
-}
-
-.scope-copy p {
-  max-width: 35ch;
-  margin-top: 22px;
-  color: var(--muted-strong);
+.scope-controls legend {
+  padding: 0;
   font-size: 1rem;
-  line-height: 1.6;
+  font-weight: 500;
 }
-
-.scope-annotation {
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-  min-height: 64px;
-  margin-top: 18px;
-  font-size: 0.875rem;
+.scope-controls > p {
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.segmented-control {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--paper-sunk);
+}
+.segmented-control button {
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   color: var(--muted-strong);
+  font-size: 0.875rem;
+  transition:
+    background 160ms,
+    color 160ms;
 }
-
-.scope-annotation-mark {
-  font-size: 1.6rem;
-  line-height: 1;
+.segmented-control button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.segmented-control button:hover:not([aria-pressed="true"]) {
+  background: var(--line);
   color: var(--ink);
 }
-
-.scope-annotation[data-finding="true"] .scope-annotation-mark {
-  color: var(--signal-leader);
-}
-
-.scope-step-action {
-  min-height: 44px;
-  margin-top: 8px;
-}
-
 .scope-map-wrap {
+  grid-area: map;
   width: 100%;
   max-width: 560px;
-  justify-self: end;
   min-width: 0;
-  padding-top: 16px;
+  justify-self: end;
 }
-
-.scope-route-labels {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 10px;
+.scope-trace {
+  padding-top: 0;
 }
-
-.scope-route-labels .agent {
+.scope-agents {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  margin-bottom: 20px;
+}
+.scope-agent {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 132px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-strong);
+  transition:
+    border-color 180ms,
+    background 180ms,
+    color 180ms;
+}
+.scope-agent .agent {
   font-size: 0.875rem;
-  transition: opacity 0.4s;
 }
-
+.scope-agent[aria-pressed="true"] {
+  border-color: var(--line-strong);
+  background: var(--paper-sunk);
+  color: var(--ink);
+}
+.scope-agent:hover {
+  border-color: var(--ink);
+}
 .scope-map {
   position: relative;
   width: 100%;
   aspect-ratio: var(--map-ratio);
 }
-
 .scope-routes,
 .scope-nodes {
   position: absolute;
@@ -947,71 +896,84 @@ pre {
   width: 100%;
   height: 100%;
 }
-
 .scope-routes {
   overflow: visible;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-
 .scope-routes path {
   vector-effect: non-scaling-stroke;
 }
-
 .scope-route-base,
 .scope-directory-link {
   stroke: var(--line-strong);
   stroke-width: 1;
 }
-
 .scope-route-active {
   stroke: var(--ink-2);
   stroke-width: 2;
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
-  transition:
-    stroke-dashoffset 1s var(--ease),
-    opacity 0.45s var(--ease);
+  transition: stroke-dashoffset 320ms var(--ease);
 }
-
 .scope-route-missing {
   stroke: var(--signal-leader);
   stroke-width: 1.5;
   stroke-dasharray: 3 7;
 }
-
 .scope-route-stop {
   stroke: var(--signal-leader);
   stroke-width: 3;
 }
-
 .scope-routes g {
-  transition: opacity 0.45s var(--ease);
+  transition: opacity 220ms var(--ease);
 }
-
+[data-focus="claude"] g[data-agent="codex"],
+[data-focus="codex"] g[data-agent="claude"] {
+  opacity: 0.16;
+}
+[data-focus="claude"] g[data-agent="codex"] .scope-route-active,
+[data-focus="codex"] g[data-agent="claude"] .scope-route-active {
+  stroke-dashoffset: 1;
+}
 .scope-node,
 .scope-location,
 .scope-target {
   position: absolute;
   left: 50%;
   transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+.scope-node button,
+.scope-location button,
+.scope-target button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  padding: 6px 9px;
+  min-height: 36px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
   background: var(--paper);
-  white-space: nowrap;
-  transition:
-    opacity 0.45s var(--ease),
-    color 0.45s var(--ease);
-}
-
-.scope-node {
+  color: inherit;
   font-size: 0.875rem;
-  line-height: 1.3;
+  transition:
+    border-color 180ms,
+    color 180ms,
+    background 180ms;
 }
-
+.scope-node button:hover,
+.scope-location button:hover,
+.scope-target button:hover {
+  border-color: var(--line-strong);
+}
+.scope-node button[data-inspected="true"],
+.scope-location button[data-inspected="true"],
+.scope-target button[data-inspected="true"] {
+  border-color: currentColor;
+}
 .scope-node-dot {
   flex: none;
   width: 7px;
@@ -1020,18 +982,15 @@ pre {
   border-radius: 50%;
   background: currentColor;
 }
-
 .scope-node[data-state="on-demand"] .scope-node-dot {
   background: var(--paper);
   box-shadow:
     0 0 0 3px var(--paper),
     0 0 0 4px var(--line-strong);
 }
-
 .scope-node[data-state="absent"] {
   color: var(--signal-leader);
 }
-
 .scope-node[data-state="absent"] .scope-node-dot {
   display: grid;
   place-content: center;
@@ -1042,21 +1001,27 @@ pre {
   background: transparent;
   font-size: 18px;
 }
-
-.scope-node[data-kind="skill"] {
+.scope-node[data-emphasis="off"] {
+  color: var(--muted);
+}
+.scope-node[data-emphasis="off"] button {
+  color: color-mix(in srgb, var(--muted) 45%, var(--paper));
+}
+.scope-node[data-emphasis="off"] button:hover,
+.scope-node[data-emphasis="off"] button:focus-visible {
+  color: var(--ink);
+}
+.scope-node[data-kind="skill"] button {
   font-size: 0.75rem;
 }
-
 .scope-skill-label {
   font-size: 0.625rem;
   color: var(--muted);
 }
-
-.scope-location {
+.scope-location button {
   gap: 10px;
   font-size: 0.8125rem;
 }
-
 .scope-wayfinding {
   font-family: var(--sans);
   font-size: 0.5625rem;
@@ -1065,190 +1030,120 @@ pre {
   text-transform: uppercase;
   color: var(--muted);
 }
-
-.scope-target {
+.scope-target button {
   flex-direction: column;
   gap: 2px;
-  padding: 10px 20px;
+  padding: 7px 16px;
   border-bottom: 2px solid var(--ink);
-  font-size: 0.875rem;
+  border-radius: 0;
 }
-
 .scope-target .scope-wayfinding {
   color: var(--ink);
 }
-
-.scope-map-caption {
-  margin-top: 8px;
-  text-align: center;
-  font-size: 0.6875rem;
-  color: var(--muted);
-}
-
-.scope-node[data-emphasis="off"] {
-  opacity: 0.22;
-  color: var(--muted);
-}
-
-[data-focus="claude"] g[data-agent="codex"],
-[data-focus="codex"] g[data-agent="claude"] {
-  opacity: 0.12;
-}
-
-[data-focus="claude"] .scope-route-labels .agent:last-child,
-[data-focus="codex"] .scope-route-labels .agent:first-child {
-  opacity: 0.3;
-}
-
-/* The first beat establishes physical structure before any route is traced. */
-[data-step="0"] .scope-route-active {
-  stroke-dashoffset: 1;
-}
-
-[data-step="0"] .scope-route-missing,
-[data-step="0"] .scope-route-stop {
-  opacity: 0;
-}
-
-[data-step="0"] .scope-node[data-state="absent"] {
-  color: var(--ink);
-}
-
-[data-step="0"] .scope-node[data-state="absent"] .scope-node-dot {
-  font-size: 0;
-  width: 7px;
-  height: 7px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-[data-step="1"] g[data-agent="codex"] .scope-route-active,
-[data-step="2"] g[data-agent="claude"] .scope-route-active {
-  stroke-dashoffset: 1;
-}
-
-.scope-exploration {
+.scope-start {
+  position: absolute;
+  left: calc(50% + 84px);
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  min-height: 90px;
-  padding-block: 16px;
-  border-top: 1px solid var(--line);
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: top 300ms var(--ease);
 }
-
-.scope-exploration[hidden] {
+.scope-start span {
+  font-size: 0.75rem;
+}
+.scope-context {
+  grid-area: context;
+  position: relative;
+  min-height: 222px;
+  padding: 0 0 0 18px;
+  border-left: 2px solid var(--line-strong);
+  margin-top: 28px;
+}
+.scope-context[data-finding="true"] {
+  border-color: var(--signal-leader);
+}
+.scope-context-title {
   display: flex;
-  visibility: hidden;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
-
-.scope-trace,
-.scope-controls {
-  min-width: 0;
-  padding: 0;
-  border: 0;
+.scope-context[data-finding="true"] .scope-context-title {
+  color: var(--signal-leader);
 }
-
-.scope-trace legend,
-.scope-controls legend {
-  padding: 0;
-  margin-bottom: 7px;
+.scope-context-title span {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+.scope-context code {
+  display: block;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  color: var(--ink);
+}
+.scope-context p:last-child {
+  margin-top: 14px;
+  max-width: 37ch;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--muted-strong);
+}
+.scope-hint {
+  display: block;
+  margin-top: 22px;
   font-size: 0.6875rem;
   color: var(--muted);
 }
-
-.scope-agents,
-.segmented-control {
-  display: flex;
-  gap: 4px;
-}
-
-.scope-agent,
-.segmented-control button {
-  min-height: 44px;
-  padding: 8px 13px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-strong);
-  font-size: 0.8125rem;
-  transition:
-    background 0.2s,
-    border-color 0.2s;
-}
-
-.scope-agent[aria-pressed="true"],
-.segmented-control button[aria-pressed="true"] {
-  border-color: var(--line-strong);
-  background: var(--paper-sunk);
-  color: var(--ink);
-}
-
-.scope-agent:hover,
-.segmented-control button:hover {
-  border-color: var(--ink);
-}
-
-.scope-progress {
-  height: 1px;
-  background: var(--line);
-}
-
-.scope-progress span {
-  display: block;
-  height: 100%;
-  transform: scaleX(var(--story-progress, 0));
-  transform-origin: left;
-  background: var(--ink);
-}
-
 .scope-evidence-section {
-  max-width: 850px;
-  margin: 70px auto 0;
-  scroll-margin-top: 110px;
+  margin-top: 40px;
+  border-top: 1px solid var(--line);
 }
-
 .scope-result {
   display: flex;
   align-items: center;
-  gap: 28px;
-  margin-bottom: 32px;
+  gap: 16px;
+  min-height: 88px;
+  padding-block: 16px;
 }
-
 .scope-result-symbol {
-  font-size: 4.5rem;
-  font-weight: 400;
-  line-height: 1;
+  font-size: 2rem;
   color: var(--signal-leader);
 }
-
 .scope-result[data-clear="true"] .scope-result-symbol {
   color: var(--ink);
 }
-
-.scope-result h3 {
-  margin-top: 4px;
-  font-size: 1.75rem;
-  font-weight: 500;
-  letter-spacing: -0.025em;
+.scope-result p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
 }
-
-.scope-result p:last-child {
-  margin-top: 4px;
-  font-size: 0.9375rem;
+.scope-result strong {
+  font-size: 1rem;
+  font-weight: 500;
+}
+.scope-result p > span {
+  font-size: 0.8125rem;
   color: var(--muted-strong);
 }
-
 .scope-transcript {
   border-bottom: 1px solid var(--line);
 }
-
 .scope-transcript summary {
-  min-height: 58px;
+  min-height: 48px;
   justify-content: space-between;
 }
-
 .scope-transcript pre {
   margin: 0 0 20px;
   padding: 24px;
@@ -1258,7 +1153,6 @@ pre {
   font-size: 0.75rem;
   line-height: 1.7;
 }
-
 .scope-file-evidence li {
   display: flex;
   justify-content: space-between;
@@ -1267,194 +1161,152 @@ pre {
   border-top: 1px solid var(--line);
   font-size: 0.75rem;
 }
-
 .scope-file-evidence code,
 .scope-findings code {
   overflow-wrap: anywhere;
 }
-
 .scope-file-evidence span {
   flex: none;
   color: var(--muted-strong);
 }
-
 .scope-findings {
   padding-block: 12px 24px;
   font-size: 0.875rem;
 }
-
 .scope-findings li + li {
   margin-top: 22px;
 }
-
 .scope-findings code {
   display: block;
   margin-top: 6px;
   font-size: 0.75rem;
   color: var(--muted);
 }
-
 .severity {
   color: var(--signal-leader);
   font-size: 0.75rem;
   text-transform: uppercase;
 }
-
 @media (prefers-reduced-motion: no-preference) {
-  .scope-copy {
-    animation: scope-copy-in 0.5s var(--ease);
+  .scope-context > div {
+    animation: scope-context-in 180ms var(--ease);
+  }
+  [data-focus="claude"] g[data-agent="claude"] .scope-route-active,
+  [data-focus="codex"] g[data-agent="codex"] .scope-route-active {
+    animation: scope-route-in 280ms var(--ease);
+  }
+}
+@keyframes scope-route-in {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
-@keyframes scope-copy-in {
+@keyframes scope-context-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
-/* Keep the complete scene and its controls inside a laptop viewport. */
-@media (min-width: 900px) and (max-height: 860px) {
-  .scope-stage {
-    padding-top: 16px;
+@media (max-width: 760px) {
+  .scope {
+    margin-top: 28px;
   }
-  .scope-story-top {
-    padding-bottom: 10px;
+  .scope-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "controls" "map" "context";
+    gap: 26px;
   }
-  .scope-copy {
-    min-height: 180px;
+  .scope-controls {
+    padding-top: 10px;
   }
-  .scope-copy h3 {
-    font-size: 2rem;
-  }
-  .scope-copy p {
-    margin-top: 14px;
-    font-size: 0.9375rem;
-    line-height: 1.5;
-  }
-  .scope-chapters {
-    margin-bottom: 16px;
-  }
-  .scope-annotation {
-    min-height: 54px;
-    margin-top: 12px;
-  }
-  .scope-map-wrap {
-    max-width: 520px;
-  }
-}
-
-@media (max-width: 899px) {
-  .scope-story-top {
-    padding-bottom: 12px;
-  }
-  .scope-story-top .eyebrow {
-    max-width: 20ch;
-    font-size: 0.625rem;
-  }
-  .scope-explore {
-    font-size: 0.75rem;
-  }
-  .scope-composition {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  .scope-narrative {
-    display: grid;
-    grid-template-columns: 1fr;
-    padding-block: 12px 0;
-  }
-  .scope-chapters {
-    margin-bottom: 20px;
-  }
-  .scope-copy {
-    min-height: 168px;
-  }
-  .scope-copy h3 {
-    max-width: 19ch;
-    font-size: 2rem;
-  }
-  .scope-copy p {
-    max-width: 48ch;
-    margin-top: 14px;
+  .scope-controls legend {
     font-size: 0.9375rem;
   }
-  .scope-annotation {
-    min-height: 54px;
-    margin-top: 10px;
-    font-size: 0.8125rem;
-  }
-  .scope-step-action {
-    margin-top: 0;
+  .scope-controls > p {
+    display: none;
   }
   .scope-map-wrap {
-    width: 100%;
-    max-width: 560px;
-    margin-inline: auto;
-    padding-top: 18px;
+    justify-self: center;
+    max-width: 480px;
   }
   .scope-map {
-    min-height: 300px;
+    min-height: 336px;
   }
-  .scope-route-labels .agent {
+  .scope-agents {
+    margin-bottom: 14px;
+  }
+  .scope-agent {
+    min-width: 120px;
+    padding-inline: 10px;
+  }
+  .scope-agent .agent {
     font-size: 0.8125rem;
   }
-  .scope-node {
+  .scope-node button {
+    min-height: 32px;
     font-size: 0.75rem;
-    gap: 5px;
     padding-inline: 5px;
+    gap: 5px;
   }
-  .scope-node[data-kind="skill"] {
-    font-size: 0.75rem;
+  .scope-node[data-kind="skill"] button {
+    font-size: 0.6875rem;
   }
   .scope-skill-label {
     display: none;
   }
-  .scope-location {
+  .scope-location button {
+    min-height: 36px;
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+  .scope-target button {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+  .scope-start {
+    left: calc(50% + 75px);
+    padding-inline: 4px;
+    font-size: 0.5rem;
+  }
+  .scope-context {
+    margin-top: 0;
+    min-height: 178px;
+    padding-left: 14px;
+  }
+  .scope-context code {
+    margin-top: 6px;
     font-size: 0.75rem;
   }
-  .scope-target {
-    font-size: 0.75rem;
-    padding: 8px 10px;
-  }
-  .scope-map-caption {
-    margin-top: 22px;
-  }
-  .scope-exploration {
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 24px;
-  }
-  .scope-exploration[hidden] {
-    display: none;
-  }
-  .scope-progress {
-    display: none;
-  }
-  .scope-evidence-section {
-    margin-top: 44px;
-  }
-  .scope-result {
-    gap: 18px;
-  }
-  .scope-result-symbol {
-    font-size: 3.5rem;
-  }
-  .scope-result h3 {
-    font-size: 1.3rem;
-  }
-  .scope-result .eyebrow {
-    font-size: 0.625rem;
-  }
-  .scope-result p:last-child {
+  .scope-context p:last-child {
+    max-width: none;
+    margin-top: 8px;
     font-size: 0.8125rem;
   }
+  .scope-hint {
+    margin-top: 12px;
+  }
+  .scope-evidence-section {
+    margin-top: 20px;
+  }
+  .scope-result {
+    align-items: flex-start;
+  }
+  .scope-result p {
+    display: block;
+  }
+  .scope-result p > span {
+    display: block;
+    margin-top: 4px;
+  }
 }
-
 @media (prefers-reduced-motion: reduce) {
   .scope *,
   .scope *::before,
@@ -1542,7 +1394,6 @@ details[open] > summary .faq-marker {
 }
 
 .faq-answer a,
-.scope-note a,
 .footnote a,
 .run p a,
 .doc-body a:not(.doc-anchor),
@@ -1554,7 +1405,6 @@ details[open] > summary .faq-marker {
 }
 
 .faq-answer a:hover,
-.scope-note a:hover,
 .footnote a:hover,
 .run p a:hover,
 .doc-body a:not(.doc-anchor):hover,
@@ -2058,14 +1908,14 @@ details[open] > summary .faq-marker {
   }
 }
 
-/* Homepage rhythm: an open explanation, a compact proof, then the reference. */
+/* Homepage hierarchy: the demo is proof; the map is optional depth. */
 .hero h1 {
-  font-size: clamp(2.6rem, 4.8vw, 4.2rem);
+  font-size: clamp(2.6rem, 4.6vw, 4rem);
   line-height: 1.04;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
 }
 .hero .eyebrow {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .hero-copy {
   max-width: 680px;
@@ -2076,7 +1926,7 @@ details[open] > summary .faq-marker {
 }
 .hero .command-copyable {
   max-width: 470px;
-  margin-top: 28px;
+  margin-top: 26px;
 }
 .hero-actions {
   align-items: center;
@@ -2092,9 +1942,7 @@ details[open] > summary .faq-marker {
   text-underline-offset: 5px;
 }
 .hero-secondary {
-  display: flex;
-  gap: 22px;
-  margin-top: 18px;
+  margin-top: 14px;
   color: var(--muted);
   font-size: 0.8125rem;
 }
@@ -2103,53 +1951,54 @@ details[open] > summary .faq-marker {
 }
 .hero-art {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-}
-.hero-art p {
-  color: var(--muted);
-  font-size: 0.75rem;
-  letter-spacing: 0.01em;
-}
-.story-section {
-  padding-top: 0;
-  padding-bottom: 72px;
-}
-.story-heading {
-  max-width: 620px;
-  padding-block: 36px 28px;
-}
-.story-heading h2 {
-  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
-  max-width: 23ch;
-}
-.story-section > .footnote {
-  max-width: 850px;
-  margin-inline: auto;
+  justify-content: center;
 }
 .demo {
-  display: grid;
-  grid-template-columns: 0.75fr 1.25fr;
-  gap: 40px 64px;
-  align-items: center;
-  padding-block: 88px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  max-width: 1016px;
+  padding-block: 8px 80px;
 }
-.demo .prose h2 {
-  font-size: clamp(1.7rem, 3vw, 2.5rem);
+.demo-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
 }
-.demo .prose p {
-  font-size: 0.9375rem;
+.demo-heading h2 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+.demo-heading p {
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 .demo .footnote {
-  grid-column: 2;
-  margin-top: -20px;
+  margin-top: 16px;
   font-size: 0.75rem;
 }
-.demo .eyebrow {
-  margin-bottom: 20px;
+.example-section {
+  padding-block: 64px 72px;
+  border-top: 1px solid var(--line);
+}
+.example-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 64px;
+  align-items: start;
+}
+.example-heading h2 {
+  max-width: 19ch;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+.example-heading p {
+  max-width: 43ch;
+  color: var(--muted-strong);
+  font-size: 1rem;
+}
+.example-section > .footnote {
+  font-size: 0.75rem;
 }
 #surfaces .prose,
 #run .prose {
@@ -2176,11 +2025,29 @@ details[open] > summary .faq-marker {
   background: var(--paper-sunk);
   padding-block: 40px;
 }
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  transition: opacity 160ms;
+}
+.brand-link:hover {
+  opacity: 0.75;
+}
 .site-header nav a {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 5px;
+  transition:
+    text-decoration-color 160ms,
+    color 160ms;
+}
+.site-header nav a:hover {
+  text-decoration-color: var(--line-strong);
 }
 @media (max-width: 999px) {
   .hero {
@@ -2195,30 +2062,27 @@ details[open] > summary .faq-marker {
 @media (max-width: 760px) {
   .hero {
     grid-template-columns: 1fr;
-    padding-block: 48px 36px;
-    gap: 30px;
+    padding-block: 36px 32px;
+    gap: 0;
   }
   .hero h1 {
     max-width: 17ch;
     font-size: clamp(2.45rem, 8.8vw, 3.6rem);
   }
   .hero .eyebrow {
-    margin-bottom: 18px;
-    font-size: 0.6875rem;
+    margin-bottom: 16px;
+    font-size: 0.625rem;
   }
   .hero-lead {
     font-size: 1rem;
+    margin-top: 18px;
   }
   .hero-art {
-    flex-direction: row;
-    justify-content: center;
-    gap: 22px;
+    display: none;
   }
-  .hero-art .hero-mark {
-    max-width: 120px;
-  }
-  .hero-art p {
-    max-width: 15ch;
+  .hero .command {
+    padding-inline: 10px;
+    font-size: 0.8125rem;
   }
   .hero-actions {
     gap: 10px 20px;
@@ -2226,26 +2090,31 @@ details[open] > summary .faq-marker {
   .hero-actions .button {
     font-size: 0.875rem;
   }
-  .hero-secondary {
-    margin-top: 14px;
-  }
-  .story-section {
-    padding-top: 16px;
-  }
-  .story-heading {
-    padding-block: 26px 10px;
-  }
-  .story-heading h2 {
-    font-size: 1.75rem;
-  }
   .demo {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    padding-block: 56px;
+    padding-block: 12px 48px;
   }
-  .demo .footnote {
-    grid-column: auto;
-    margin-top: 0;
+  .demo-heading {
+    display: block;
+    margin-bottom: 14px;
+  }
+  .demo-heading h2 {
+    font-size: 1rem;
+  }
+  .demo-heading p {
+    margin-top: 4px;
+  }
+  .example-section {
+    padding-block: 44px 48px;
+  }
+  .example-heading {
+    display: block;
+  }
+  .example-heading h2 {
+    font-size: 1.8rem;
+  }
+  .example-heading p {
+    margin-top: 16px;
+    font-size: 0.9375rem;
   }
   #surfaces .prose,
   #run .prose {
@@ -2259,5 +2128,19 @@ details[open] > summary .faq-marker {
   }
   .site-footer nav a {
     min-height: 36px;
+  }
+}
+
+/* Below roughly 345 pixels the hero command no longer fits beside a copy
+   control that also spells out "Copy", and the block starts scrolling a
+   one-line command. The icon already carries the meaning, and the accessible
+   name is on the button itself, so the word is what gives way. */
+@media (max-width: 359px) {
+  .command-copy {
+    padding-inline: 8px;
+  }
+
+  .command-copy span[aria-hidden] {
+    display: none;
   }
 }

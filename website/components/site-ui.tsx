@@ -105,19 +105,22 @@ export function Command({
 
 export function SiteHeader({ home = false }: { home?: boolean }) {
   return (
-    <header className="site-header" id="top">
-      <div className="container header-inner">
-        <a className="brand-link" href={home ? "#top" : "/"} aria-label="PlaybookDiff home">
-          <Logo />
-        </a>
-        <nav aria-label="Main navigation">
-          <a href="/docs">Docs</a>
-          <a href={site.repository}>
-            GitHub <span aria-hidden="true">↗</span>
+    <>
+      <div id="top" aria-hidden="true" />
+      <header className="site-header">
+        <div className="container header-inner">
+          <a className="brand-link" href={home ? "#top" : "/"} aria-label="PlaybookDiff home">
+            <Logo />
           </a>
-        </nav>
-      </div>
-    </header>
+          <nav aria-label="Main navigation">
+            <a href="/docs">Docs</a>
+            <a href={site.repository}>
+              GitHub <span aria-hidden="true">↗</span>
+            </a>
+          </nav>
+        </div>
+      </header>
+    </>
   );
 }
 

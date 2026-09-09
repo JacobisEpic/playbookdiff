@@ -13,6 +13,7 @@ const packageJson = JSON.parse(await read("package.json"));
 const css = await read("app/globals.css");
 const signupSource = await read("components/signup.tsx");
 const copySource = await read("components/copy-command.tsx");
+const scopeSource = await read("components/effective-scope.tsx");
 const { buttondownConfigured, buttondownSubscribeUrl, site } = await import("../lib/site.ts");
 
 // Script payloads carry a streamed copy of the markup, so anything counting
@@ -125,7 +126,7 @@ test("the interactive example is generated from real analyzer output", () => {
 });
 
 test("the example renders, is interactive, and carries the real transcript", () => {
-  assert.match(html, /Both agents were launched from/);
+  assert.match(html, /Where do both agents start\?/);
   assert.match(html, /aria-pressed="true"/);
   assert.match(html, /aria-pressed="false"/);
   assert.ok(html.includes(example.target), "the work target both runs share");
@@ -211,10 +212,10 @@ test("nothing unfinished is published", () => {
 });
 
 test("the demo plays the visitor's way, and costs nothing until it does", async () => {
-  // The guided explanation precedes the recording; the video supplies proof.
+  // Proof comes immediately after the hero, before optional exploration.
   const demo = html.indexOf('id="demo"');
   assert.ok(demo > html.indexOf("hero-actions"), "after the hero");
-  assert.ok(demo > html.indexOf('id="example"'), "after the worked example");
+  assert.ok(demo < html.indexOf('id="example"'), "before the worked example");
 
   // It is narrated, so it never starts on its own, and no byte of it is
   // fetched before someone asks for it.
@@ -438,18 +439,49 @@ test("the route art has a complete textual equivalent", () => {
       markup.includes(`${row.path}, ${row.harness === "claude" ? "Claude Code" : "Codex"}, `),
     );
   }
-  assert.match(markup, /Configuration and finding evidence/);
+  assert.match(markup, /View evidence/);
 });
 
-test("the guided story can be skipped and navigated without scrolling", () => {
-  assert.match(markup, /aria-label="Example story chapters"/);
-  for (const chapter of ["1. Repository", "2. Claude", "3. Codex", "4. The difference"]) {
-    assert.ok(markup.includes(`aria-label="${chapter}"`), chapter);
-  }
-  assert.match(markup, /Explore the example/);
-  assert.match(markup, /Continue the story/);
+test("the map is immediately interactive and has no scroll gate", () => {
+  assert.doesNotMatch(markup, /Example story chapters|Continue the story|Explore the example/);
+  assert.doesNotMatch(
+    scopeSource,
+    /addEventListener|requestAnimationFrame|scrollTo|matchMedia|setStep|setManual/,
+  );
+  assert.doesNotMatch(css, /scope-story|scope-stage|scope-chapters|story-progress|data-step/);
   assert.match(css, /prefers-reduced-motion: reduce/);
+  for (const control of markup.matchAll(/<button[^>]*class="scope-agent"[^>]*>/g)) {
+    assert.doesNotMatch(control[0], /hidden|disabled/);
+  }
+});
+
+test("launch location is explicit and the map identifies the start", () => {
+  assert.match(markup, /Where do both agents start\?/);
+  assert.match(markup, />Repo root<\/button>/);
+  assert.match(
+    markup,
+    /class="scope-start"[^>]*aria-label="Both agents start at the repository root"/,
+  );
+  assert.match(markup, /View CLI output/);
   assert.ok(markup.includes('id="scope-evidence"'));
+});
+
+test("nodes expose contextual explanations through semantic controls", () => {
+  const nodeButtons = [...markup.matchAll(/<button[^>]*data-inspected="(?:true|false)"[^>]*>/g)];
+  assert.equal(
+    nodeButtons.length,
+    example.rows.length + 3,
+    "configuration, directories, and target",
+  );
+  assert.ok(nodeButtons.some(([tag]) => tag.includes("aria-describedby=")));
+  assert.match(markup, /class="scope-context"[^>]*aria-live="polite"/);
+});
+
+test("the homepage logo targets the document start outside the sticky header", () => {
+  const top = markup.indexOf('id="top"');
+  const header = markup.indexOf("<header");
+  assert.ok(top > 0 && top < header, "the anchor precedes the sticky element");
+  assert.match(markup.slice(header, markup.indexOf("</header>")), /href="#top"/);
 });
 
 // ---------------------------------------------------------------------------

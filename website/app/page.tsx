@@ -71,16 +71,15 @@ export default function Home() {
               {`npx ${site.npmPackage} check .`}
             </Command>
             <div className="hero-actions">
-              <ButtonLink href="#example">
-                Follow the difference <span aria-hidden="true">↓</span>
+              <ButtonLink href="#demo">
+                Watch the demo <span aria-hidden="true">↓</span>
               </ButtonLink>
               <ButtonLink href={site.repository} variant="ghost" external>
                 View on GitHub
               </ButtonLink>
             </div>
             <div className="hero-secondary">
-              <a href="#demo">Watch the demo</a>
-              <a href="/docs/cli">Read the docs ↗</a>
+              <a href="/docs/cli">Read the docs</a>
             </div>
           </div>
 
@@ -92,58 +91,87 @@ export default function Home() {
               width="364"
               height="297"
             />
-            <p>
-              Two agents.
-              <br />
-              One shared playbook.
-            </p>
           </div>
         </section>
 
+        <section className="container demo" id="demo" aria-labelledby="demo-title">
+          <div className="demo-heading">
+            <h2 id="demo-title">See it catch a real mismatch.</h2>
+            <p>CLI + GitHub Action · 40 seconds</p>
+          </div>
+          <DemoVideo />
+          <p className="footnote">
+            Recorded against a real repository. <a href="/docs/cli">CLI reference</a> ·{" "}
+            <a href="/docs/action">Action reference</a>
+          </p>
+        </section>
+
         <section
-          className="section container story-section"
+          className="section container example-section"
           id="example"
           aria-labelledby="example-title"
         >
-          <div className="story-heading">
-            <h2 id="example-title">The difference is in the path.</h2>
+          <div className="example-heading">
+            <h2 id="example-title">
+              Same code.
+              <br />
+              Different playbook.
+            </h2>
+            <p>
+              Matching files are not matching configuration. Follow the paths to see why the launch
+              location matters.
+            </p>
           </div>
 
           <EffectiveScope />
 
           <p className="footnote">
-            Generated from{" "}
-            <a href={evidenceUrl(example.baseline, example.fixture, "tree")}>
-              the checked-in fixture
-            </a>{" "}
-            by running the real analyzer, and protected by{" "}
-            <a href={evidenceUrl(example.baseline, example.test)}>
-              a test that asserts both results
-            </a>
-            . The discovery rules behind it are specified for{" "}
-            <a href="/docs/harnesses/claude">Claude Code</a> and{" "}
-            <a href="/docs/harnesses/codex">Codex</a>, each citing that harness&rsquo;s official
-            documentation.
+            Real analyzer output.{" "}
+            <a href={evidenceUrl(example.baseline, example.fixture, "tree")}>Fixture</a> ·{" "}
+            <a href={evidenceUrl(example.baseline, example.test)}>Verified results</a> · Discovery
+            rules: <a href="/docs/harnesses/claude">Claude Code</a> /{" "}
+            <a href="/docs/harnesses/codex">Codex</a>.
           </p>
         </section>
 
-        <section className="section container demo" id="demo" aria-labelledby="demo-title">
+        <section className="section container" id="run" aria-labelledby="run-title">
           <div className="prose">
-            <p className="eyebrow">From explanation to execution</p>
-            <h2 id="demo-title">Watch it catch a real mismatch.</h2>
-            <p>
-              Two instruction files whose contents match, one launch directory apart. PlaybookDiff
-              proves the difference on the command line, and the Action catches the next one on a
-              pull request.
-            </p>
+            <h2 id="run-title">Run it locally, then keep it there.</h2>
           </div>
 
-          <DemoVideo />
+          <div className="run">
+            <article>
+              <p className="eyebrow">01 / Check</p>
+              <h3>On your machine</h3>
+              <Command copy label="Install PlaybookDiff and check a repository">
+                {`npm install -g ${site.npmPackage}\nplaybookdiff check .`}
+              </Command>
+              <p>
+                Prints every proven configuration gap, with the source file behind each one, and
+                exits non-zero on actionable findings. <code>explain</code> expands one finding and{" "}
+                <code>diff</code> compares two Git revisions. <a href="/docs/cli">CLI reference</a>.
+              </p>
+            </article>
+            <article>
+              <p className="eyebrow">02 / Keep in sync</p>
+              <h3>In pull requests</h3>
+              <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
+                <code>{`- uses: actions/checkout@v4\n  with:\n    fetch-depth: 0\n\n- uses: ${site.actionRef}`}</code>
+              </pre>
+              <p>
+                The Action compares the pull request base against the head and fails only on newly
+                introduced findings, so existing debt stays green. It needs{" "}
+                <code>contents: read</code> and no token.{" "}
+                <a href="/docs/action">Action reference</a>.
+              </p>
+            </article>
+          </div>
 
           <p className="footnote">
-            Forty seconds, recorded against a real repository. The commands are in the{" "}
-            <a href="/docs/cli">CLI reference</a> and the workflow is in the{" "}
-            <a href="/docs/action">Action reference</a>.
+            Prefer to build from source, or read it first?{" "}
+            <a href={site.repository}>
+              The repository <span aria-hidden="true">↗</span>
+            </a>
           </p>
         </section>
 
@@ -193,47 +221,6 @@ export default function Home() {
           </p>
         </section>
 
-        <section className="section container" id="run" aria-labelledby="run-title">
-          <div className="prose">
-            <h2 id="run-title">Run it locally, then keep it there.</h2>
-          </div>
-
-          <div className="run">
-            <article>
-              <p className="eyebrow">01 / Check</p>
-              <h3>On your machine</h3>
-              <Command copy label="Install PlaybookDiff and check a repository">
-                {`npm install -g ${site.npmPackage}\nplaybookdiff check .`}
-              </Command>
-              <p>
-                Prints every proven configuration gap, with the source file behind each one, and
-                exits non-zero on actionable findings. <code>explain</code> expands one finding and{" "}
-                <code>diff</code> compares two Git revisions. <a href="/docs/cli">CLI reference</a>.
-              </p>
-            </article>
-            <article>
-              <p className="eyebrow">02 / Keep in sync</p>
-              <h3>In pull requests</h3>
-              <pre tabIndex={0} aria-label="Use PlaybookDiff in GitHub Actions">
-                <code>{`- uses: actions/checkout@v4\n  with:\n    fetch-depth: 0\n\n- uses: ${site.actionRef}`}</code>
-              </pre>
-              <p>
-                The Action compares the pull request base against the head and fails only on newly
-                introduced findings, so existing debt stays green. It needs{" "}
-                <code>contents: read</code> and no token.{" "}
-                <a href="/docs/action">Action reference</a>.
-              </p>
-            </article>
-          </div>
-
-          <p className="footnote">
-            Prefer to build from source, or read it first?{" "}
-            <a href={site.repository}>
-              The repository <span aria-hidden="true">↗</span>
-            </a>
-          </p>
-        </section>
-
         <section className="section container" id="trust" aria-labelledby="trust-title">
           <div className="prose">
             <h2 id="trust-title">It reports what it can prove.</h2>
@@ -259,7 +246,7 @@ export default function Home() {
 
         <section className="section container" id="faq" aria-labelledby="faq-title">
           <div className="prose">
-            <h2 id="faq-title">Questions people ask first.</h2>
+            <h2 id="faq-title">FAQ</h2>
           </div>
           <Faq />
 
