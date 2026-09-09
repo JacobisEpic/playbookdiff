@@ -104,7 +104,13 @@ export default function Home() {
             <p>CLI + GitHub Action · 40 seconds</p>
           </div>
           <DemoVideo />
-          <p className="footnote">Recorded against a real repository.</p>
+          <p className="footnote">
+            Recorded against{" "}
+            <a href={site.demoRepository}>
+              a real repository <span aria-hidden="true">↗</span>
+            </a>
+            .
+          </p>
         </section>
 
         <section

@@ -215,6 +215,10 @@ test("the demo plays the visitor's way, and costs nothing until it does", async 
   assert.ok(demo > html.indexOf("hero-actions"), "after the hero");
   assert.ok(demo < html.indexOf('id="example"'), "before the worked example");
 
+  // "A real repository" is a claim, so it links to the repository it was
+  // recorded against.
+  assert.ok(html.includes(`href="${site.demoRepository}"`), "the recorded repository");
+
   // It is narrated, so it never starts on its own, and no byte of it is
   // fetched before someone asks for it.
   assert.match(html, /<video\b[^>]*preload="none"/);

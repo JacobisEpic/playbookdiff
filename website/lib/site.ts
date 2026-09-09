@@ -3,6 +3,10 @@ export const site = {
   description:
     "Check that Claude Code and Codex receive the same repository configuration, then catch new gaps in CI.",
   repository: "https://github.com/JacobisEpic/playbookdiff",
+
+  // The repository the walkthrough was recorded against. The recording claims
+  // it is a real one, so the claim links to it.
+  demoRepository: "https://github.com/JacobisEpic/playbookdiff-demo",
   actionRef: "JacobisEpic/playbookdiff@v0",
   release: "v0.2.0",
   npmPackage: "playbookdiff",
