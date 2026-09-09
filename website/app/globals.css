@@ -40,7 +40,7 @@
    Colour
 
    The page is warm neutral throughout: paper, ink, and one dark surface for the
-   product's own output. Exactly one hue is defined, `--signal`, and it means
+   product's own output. Exactly one signal hue is defined, and it means
    one thing: PlaybookDiff proved a difference here. It appears on a broken
    leader, on "not received", and on a severity label, and nowhere else.
 
@@ -77,8 +77,7 @@
   --panel-muted: #9c978b;
   --panel-dim: #8d887c;
 
-  /* The only hue. Divergence, and nothing else. It lives on the dark panels,
-     because a finding is always something the tool printed. */
+  /* Divergence only: a light signal for dark output, a dark signal for paper. */
   --signal-on-dark: #eea45a;
   --signal-leader: #946527;
 
@@ -136,6 +135,7 @@ button {
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
+summary:focus-visible,
 pre:focus-visible,
 [tabindex]:focus-visible {
   border-radius: 6px;
@@ -145,7 +145,6 @@ pre:focus-visible,
 
 /* Ink is invisible against the panel, so a focus ring on the tool's own output
    is drawn in the panel's own light. */
-.scope-panel :focus-visible,
 .scope-transcript pre:focus-visible,
 .doc-body pre:focus-visible {
   outline-color: var(--panel-ink);
@@ -291,7 +290,7 @@ pre {
 .hero {
   display: grid;
   gap: 52px;
-  padding-block: 84px 96px;
+  padding-block: 100px 100px;
   align-items: start;
 }
 
@@ -448,7 +447,6 @@ pre {
 
 .section {
   padding-block: 88px;
-  border-top: 1px solid var(--line);
 }
 
 .prose h2 {
@@ -479,8 +477,8 @@ pre {
 .demo-frame {
   position: relative;
   max-width: 940px;
-  margin-top: 44px;
-  border-radius: 12px;
+  margin: 0;
+  border-radius: 10px;
   background: var(--panel);
   overflow: hidden;
 }
@@ -773,409 +771,697 @@ pre {
   transition: opacity 0.28s var(--ease);
 }
 
-/* ---------- effective-configuration example ---------- */
+/* ---------- effective-configuration story ---------- */
 
-/* The signature element: one real repository, with what each harness receives
-   from it in the selected context. It sits on the product's dark surface
-   because it is the tool's own view, not a diagram of one.
-
-   Only "not received" takes the signal colour, so the coloured thing is always
-   the finding. Switching the launch directory drains the colour out of the
-   panel, which is the product. */
-
-.scope {
-  margin-top: 44px;
+.scope-story {
+  position: relative;
 }
 
-.scope-controls {
+.scope-stage {
+  padding-top: 28px;
+}
+
+.scope-story[data-scroll="true"] {
+  height: calc(100svh + 1500px);
+}
+
+.scope-story[data-scroll="true"] .scope-stage {
+  position: sticky;
+  top: 94px;
+  height: min(740px, calc(100svh - 118px));
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 16px;
-  margin: 0 0 20px;
-  padding: 0;
-  border: 0;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.scope-controls legend {
-  float: left;
-  padding: 0;
-  margin-right: 16px;
-  font-size: 0.9375rem;
-  color: var(--muted-strong);
+.scope-story-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
 }
 
-.segmented-control {
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.text-button {
   display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--line-strong);
-  border-radius: 9px;
-  background: var(--paper-sunk);
-}
-
-.segmented-control button {
-  min-height: 34px;
-  padding: 6px 14px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  padding: 0;
   border: 0;
-  border-radius: 6px;
   background: transparent;
-  font-size: 0.875rem;
-  color: var(--muted-strong);
-  transition:
-    background 0.15s var(--ease),
-    color 0.15s var(--ease);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 5px;
 }
 
-.segmented-control button:hover {
+.text-button:hover {
+  text-decoration-color: var(--ink);
+}
+
+.scope-composition {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: 56px;
+  flex: 1;
+}
+
+.scope-narrative {
+  padding-block: 16px;
+}
+
+.scope-chapters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.scope-chapters button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 0.25s,
+    color 0.25s;
+}
+
+.scope-chapters button[aria-current="step"],
+.scope-chapters button:hover {
+  border-color: var(--ink);
   color: var(--ink);
 }
 
-.segmented-control button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
+.scope-copy {
+  min-height: 210px;
 }
 
-.scope-panel {
-  max-width: 940px;
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--panel-ink);
-  overflow: hidden;
+.scope-copy h3 {
+  max-width: 14ch;
+  font-size: clamp(2rem, 3.1vw, 2.8rem);
+  line-height: 1.09;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 
-.scope-bar {
-  padding: 13px 20px;
-  border-bottom: 1px solid var(--panel-line);
-  background: var(--panel-2);
-  font-family: var(--mono);
+.scope-copy p {
+  max-width: 35ch;
+  margin-top: 22px;
+  color: var(--muted-strong);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.scope-annotation {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  min-height: 64px;
+  margin-top: 18px;
+  font-size: 0.875rem;
+  color: var(--muted-strong);
+}
+
+.scope-annotation-mark {
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.scope-annotation[data-finding="true"] .scope-annotation-mark {
+  color: var(--signal-leader);
+}
+
+.scope-step-action {
+  min-height: 44px;
+  margin-top: 8px;
+}
+
+.scope-map-wrap {
+  width: 100%;
+  max-width: 560px;
+  justify-self: end;
+  min-width: 0;
+  padding-top: 16px;
+}
+
+.scope-route-labels {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+}
+
+.scope-route-labels .agent {
+  font-size: 0.875rem;
+  transition: opacity 0.4s;
+}
+
+.scope-map {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--map-ratio);
+}
+
+.scope-routes,
+.scope-nodes {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scope-routes {
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.scope-routes path {
+  vector-effect: non-scaling-stroke;
+}
+
+.scope-route-base,
+.scope-directory-link {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.scope-route-active {
+  stroke: var(--ink-2);
+  stroke-width: 2;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset 1s var(--ease),
+    opacity 0.45s var(--ease);
+}
+
+.scope-route-missing {
+  stroke: var(--signal-leader);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 7;
+}
+
+.scope-route-stop {
+  stroke: var(--signal-leader);
+  stroke-width: 3;
+}
+
+.scope-routes g {
+  transition: opacity 0.45s var(--ease);
+}
+
+.scope-node,
+.scope-location,
+.scope-target {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  background: var(--paper);
+  white-space: nowrap;
+  transition:
+    opacity 0.45s var(--ease),
+    color 0.45s var(--ease);
+}
+
+.scope-node {
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.scope-node-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.scope-node[data-state="on-demand"] .scope-node-dot {
+  background: var(--paper);
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 4px var(--line-strong);
+}
+
+.scope-node[data-state="absent"] {
+  color: var(--signal-leader);
+}
+
+.scope-node[data-state="absent"] .scope-node-dot {
+  display: grid;
+  place-content: center;
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 18px;
+}
+
+.scope-node[data-kind="skill"] {
+  font-size: 0.75rem;
+}
+
+.scope-skill-label {
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+
+.scope-location {
+  gap: 10px;
   font-size: 0.8125rem;
-  overflow-wrap: anywhere;
 }
 
-.scope-bar span {
-  color: var(--panel-dim);
+.scope-wayfinding {
+  font-family: var(--sans);
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
-/* ---- the tree ----
-
-   Drawn connectors rather than indentation: each row carries one small SVG per
-   ancestor level, so the trunk runs continuously down the gutter and every
-   branch ends in a gentle corner. It stays a filesystem tree at any width
-   because the geometry is per-row and the labels are ordinary text.
-
-   Choosing an agent traces its path: everything that agent does not receive
-   recedes, the branches that carry its configuration stay lit, and a file it
-   never receives keeps the signal colour, because that is a finding. Neither
-   agent is ever given a colour of its own. */
-
-.scope-tree {
-  padding: 14px 20px 26px;
-  overflow-x: auto;
-  font-family: var(--mono);
+.scope-target {
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 20px;
+  border-bottom: 2px solid var(--ink);
   font-size: 0.875rem;
 }
 
-.scope-branch,
-.scope-row {
+.scope-target .scope-wayfinding {
+  color: var(--ink);
+}
+
+.scope-map-caption {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.scope-node[data-emphasis="off"] {
+  opacity: 0.22;
+  color: var(--muted);
+}
+
+[data-focus="claude"] g[data-agent="codex"],
+[data-focus="codex"] g[data-agent="claude"] {
+  opacity: 0.12;
+}
+
+[data-focus="claude"] .scope-route-labels .agent:last-child,
+[data-focus="codex"] .scope-route-labels .agent:first-child {
+  opacity: 0.3;
+}
+
+/* The first beat establishes physical structure before any route is traced. */
+[data-step="0"] .scope-route-active {
+  stroke-dashoffset: 1;
+}
+
+[data-step="0"] .scope-route-missing,
+[data-step="0"] .scope-route-stop {
+  opacity: 0;
+}
+
+[data-step="0"] .scope-node[data-state="absent"] {
+  color: var(--ink);
+}
+
+[data-step="0"] .scope-node[data-state="absent"] .scope-node-dot {
+  font-size: 0;
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+[data-step="1"] g[data-agent="codex"] .scope-route-active,
+[data-step="2"] g[data-agent="claude"] .scope-route-active {
+  stroke-dashoffset: 1;
+}
+
+.scope-exploration {
   display: flex;
   align-items: center;
-  gap: 0;
-  height: 38px;
-  white-space: nowrap;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 90px;
+  padding-block: 16px;
+  border-top: 1px solid var(--line);
 }
 
-.scope-gutter {
-  flex: none;
-  width: 30px;
-  height: 38px;
-  overflow: visible;
-  fill: none;
-  stroke: var(--panel-leader);
-  stroke-width: 1;
-  stroke-linecap: round;
-}
-
-.scope-gutter path {
-  transition:
-    stroke 0.28s var(--ease),
-    stroke-width 0.28s var(--ease),
-    opacity 0.28s var(--ease);
-}
-
-.scope-path {
-  flex: none;
-  padding-right: 16px;
-  color: var(--panel-ink);
-  transition:
-    color 0.28s var(--ease),
-    opacity 0.28s var(--ease);
-}
-
-[data-kind="root"] .scope-path,
-[data-kind="directory"] .scope-path {
-  color: var(--panel-muted);
-}
-
-.scope-verdict {
+.scope-exploration[hidden] {
   display: flex;
-  align-items: center;
-  flex: none;
-  gap: 8px;
-  color: var(--panel-muted);
-  transition: opacity 0.28s var(--ease);
+  visibility: hidden;
 }
 
-.scope-verdict .agent {
-  color: var(--panel-dim);
-  transition: color 0.28s var(--ease);
-}
-
-.scope-state {
-  font-family: var(--sans);
-  font-size: 0.8125rem;
-  letter-spacing: 0.005em;
-  transition: color 0.28s var(--ease);
-}
-
-/* A file that exists in the repository and never reaches the agent is the
-   entire argument, so it is marked on the branch as well as named. */
-.scope-row[data-state="absent"] .scope-gutter:last-of-type .scope-stub {
-  stroke: var(--signal-leader);
-  stroke-dasharray: 0.14 0.14;
-}
-
-.scope-row[data-state="absent"] .scope-state {
-  color: var(--signal-on-dark);
-}
-
-/* Configuration reached on the way to the work target, rather than held from
-   the first moment: a dashed branch, the same distinction the label makes. */
-.scope-row[data-state="on-demand"] .scope-gutter:last-of-type .scope-stub {
-  stroke-dasharray: 0.18 0.14;
-}
-
-/* ---- tracing one agent ---- */
-
-/* The trunk is the repository's own shape, so it never dims or brightens: what
-   changes per agent is the branch that delivers a file and the label on it.
-   Dimming the trunk instead would leave the spine looking broken between two
-   lit rows. */
-[data-emphasis="off"] .scope-path,
-[data-emphasis="off"] .scope-verdict,
-[data-emphasis="off"] .scope-stub {
-  opacity: 0.28;
-}
-
-.scope-row[data-emphasis="on"] .scope-stub {
-  stroke: var(--panel-ink);
-  stroke-width: 1.4;
-}
-
-.scope-row[data-emphasis="on"] .scope-path {
-  color: #fff;
-}
-
-.scope-row[data-emphasis="on"] .scope-state,
-.scope-row[data-emphasis="on"] .scope-verdict .agent {
-  color: var(--panel-ink);
-}
-
-.scope-row[data-emphasis="on"] .agent-compact {
-  opacity: 1;
-}
-
-.scope-row[data-emphasis="finding"] .scope-path,
-.scope-row[data-emphasis="finding"] .scope-state {
-  color: var(--signal-on-dark);
-}
-
-.scope-row[data-emphasis="finding"] .scope-gutter:last-of-type .scope-stub {
-  stroke: var(--signal-on-dark);
-  stroke-width: 1.4;
-}
-
-/* ---- the agent controls ---- */
-
-.scope-trace {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 16px;
-  margin: 0;
-  padding: 14px 20px 12px;
-  border: 0;
-  border-bottom: 1px solid var(--panel-line);
-}
-
-.scope-trace legend {
-  float: left;
-  margin-right: 16px;
+.scope-trace,
+.scope-controls {
+  min-width: 0;
   padding: 0;
-  font-size: 0.8125rem;
-  color: var(--panel-dim);
+  border: 0;
 }
 
-.scope-agents {
+.scope-trace legend,
+.scope-controls legend {
+  padding: 0;
+  margin-bottom: 7px;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.scope-agents,
+.segmented-control {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
-.scope-agent {
-  padding: 6px 12px;
-  border: 1px solid var(--panel-line);
-  border-radius: 999px;
+.scope-agent,
+.segmented-control button {
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 6px;
   background: transparent;
-  color: var(--panel-muted);
+  color: var(--muted-strong);
+  font-size: 0.8125rem;
   transition:
-    border-color 0.2s var(--ease),
-    background 0.2s var(--ease),
-    color 0.2s var(--ease);
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.scope-agent[aria-pressed="true"],
+.segmented-control button[aria-pressed="true"] {
+  border-color: var(--line-strong);
+  background: var(--paper-sunk);
+  color: var(--ink);
 }
 
 .scope-agent:hover,
-.scope-agent:focus-visible {
-  border-color: var(--panel-leader);
-  color: var(--panel-ink);
+.segmented-control button:hover {
+  border-color: var(--ink);
 }
 
-.scope-agent[aria-pressed="true"] {
-  border-color: var(--panel-ink);
-  background: var(--panel-ink);
-  color: var(--panel);
+.scope-progress {
+  height: 1px;
+  background: var(--line);
 }
 
-.scope-agent[aria-pressed="true"] .agent {
-  color: var(--panel);
+.scope-progress span {
+  display: block;
+  height: 100%;
+  transform: scaleX(var(--story-progress, 0));
+  transform-origin: left;
+  background: var(--ink);
 }
 
-/* ---- drawing the tree ----
-
-   Switching the launch directory redraws the branches outward from the root
-   rather than swapping rows, so the configuration visibly travels through the
-   repository. */
-@media (prefers-reduced-motion: no-preference) {
-  /* The entrance fade lives on the row and the draw lives on its paths, so
-     neither competes with the per-element dimming that tracing an agent
-     applies. An animation with `forwards` outranks a plain declaration on the
-     same element, which is why they are kept apart. */
-  .scope-tree > li {
-    opacity: 0;
-    animation: scope-fade 0.3s var(--ease) forwards;
-    animation-delay: calc(90ms + var(--i) * 45ms);
-  }
-
-  .scope-tree .scope-gutter path {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: scope-draw 0.34s var(--ease) forwards;
-    animation-delay: calc(90ms + var(--i) * 45ms);
-  }
-
-  /* A dashed branch already owns its dash pattern, so it cannot be drawn by
-     dashoffset; it arrives with the row instead. */
-  .scope-row[data-state="absent"] .scope-stub,
-  .scope-row[data-state="on-demand"] .scope-stub {
-    stroke-dasharray: 0.18 0.14;
-    stroke-dashoffset: 0;
-    animation: none;
-  }
-
-  .scope-row[data-state="absent"] .scope-stub {
-    stroke-dasharray: 0.14 0.14;
-  }
-}
-
-@keyframes scope-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes scope-fade {
-  to {
-    opacity: 1;
-  }
+.scope-evidence-section {
+  max-width: 850px;
+  margin: 70px auto 0;
+  scroll-margin-top: 110px;
 }
 
 .scope-result {
-  padding: 18px 20px;
-  border-top: 1px solid var(--panel-line);
-  background: var(--panel-2);
-  font-size: 0.875rem;
-  line-height: 1.55;
-}
-
-.scope-count {
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  color: var(--panel-muted);
-}
-
-.scope-clear {
-  max-width: 74ch;
-  color: var(--panel-muted);
-}
-
-.scope-clear strong {
-  font-weight: 500;
-  color: var(--panel-ink);
-}
-
-.scope-clear code {
-  color: var(--panel-ink);
-}
-
-.scope-result li {
-  margin-top: 14px;
-}
-
-.scope-finding {
   display: flex;
-  gap: 12px;
-  max-width: 82ch;
-  color: var(--panel-ink);
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 32px;
 }
 
-.severity {
-  flex: none;
-  width: 56px;
-  font-family: var(--mono);
-  font-size: 0.8125rem;
-  color: var(--signal-on-dark);
+.scope-result-symbol {
+  font-size: 4.5rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--signal-leader);
 }
 
-.scope-evidence {
-  display: block;
-  margin-top: 5px;
-  margin-left: 68px;
-  font-size: 0.8125rem;
-  color: var(--panel-dim);
+.scope-result[data-clear="true"] .scope-result-symbol {
+  color: var(--ink);
 }
 
-.scope-transcript {
-  margin-top: 18px;
+.scope-result h3 {
+  margin-top: 4px;
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
 }
 
-.scope-transcript pre {
-  margin-top: 12px;
-  padding: 18px 20px;
-  border-radius: 10px;
-  background: var(--panel);
-  color: var(--panel-ink);
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-
-.scope-note {
-  margin-top: 18px;
-  max-width: 68ch;
+.scope-result p:last-child {
+  margin-top: 4px;
   font-size: 0.9375rem;
   color: var(--muted-strong);
 }
 
-.scope-note code,
-.scope-controls code {
-  color: var(--ink);
+.scope-transcript {
+  border-bottom: 1px solid var(--line);
+}
+
+.scope-transcript summary {
+  min-height: 58px;
+  justify-content: space-between;
+}
+
+.scope-transcript pre {
+  margin: 0 0 20px;
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--panel-ink);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.scope-file-evidence li {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-block: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+}
+
+.scope-file-evidence code,
+.scope-findings code {
+  overflow-wrap: anywhere;
+}
+
+.scope-file-evidence span {
+  flex: none;
+  color: var(--muted-strong);
+}
+
+.scope-findings {
+  padding-block: 12px 24px;
+  font-size: 0.875rem;
+}
+
+.scope-findings li + li {
+  margin-top: 22px;
+}
+
+.scope-findings code {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.severity {
+  color: var(--signal-leader);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scope-copy {
+    animation: scope-copy-in 0.5s var(--ease);
+  }
+}
+
+@keyframes scope-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Keep the complete scene and its controls inside a laptop viewport. */
+@media (min-width: 900px) and (max-height: 860px) {
+  .scope-stage {
+    padding-top: 16px;
+  }
+  .scope-story-top {
+    padding-bottom: 10px;
+  }
+  .scope-copy {
+    min-height: 180px;
+  }
+  .scope-copy h3 {
+    font-size: 2rem;
+  }
+  .scope-copy p {
+    margin-top: 14px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .scope-chapters {
+    margin-bottom: 16px;
+  }
+  .scope-annotation {
+    min-height: 54px;
+    margin-top: 12px;
+  }
+  .scope-map-wrap {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 899px) {
+  .scope-story-top {
+    padding-bottom: 12px;
+  }
+  .scope-story-top .eyebrow {
+    max-width: 20ch;
+    font-size: 0.625rem;
+  }
+  .scope-explore {
+    font-size: 0.75rem;
+  }
+  .scope-composition {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .scope-narrative {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-block: 12px 0;
+  }
+  .scope-chapters {
+    margin-bottom: 20px;
+  }
+  .scope-copy {
+    min-height: 168px;
+  }
+  .scope-copy h3 {
+    max-width: 19ch;
+    font-size: 2rem;
+  }
+  .scope-copy p {
+    max-width: 48ch;
+    margin-top: 14px;
+    font-size: 0.9375rem;
+  }
+  .scope-annotation {
+    min-height: 54px;
+    margin-top: 10px;
+    font-size: 0.8125rem;
+  }
+  .scope-step-action {
+    margin-top: 0;
+  }
+  .scope-map-wrap {
+    width: 100%;
+    max-width: 560px;
+    margin-inline: auto;
+    padding-top: 18px;
+  }
+  .scope-map {
+    min-height: 300px;
+  }
+  .scope-route-labels .agent {
+    font-size: 0.8125rem;
+  }
+  .scope-node {
+    font-size: 0.75rem;
+    gap: 5px;
+    padding-inline: 5px;
+  }
+  .scope-node[data-kind="skill"] {
+    font-size: 0.75rem;
+  }
+  .scope-skill-label {
+    display: none;
+  }
+  .scope-location {
+    font-size: 0.75rem;
+  }
+  .scope-target {
+    font-size: 0.75rem;
+    padding: 8px 10px;
+  }
+  .scope-map-caption {
+    margin-top: 22px;
+  }
+  .scope-exploration {
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .scope-exploration[hidden] {
+    display: none;
+  }
+  .scope-progress {
+    display: none;
+  }
+  .scope-evidence-section {
+    margin-top: 44px;
+  }
+  .scope-result {
+    gap: 18px;
+  }
+  .scope-result-symbol {
+    font-size: 3.5rem;
+  }
+  .scope-result h3 {
+    font-size: 1.3rem;
+  }
+  .scope-result .eyebrow {
+    font-size: 0.625rem;
+  }
+  .scope-result p:last-child {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scope *,
+  .scope *::before,
+  .scope *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* ---------- FAQ ---------- */
@@ -1770,49 +2056,208 @@ details[open] > summary .faq-marker {
     width: 54px;
     height: 54px;
   }
+}
 
-  /* The tree keeps its geometry and scrolls inside its own surface, the way the
-     transcript below it does, rather than collapsing into stacked rows. */
-  .scope-tree {
-    padding: 6px 14px 20px;
-    font-size: 0.75rem;
+/* Homepage rhythm: an open explanation, a compact proof, then the reference. */
+.hero h1 {
+  font-size: clamp(2.6rem, 4.8vw, 4.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+.hero .eyebrow {
+  margin-bottom: 24px;
+}
+.hero-copy {
+  max-width: 680px;
+}
+.hero-lead {
+  font-size: 1.125rem;
+  max-width: 46ch;
+}
+.hero .command-copyable {
+  max-width: 470px;
+  margin-top: 28px;
+}
+.hero-actions {
+  align-items: center;
+  gap: 12px 22px;
+}
+.hero-actions .button-ghost {
+  padding-inline: 0;
+  border-color: transparent;
+  border-radius: 0;
+}
+.hero-actions .button-ghost:hover {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+.hero-secondary {
+  display: flex;
+  gap: 22px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.hero-secondary a:hover {
+  color: var(--ink);
+}
+.hero-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+.hero-art p {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
+.story-section {
+  padding-top: 0;
+  padding-bottom: 72px;
+}
+.story-heading {
+  max-width: 620px;
+  padding-block: 36px 28px;
+}
+.story-heading h2 {
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  max-width: 23ch;
+}
+.story-section > .footnote {
+  max-width: 850px;
+  margin-inline: auto;
+}
+.demo {
+  display: grid;
+  grid-template-columns: 0.75fr 1.25fr;
+  gap: 40px 64px;
+  align-items: center;
+  padding-block: 88px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.demo .prose h2 {
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+}
+.demo .prose p {
+  font-size: 0.9375rem;
+}
+.demo .footnote {
+  grid-column: 2;
+  margin-top: -20px;
+  font-size: 0.75rem;
+}
+.demo .eyebrow {
+  margin-bottom: 20px;
+}
+#surfaces .prose,
+#run .prose {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 48px;
+}
+#surfaces .prose p {
+  max-width: 48ch;
+  margin-top: 0;
+}
+.run article {
+  padding-top: 20px;
+  border-top: 1px solid var(--line-strong);
+}
+.run h3 {
+  font-size: 1.125rem;
+}
+.run .eyebrow {
+  margin-bottom: 10px;
+}
+.site-footer {
+  background: var(--paper-sunk);
+  padding-block: 40px;
+}
+.site-header nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+@media (max-width: 999px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 32px;
+    align-items: center;
   }
-
-  .scope-gutter {
-    width: 22px;
+  .hero-art .hero-mark {
+    max-width: 220px;
   }
-
-  .scope-path {
-    padding-right: 14px;
+}
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    padding-block: 48px 36px;
+    gap: 30px;
   }
-
-  .scope-verdict {
-    gap: 7px;
+  .hero h1 {
+    max-width: 17ch;
+    font-size: clamp(2.45rem, 8.8vw, 3.6rem);
   }
-
-  .scope-state {
+  .hero .eyebrow {
+    margin-bottom: 18px;
     font-size: 0.6875rem;
   }
-
-  .scope-trace {
-    padding: 12px 14px 10px;
+  .hero-lead {
+    font-size: 1rem;
   }
-
-  .scope-controls legend {
-    float: none;
-    margin-bottom: 10px;
+  .hero-art {
+    flex-direction: row;
+    justify-content: center;
+    gap: 22px;
   }
-
-  .scope-finding {
+  .hero-art .hero-mark {
+    max-width: 120px;
+  }
+  .hero-art p {
+    max-width: 15ch;
+  }
+  .hero-actions {
+    gap: 10px 20px;
+  }
+  .hero-actions .button {
+    font-size: 0.875rem;
+  }
+  .hero-secondary {
+    margin-top: 14px;
+  }
+  .story-section {
+    padding-top: 16px;
+  }
+  .story-heading {
+    padding-block: 26px 10px;
+  }
+  .story-heading h2 {
+    font-size: 1.75rem;
+  }
+  .demo {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-block: 56px;
+  }
+  .demo .footnote {
+    grid-column: auto;
+    margin-top: 0;
+  }
+  #surfaces .prose,
+  #run .prose {
     display: block;
   }
-
-  .severity {
-    width: auto;
-    margin-right: 10px;
+  #surfaces .prose p {
+    margin-top: 18px;
   }
-
-  .scope-evidence {
-    margin-left: 0;
+  .site-footer nav {
+    gap: 14px 22px;
+  }
+  .site-footer nav a {
+    min-height: 36px;
   }
 }

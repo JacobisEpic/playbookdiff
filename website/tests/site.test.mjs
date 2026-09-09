@@ -211,11 +211,10 @@ test("nothing unfinished is published", () => {
 });
 
 test("the demo plays the visitor's way, and costs nothing until it does", async () => {
-  // Directly after the hero, so the recording is the first thing that explains
-  // the product, and still ahead of the interactive example that details it.
+  // The guided explanation precedes the recording; the video supplies proof.
   const demo = html.indexOf('id="demo"');
   assert.ok(demo > html.indexOf("hero-actions"), "after the hero");
-  assert.ok(demo < html.indexOf('id="example"'), "before the worked example");
+  assert.ok(demo > html.indexOf('id="example"'), "after the worked example");
 
   // It is narrated, so it never starts on its own, and no byte of it is
   // fetched before someone asks for it.
@@ -240,7 +239,7 @@ test("colour is reserved for findings, never for agent branding", () => {
   const hues = [...css.matchAll(/^\s*(--signal[\w-]*):/gm)].map((match) => match[1]).sort();
   assert.deepEqual(hues, ["--signal-leader", "--signal-on-dark"]);
   // The one coloured state in the tree is the one that is a finding.
-  assert.match(css, /\.scope-row\[data-state="absent"\][\s\S]*?--signal-leader/);
+  assert.match(css, /\.scope-node\[data-state="absent"\][\s\S]*?--signal-leader/);
 });
 
 test("local anchor links point at existing IDs", () => {
@@ -398,28 +397,20 @@ test("the GitHub Action snippet is valid, copy-pasteable YAML", () => {
   assert.equal(snippet, expected);
 });
 
-test("the tree is drawn from the generated data, structure and all", () => {
-  // One row per configuration item, plus the repository root and the one
-  // directory the example nests under.
-  const treeRows = [...html.matchAll(/<li class="scope-(?:row|branch)"[^>]*>/g)];
-  assert.equal(treeRows.length, example.rows.length + 2, "root + directory + every row");
-  assert.ok(html.includes("your-repo/"), "the repository root node");
-  assert.ok(html.includes(`data-kind="directory"`), "the nested directory node");
-
-  // The branch drawn into a node is what carries its state, so every state in
-  // the data has to reach the markup.
+test("the route map includes every generated item and the actual target", () => {
+  const nodes = [...markup.matchAll(/<li class="scope-node"[^>]*>/g)];
+  assert.equal(nodes.length, example.rows.length);
+  assert.ok(markup.includes("your-repo/"));
+  assert.equal([...markup.matchAll(/data-kind="directory"/g)].length, 1);
+  assert.equal([...markup.matchAll(/data-kind="target"/g)].length, 1);
   for (const row of example.rows) {
-    assert.ok(html.includes(row.name), row.path);
+    const node = nodes.find(([tag]) => tag.includes(`data-path="${row.path}"`));
+    assert.ok(node, row.path);
+    assert.ok(node[0].includes(`data-state="${row.states.root}"`));
   }
-  for (const state of new Set(example.rows.map((row) => row.states.root))) {
-    assert.ok(html.includes(`data-state="${state}"`), state);
-  }
-
-  // Colour is applied to exactly the files the analyzer says are not received.
-  const findings = [...html.matchAll(/data-emphasis="finding"/g)].length;
-  const absent = example.rows.filter((row) => row.states.root === "absent").length;
-  assert.equal(findings, absent, "only a not-received file is coloured");
-  assert.equal(absent, 2);
+  const absent = example.rows.filter((row) => row.states.root === "absent");
+  assert.equal([...markup.matchAll(/data-emphasis="finding"/g)].length, absent.length);
+  assert.equal([...markup.matchAll(/data-stopped="true"/g)].length, 1);
 });
 
 test("either agent's path can be traced, by pointer, keyboard, or tap", () => {
@@ -437,16 +428,28 @@ test("either agent's path can be traced, by pointer, keyboard, or tap", () => {
   assert.match(html, /highlight the configuration Codex receives/);
 });
 
-test("the drawn branches are decorative, and the tree reads without them", () => {
-  const gutters = [...html.matchAll(/<svg class="scope-gutter"[^>]*>/g)];
-  assert.ok(gutters.length >= example.rows.length, "every node is connected");
-  for (const gutter of gutters) {
-    assert.match(gutter[0], /aria-hidden="true"/, "branch art is not announced");
-  }
-  // Every state still has a text label, so nothing is carried by line style alone.
+test("the route art has a complete textual equivalent", () => {
+  assert.match(markup, /<svg class="scope-routes"[^>]*aria-hidden="true"/);
   for (const label of ["at startup", "on demand", "not received"]) {
-    assert.ok(html.includes(label), label);
+    assert.ok(markup.includes(label), label);
   }
+  for (const row of example.rows) {
+    assert.ok(
+      markup.includes(`${row.path}, ${row.harness === "claude" ? "Claude Code" : "Codex"}, `),
+    );
+  }
+  assert.match(markup, /Configuration and finding evidence/);
+});
+
+test("the guided story can be skipped and navigated without scrolling", () => {
+  assert.match(markup, /aria-label="Example story chapters"/);
+  for (const chapter of ["1. Repository", "2. Claude", "3. Codex", "4. The difference"]) {
+    assert.ok(markup.includes(`aria-label="${chapter}"`), chapter);
+  }
+  assert.match(markup, /Explore the example/);
+  assert.match(markup, /Continue the story/);
+  assert.match(css, /prefers-reduced-motion: reduce/);
+  assert.ok(markup.includes('id="scope-evidence"'));
 });
 
 // ---------------------------------------------------------------------------
