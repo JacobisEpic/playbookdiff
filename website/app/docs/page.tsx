@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DocsNav } from "../../components/docs-nav";
-import { Command } from "../../components/site-ui";
+import { Command, ExternalLink } from "../../components/site-ui";
 import { sections } from "../../lib/docs";
 import { openGraph, repositoryUrl, site } from "../../lib/site";
 
@@ -65,9 +65,9 @@ export default function DocsIndex() {
 
           <p className="doc-source">
             Every page here renders the Markdown in the repository&rsquo;s{" "}
-            <a href={repositoryUrl("docs", "tree")}>
+            <ExternalLink href={repositoryUrl("docs", "tree")}>
               docs directory <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
             , which stays the source of truth.
           </p>
         </div>

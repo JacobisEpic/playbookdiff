@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SiteFooter, SiteHeader } from "../../components/site-ui";
+import { ExternalLink, SiteFooter, SiteHeader } from "../../components/site-ui";
 import { openGraph, site } from "../../lib/site";
 
 export const metadata: Metadata = {
@@ -42,10 +42,13 @@ export default function Privacy() {
             </p>
             <p>
               Email delivery and subscriber management are handled by{" "}
-              <a href="https://buttondown.com/">Buttondown</a>, which stores the list. The form
-              posts directly to Buttondown; this site keeps no subscriber database of its own.
-              Buttondown&rsquo;s handling of the data it stores is described in{" "}
-              <a href="https://buttondown.com/legal/privacy">its privacy policy</a>.
+              <ExternalLink href="https://buttondown.com/">Buttondown</ExternalLink>, which stores
+              the list. The form posts directly to Buttondown; this site keeps no subscriber
+              database of its own. Buttondown&rsquo;s handling of the data it stores is described in{" "}
+              <ExternalLink href="https://buttondown.com/legal/privacy">
+                its privacy policy
+              </ExternalLink>
+              .
             </p>
             <p>
               Every email carries an unsubscribe link, and unsubscribing removes the address from
@@ -65,7 +68,8 @@ export default function Privacy() {
             </p>
             <p>
               Questions, or want an address removed by hand?{" "}
-              <a href={`${site.repository}/issues`}>Open an issue</a> on the repository.
+              <ExternalLink href={`${site.repository}/issues`}>Open an issue</ExternalLink> on the
+              repository.
             </p>
           </div>
         </article>

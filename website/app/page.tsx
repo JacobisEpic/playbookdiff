@@ -3,7 +3,14 @@ import { DemoVideo } from "../components/demo-video";
 import { EffectiveScope } from "../components/effective-scope";
 import { Faq } from "../components/faq";
 import { Signup } from "../components/signup";
-import { AgentMark, ButtonLink, Command, SiteFooter, SiteHeader } from "../components/site-ui";
+import {
+  AgentMark,
+  ButtonLink,
+  Command,
+  ExternalLink,
+  SiteFooter,
+  SiteHeader,
+} from "../components/site-ui";
 import example from "../lib/effective-scope.json";
 import { evidenceUrl, site } from "../lib/site";
 
@@ -106,9 +113,9 @@ export default function Home() {
           <DemoVideo />
           <p className="footnote">
             Recorded against{" "}
-            <a href={site.demoRepository}>
+            <ExternalLink href={site.demoRepository}>
               a real repository <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
             .
           </p>
         </section>
@@ -127,9 +134,14 @@ export default function Home() {
 
           <p className="footnote">
             Real analyzer output.{" "}
-            <a href={evidenceUrl(example.baseline, example.fixture, "tree")}>Fixture</a> ·{" "}
-            <a href={evidenceUrl(example.baseline, example.test)}>Verified results</a> · Discovery
-            rules: <a href="/docs/harnesses/claude">Claude Code</a> /{" "}
+            <ExternalLink href={evidenceUrl(example.baseline, example.fixture, "tree")}>
+              Fixture
+            </ExternalLink>{" "}
+            ·{" "}
+            <ExternalLink href={evidenceUrl(example.baseline, example.test)}>
+              Verified results
+            </ExternalLink>{" "}
+            · Discovery rules: <a href="/docs/harnesses/claude">Claude Code</a> /{" "}
             <a href="/docs/harnesses/codex">Codex</a>.
           </p>
         </section>
@@ -170,9 +182,9 @@ export default function Home() {
 
           <p className="footnote">
             Prefer to build from source, or read it first?{" "}
-            <a href={site.repository}>
+            <ExternalLink href={site.repository}>
               The repository <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
           </p>
         </section>
 
@@ -253,9 +265,9 @@ export default function Home() {
 
           <p className="footnote">
             Anything else is in <a href="/docs">the documentation</a>, or worth{" "}
-            <a href={`${site.repository}/issues`}>
+            <ExternalLink href={`${site.repository}/issues`}>
               opening an issue <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
             .
           </p>
         </section>

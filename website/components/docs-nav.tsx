@@ -1,5 +1,6 @@
 import { pages, sections } from "../lib/docs";
 import { repositoryUrl, site } from "../lib/site";
+import { ExternalLink } from "./site-ui";
 
 /**
  * The documentation index, rendered beside every docs page.
@@ -35,19 +36,19 @@ export function DocsNav({ current }: { current?: string }) {
         <p className="docs-nav-title">Repository</p>
         <ul>
           <li>
-            <a href={site.repository}>
+            <ExternalLink href={site.repository}>
               Source <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
           </li>
           <li>
-            <a href={repositoryUrl("CONTRIBUTING.md")}>
+            <ExternalLink href={repositoryUrl("CONTRIBUTING.md")}>
               Contributing <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
           </li>
           <li>
-            <a href={repositoryUrl("docs/releasing.md")}>
+            <ExternalLink href={repositoryUrl("docs/releasing.md")}>
               Release process <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
           </li>
         </ul>
       </div>

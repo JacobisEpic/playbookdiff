@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DocsNav } from "../../../components/docs-nav";
+import { ExternalLink } from "../../../components/site-ui";
 import { findPage, pages, renderDoc } from "../../../lib/docs";
 import { openGraph, repositoryUrl } from "../../../lib/site";
 
@@ -37,9 +38,9 @@ export default async function DocPage({ params }: Props) {
           <h1>{title || page.title}</h1>
           <p className="doc-lead">{page.summary}</p>
           {/* GitHub stays the canonical home of the code, and of this file. */}
-          <a className="doc-source-link" href={repositoryUrl(page.source)}>
+          <ExternalLink className="doc-source-link" href={repositoryUrl(page.source)}>
             View source on GitHub <span aria-hidden="true">↗</span>
-          </a>
+          </ExternalLink>
         </header>
 
         {headings.length > 2 ? (

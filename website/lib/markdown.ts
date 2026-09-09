@@ -85,7 +85,7 @@ function inline(source: string, options: Options): string {
         html += text;
       } else {
         const external = /^https?:\/\//i.test(href);
-        const attributes = external ? ' rel="noreferrer"' : "";
+        const attributes = external ? ' target="_blank" rel="noreferrer"' : "";
         html += `<a href="${escapeHtml(href)}"${attributes}>${text}</a>`;
       }
       index += link[0].length;
@@ -94,7 +94,7 @@ function inline(source: string, options: Options): string {
 
     const autolink = /^<(https?:\/\/[^>]+)>/.exec(rest);
     if (autolink) {
-      html += `<a href="${escapeHtml(autolink[1])}" rel="noreferrer">${escapeHtml(autolink[1])}</a>`;
+      html += `<a href="${escapeHtml(autolink[1])}" target="_blank" rel="noreferrer">${escapeHtml(autolink[1])}</a>`;
       index += autolink[0].length;
       continue;
     }

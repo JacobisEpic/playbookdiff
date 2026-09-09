@@ -43,6 +43,32 @@ export function AgentMark({
   );
 }
 
+/**
+ * A link that leaves the site.
+ *
+ * Off-site destinations open in their own tab so a visitor part-way down the
+ * page does not lose it, and `rel="noreferrer"` implies `noopener`, so the new
+ * document cannot reach back through `window.opener`. The `↗` that marks these
+ * links is decorative, so the same fact is spelled out for anyone who cannot
+ * see it.
+ */
+export function ExternalLink({
+  children,
+  href,
+  className,
+}: {
+  children: ReactNode;
+  href: string;
+  className?: string;
+}) {
+  return (
+    <a className={className} href={href} target="_blank" rel="noreferrer">
+      {children}
+      <span className="visually-hidden"> (opens in a new tab)</span>
+    </a>
+  );
+}
+
 export function ButtonLink({
   children,
   href,
@@ -54,10 +80,18 @@ export function ButtonLink({
   variant?: "primary" | "ghost";
   external?: boolean;
 }) {
+  if (external) {
+    return (
+      <ExternalLink className={`button button-${variant}`} href={href}>
+        {children}
+        <span aria-hidden="true">↗</span>
+      </ExternalLink>
+    );
+  }
+
   return (
     <a className={`button button-${variant}`} href={href}>
       {children}
-      {external ? <span aria-hidden="true">↗</span> : null}
     </a>
   );
 }
@@ -114,9 +148,9 @@ export function SiteHeader({ home = false }: { home?: boolean }) {
           </a>
           <nav aria-label="Main navigation">
             <a href="/docs">Docs</a>
-            <a href={site.repository}>
+            <ExternalLink href={site.repository}>
               GitHub <span aria-hidden="true">↗</span>
-            </a>
+            </ExternalLink>
           </nav>
         </div>
       </header>
@@ -136,13 +170,15 @@ export function SiteFooter() {
           <a href="/docs/action">Action</a>
           <a href="/docs/security">Security</a>
           <a href="/docs/limitations">Limitations</a>
-          <a href={repositoryUrl("CONTRIBUTING.md")}>Contribute</a>
+          <ExternalLink href={repositoryUrl("CONTRIBUTING.md")}>Contribute</ExternalLink>
           <a href="/privacy">Privacy</a>
         </nav>
         <p className="footer-meta">
-          <a href={`${site.repository}/releases/tag/${site.release}`}>{site.release}</a>
-          <a href={npmUrl}>npm</a>
-          <a href={repositoryUrl("LICENSE")}>MIT</a>
+          <ExternalLink href={`${site.repository}/releases/tag/${site.release}`}>
+            {site.release}
+          </ExternalLink>
+          <ExternalLink href={npmUrl}>npm</ExternalLink>
+          <ExternalLink href={repositoryUrl("LICENSE")}>MIT</ExternalLink>
         </p>
       </div>
     </footer>

@@ -46,7 +46,7 @@ test("a link target cannot break out of its attribute", () => {
   const packed = render('[a](https://example.com"onmouseover="alert&#40;1&#41;)');
   const tag = /<a [^>]*>/.exec(packed)[0];
   const attributes = [...tag.matchAll(/ ([a-zA-Z-]+)="[^"]*"/g)].map((match) => match[1]);
-  assert.deepEqual(attributes, ["href", "rel"], `no extra attribute: ${tag}`);
+  assert.deepEqual(attributes, ["href", "target", "rel"], `no extra attribute: ${tag}`);
 });
 
 test("only http, https, mailto, and relative targets become links", () => {
@@ -81,8 +81,10 @@ test("a resolveLink that returns a dangerous target is still refused", () => {
 });
 
 test("external links carry rel=noreferrer, internal ones do not", () => {
-  assert.match(render("[a](https://example.com)"), /rel="noreferrer"/);
-  assert.doesNotMatch(render("[a](/docs/cli)"), /rel="noreferrer"/);
+  // Off-site links also open in their own tab, so a reader keeps the document
+  // they were in. `noreferrer` implies `noopener`, which `target` needs.
+  assert.match(render("[a](https://example.com)"), /target="_blank" rel="noreferrer"/);
+  assert.doesNotMatch(render("[a](/docs/cli)"), /rel="noreferrer"|target="_blank"/);
 });
 
 test("heading slugs follow GitHub's rules", () => {

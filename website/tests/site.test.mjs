@@ -254,6 +254,43 @@ test("local anchor links point at existing IDs", () => {
   }
 });
 
+test("every off-site link opens in its own tab, and safely", async () => {
+  // Every rendered route, not just the homepage: the rule has to hold on the
+  // documentation nav and the privacy page too.
+  const routes = [];
+  const walk = async (directory) => {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const full = path.join(directory, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.name.endsWith(".html")) routes.push(full);
+    }
+  };
+  await walk(path.join(root, ".next/server/app"));
+  assert.ok(routes.length >= 10, `expected rendered routes, found ${routes.length}`);
+
+  let offSite = 0;
+  for (const route of routes) {
+    const rendered = (await readFile(route, "utf8")).replace(/<script\b[\s\S]*?<\/script>/g, "");
+    for (const [tag, href] of rendered.matchAll(/<a\b[^>]*href="(https?:\/\/[^"]+)"[^>]*>/g)) {
+      offSite += 1;
+      assert.match(tag, /target="_blank"/, `${route}: ${href}`);
+      // `noreferrer` implies `noopener`, so the opened document cannot reach
+      // back through `window.opener`.
+      assert.match(tag, /rel="noreferrer"/, `${route}: ${href}`);
+    }
+
+    // Same-page anchors and first-party routes stay in the tab the reader is in.
+    for (const [tag, href] of rendered.matchAll(/<a\b[^>]*href="([#/][^"]*)"[^>]*>/g)) {
+      assert.doesNotMatch(tag, /target="_blank"/, `${route}: ${href}`);
+    }
+  }
+  assert.ok(offSite >= 20, `expected off-site links, found ${offSite}`);
+
+  // The arrow is decorative, so the behaviour is stated for anyone who cannot
+  // see it.
+  assert.ok(markup.includes("(opens in a new tab)"));
+});
+
 test("navigation stays short and points at first-party docs", () => {
   const nav = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
   const links = [...nav.matchAll(/<a\b/g)].length;
